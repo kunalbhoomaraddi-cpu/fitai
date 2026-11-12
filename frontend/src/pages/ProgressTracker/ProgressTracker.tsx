@@ -1,6 +1,7 @@
 import clsx from 'clsx'
-import { AlertTriangle, Award, Bot, CheckCircle2, Info, Lock, Pencil, Plus, Ruler, Scale, Sparkles, Target, Trash2, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
+import { AlertTriangle, Award, Camera, Bot, CheckCircle2, Info, Lock, Pencil, Plus, Ruler, Scale, Sparkles, Target, Trash2, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MeasureChart, WeightChart } from '../../components/charts/Charts'
 import { Badge, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, Input, Label, Modal, Notice, PageHeader, Photo, Ring, Segmented, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
@@ -12,6 +13,7 @@ import { fmtLength, fmtWeight, kgToLb, lbToKg, shortDate, todayISO, weightUnit }
 const MEAS: [string, string, string][] = [['waist_cm', 'Waist', '#C6F36B'], ['chest_cm', 'Chest', '#7CC4F2'], ['hips_cm', 'Hips', '#F2B85B'], ['arm_cm', 'Arm', '#49B675'], ['thigh_cm', 'Thigh', '#C9A7F5']]
 
 export default function ProgressTracker() {
+  const nav = useNavigate()
   const { units, refresh } = useAuth()
   const toast = useToast()
   const analysis = useAsync(() => progressApi.analysis(), [])
@@ -75,7 +77,8 @@ export default function ProgressTracker() {
       <Celebration fire={confetti} />
       <div className="group relative mb-6 overflow-hidden rounded-3xl border border-line">
         <Photo name="progress-hero" alt="Runner at sunrise" className="absolute inset-0" overlay="left" />
-        <div className="relative p-6 sm:p-8"><PageHeader eyebrow="Progress Tracker" title="See the trend, not the noise" subtitle="Weigh-ins, measurements and milestones — analysed from your stored data with weekly averages and plateau detection." /></div>
+        <div className="relative p-6 sm:p-8"><PageHeader eyebrow="Progress Tracker" title="See the trend, not the noise" subtitle="Weigh-ins, measurements and milestones — analysed from your stored data with weekly averages and plateau detection."
+          actions={<Button variant="secondary" onClick={() => nav('/photos')} icon={<Camera className="h-4 w-4" />}>Progress photos</Button>} /></div>
       </div>
 
       {!a ? <div className="grid gap-4 lg:grid-cols-3"><Skeleton className="h-64" /><Skeleton className="h-64 lg:col-span-2" /></div> : (

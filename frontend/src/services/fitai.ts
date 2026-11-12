@@ -108,3 +108,18 @@ export const checkinApi = {
   generate: () => api.post<Checkin>('/checkins/generate'),
   remove: (id: number) => api.del<void>(`/checkins/${id}`),
 }
+
+export type Pose = 'front' | 'side' | 'back'
+export type ProgressPhoto = { id: number; taken_on: string; pose: Pose; note: string | null; weight_kg: number | null; width: number; height: number; size_bytes: number; created_at: string }
+export const photoApi = {
+  list: () => api.get<ProgressPhoto[]>('/photos'),
+  upload: (file: Blob, pose: Pose, taken_on: string, note?: string) => {
+    const f = new FormData()
+    f.append('file', file, 'photo.jpg'); f.append('pose', pose); f.append('taken_on', taken_on)
+    if (note) f.append('note', note)
+    return api.upload<ProgressPhoto>('/photos', f)
+  },
+  update: (id: number, b: { pose?: Pose; note?: string | null }) => api.patch<ProgressPhoto>(`/photos/${id}`, b),
+  remove: (id: number) => api.del<void>(`/photos/${id}`),
+  imagePath: (id: number, size: 'thumb' | 'full') => `/photos/${id}/image?size=${size}`,
+}

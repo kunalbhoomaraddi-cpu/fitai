@@ -120,3 +120,15 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | DELETE | `/api/checkins/{id}` | Deletes one of your check-ins. |
 
 `facts` and `score` are deterministic. Score = 40 × min(workouts / planned, 1) + 30 × min(days logged / 5, 1) + 30 × min(protein days / 4, 1). A protein day means reaching at least 90% of the target. The weight change compares this week's average with the previous week's. Weight loss faster than about 1% of body weight per week is flagged.
+
+## Progress photos
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/photos` | Your photos (metadata only), newest first. |
+| POST | `/api/photos` | `multipart/form-data`: `file` (JPG/PNG/WebP, ≤ 15 MB), `pose` (`front`/`side`/`back`), `taken_on` (YYYY-MM-DD, not in the future), `note` (optional). The server rotates the image upright, **removes all EXIF/GPS metadata**, and stores a 1600 px JPEG plus a 480 px thumbnail. Max 300 photos per user. Demo account → `403`. |
+| GET | `/api/photos/{id}/image?size=full\|thumb` | JPEG bytes. Requires the owner's token (`404` for anyone else). |
+| PATCH | `/api/photos/{id}` | `{pose?, note?}` |
+| DELETE | `/api/photos/{id}` | Permanently deletes. Deleting your account deletes all photos. |
+
+Photos are stored in the database (`progress_photos` table), so they move with it (SQLite locally, Neon in the cloud). Each set of three photos is about 0.5–1 MB.

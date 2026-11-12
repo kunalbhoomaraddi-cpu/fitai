@@ -16,6 +16,7 @@ const DietPlanner = lazy(() => import('./pages/DietPlanner/DietPlanner'))
 const WorkoutPlanner = lazy(() => import('./pages/WorkoutPlanner/WorkoutPlanner'))
 const NutritionTracker = lazy(() => import('./pages/NutritionTracker/NutritionTracker'))
 const ProgressTracker = lazy(() => import('./pages/ProgressTracker/ProgressTracker'))
+const ProgressPhotos = lazy(() => import('./pages/ProgressPhotos/ProgressPhotos'))
 const Checkins = lazy(() => import('./pages/Checkins/Checkins'))
 const Settings = lazy(() => import('./pages/Settings/Settings'))
 
@@ -65,6 +66,7 @@ export default function App() {
           <Route path="/workouts" element={<Suspense fallback={<PageSkeleton />}><WorkoutPlanner /></Suspense>} />
           <Route path="/nutrition" element={<Suspense fallback={<PageSkeleton />}><NutritionTracker /></Suspense>} />
           <Route path="/progress" element={<Suspense fallback={<PageSkeleton />}><ProgressTracker /></Suspense>} />
+          <Route path="/photos" element={<Suspense fallback={<PageSkeleton />}><ProgressPhotos /></Suspense>} />
           <Route path="/checkins" element={<Suspense fallback={<PageSkeleton />}><Checkins /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={<PageSkeleton />}><Settings /></Suspense>} />
         </Route>

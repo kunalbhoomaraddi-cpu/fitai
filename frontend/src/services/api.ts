@@ -20,10 +20,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const headers: Record<string, string> = {}
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const isForm = body instanceof FormData
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   let res: Response
   try {
-    res = await fetch(`${BASE}${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined })
+    res = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : isForm ? body : JSON.stringify(body) })
   } catch {
     throw new ApiError('Cannot reach the FitAI server. Is the backend running on port 8000?', 0)
   }
@@ -44,4 +45,16 @@ export const api = {
   put: <T>(p: string, b?: unknown) => request<T>('PUT', p, b ?? {}),
   patch: <T>(p: string, b?: unknown) => request<T>('PATCH', p, b ?? {}),
   del: <T>(p: string) => request<T>('DELETE', p),
+  upload: <T>(p: string, form: FormData) => request<T>('POST', p, form),
+}
+
+/** Fetch a private binary (e.g. a progress photo) with the login token and return an object URL. */
+export async function fetchBlobUrl(path: string): Promise<string> {
+  const token = tokenStore.get()
+  const res = await fetch(`${BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) {
+    if (res.status === 401 && token && onUnauthorized) onUnauthorized()
+    throw new ApiError(`Could not load image (${res.status})`, res.status)
+  }
+  return URL.createObjectURL(await res.blob())
 }

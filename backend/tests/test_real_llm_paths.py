@@ -29,6 +29,9 @@ class FakeLLM(LLMProvider):
         state["results"].extend(results)
 
     def generate_json(self, system, prompt):
+        if "weekly check-in" in system:
+            return json.dumps({"headline": "Strong week, keep stacking wins " * 10, "wins": ["Trained hard. " * 40, 7, None],
+                               "focus": ["Log dinner daily."], "next_week": ["Complete 3 workouts", "Log 5 days"]})
         if "Meals in order" in prompt:
             n = prompt.count("kcal)")
             meal = {"name": "Paneer bowl " * 20, "instructions": "Cook it. " * 200,
@@ -41,7 +44,7 @@ class FakeLLM(LLMProvider):
 @pytest.fixture
 def real_llm(monkeypatch):
     monkeypatch.setattr(prov, "get_provider", lambda pref=None: FakeLLM())
-    for mod in ("app.ai.agent", "app.routers.diet", "app.routers.workouts", "app.routers.progress", "app.routers.dashboard"):
+    for mod in ("app.ai.agent", "app.routers.diet", "app.routers.workouts", "app.routers.progress", "app.routers.dashboard", "app.services.checkin_service"):
         monkeypatch.setattr(f"{mod}.get_provider", lambda pref=None: FakeLLM())
 
 
@@ -62,3 +65,11 @@ def test_all_ai_features_persist_with_real_provider(client, auth, real_llm):
     assert client.post("/api/progress/ai-analysis", headers=auth).status_code == 200
     r = client.get("/api/dashboard?refresh_recommendation=true", headers=auth)
     assert r.status_code == 200 and r.json()["recommendation"]["text"]
+
+
+def test_weekly_checkin_with_real_provider(client, auth, real_llm):
+    r = client.post("/api/checkins/generate", headers=auth)
+    assert r.status_code == 201, r.text
+    c = r.json()
+    assert c["is_ai"] and len(c["generated_by"]) <= 100 and c["notice"] is None
+    assert len(c["summary"]["headline"]) <= 120 and all(isinstance(x, str) and len(x) <= 240 for x in c["summary"]["wins"])

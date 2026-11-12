@@ -66,3 +66,24 @@ class LoginOtpIn(BaseModel):
 
 class OtpTokenIn(BaseModel):
     otp_token: str = Field(min_length=10, max_length=2000)
+
+
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetTokenIn(BaseModel):
+    reset_token: str = Field(min_length=10, max_length=2000)
+
+
+class ResetPasswordIn(BaseModel):
+    reset_token: str = Field(min_length=10, max_length=2000)
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator("new_password")
+    @classmethod
+    def strong(cls, v: str) -> str:
+        if not any(c.isalpha() for c in v) or not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one letter and one number")
+        return v

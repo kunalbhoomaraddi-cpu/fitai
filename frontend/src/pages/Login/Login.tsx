@@ -107,7 +107,8 @@ export default function Login() {
       <p className="mt-2 text-sm text-fg-muted">Log in to continue with your coach.</p>
       <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
         <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" autoComplete="email" icon={<Mail className="h-4 w-4" />} placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} /></div>
-        <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" autoComplete="current-password" icon={<Lock className="h-4 w-4" />} placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} /></div>
+        <div><div className="flex items-center justify-between"><Label htmlFor="password">Password</Label>
+          <Link to="/forgot-password" state={{ email }} className="mb-1.5 text-xs font-medium text-lime hover:underline">Forgot password?</Link></div><Input id="password" name="password" type="password" autoComplete="current-password" icon={<Lock className="h-4 w-4" />} placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} /></div>
         {error && <Notice tone="warn">{error}</Notice>}
         <Button type="submit" size="lg" full loading={busy === 'login'} icon={busy ? undefined : <ArrowRight className="h-4 w-4" />}>Log in</Button>
       </form>

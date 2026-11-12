@@ -58,6 +58,10 @@ def run_light_migrations() -> None:
             with engine.begin() as conn:
                 # accounts created before email verification existed are treated as verified
                 conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT TRUE"))
+        if "password_changed_at" not in cols:
+            ts = "TIMESTAMP" if engine.dialect.name == "postgresql" else "DATETIME"
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN password_changed_at {ts} NULL"))
     # PostgreSQL enforces VARCHAR lengths (SQLite doesn't): widen columns that grew in later versions
     if engine.dialect.name == "postgresql":
         widen = {("workout_plans", "generated_by"): 100, ("diet_plans", "generated_by"): 100,

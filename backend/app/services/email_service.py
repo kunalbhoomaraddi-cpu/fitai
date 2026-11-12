@@ -16,11 +16,13 @@ class EmailNotConfigured(Exception):
 
 
 def _verification_html(name: str, code: str, minutes: int, purpose: str = "verify") -> str:
-    title = "Your login code" if purpose == "login" else "Verify your email"
-    lead = ("use this code to finish logging in to FitAI." if purpose == "login"
-            else "enter this code in FitAI to activate your account.")
-    ignore = ("If this wasn't you, change your FitAI password — someone may know it." if purpose == "login"
-              else "If you didn't create a FitAI account, you can ignore this email.")
+    title, lead, ignore = {
+        "login": ("Your login code", "use this code to finish logging in to FitAI.",
+                  "If this wasn't you, change your FitAI password — someone may know it."),
+        "reset": ("Reset your password", "use this code to choose a new FitAI password.",
+                  "If you didn't ask to reset your password, ignore this email — your password stays the same."),
+    }.get(purpose, ("Verify your email", "enter this code in FitAI to activate your account.",
+                    "If you didn't create a FitAI account, you can ignore this email."))
     digits = "".join(
         f'<td style="padding:0 4px"><div style="width:44px;height:54px;line-height:54px;border-radius:10px;'
         f'background:#171C18;border:1px solid #29312B;color:#C6F36B;font:700 26px Arial,sans-serif;text-align:center">{d}</div></td>'
@@ -40,7 +42,7 @@ def _verification_html(name: str, code: str, minutes: int, purpose: str = "verif
 def send_verification_code(to_email: str, name: str, code: str, purpose: str = "verify") -> str:
     """Returns the delivery channel: 'email' or 'console'."""
     s = get_settings()
-    label = "login" if purpose == "login" else "verification"
+    label = {"login": "login", "reset": "password reset"}.get(purpose, "verification")
     subject = f"{code} is your FitAI {label} code"
     text = (f"Hi {name},\n\nYour FitAI {label} code is: {code}\n\n"
             f"It expires in {s.verification_code_minutes} minutes. If you didn't sign up, ignore this email.")

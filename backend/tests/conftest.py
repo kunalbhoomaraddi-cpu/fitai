@@ -18,11 +18,12 @@ from app.main import app  # noqa: E402
 from app.services import email_service  # noqa: E402
 
 SENT_CODES: dict[str, str] = {}
+RESET_CODES: dict[str, str] = {}
 LOGIN_CODES: dict[str, str] = {}
 
 
 def _capture(to_email, name, code, purpose="verify"):  # stand-in for SMTP during tests
-    (LOGIN_CODES if purpose == "login" else SENT_CODES)[to_email] = code
+    {"login": LOGIN_CODES, "reset": RESET_CODES}.get(purpose, SENT_CODES)[to_email] = code
     return "console"
 
 

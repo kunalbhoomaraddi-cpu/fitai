@@ -15,7 +15,11 @@ export const authApi = {
   verifyEmail: (code: string) => api.post<User>('/auth/verify-email', { code }),
   resendCode: () => api.post<Verification>('/auth/resend-code'),
   logout: () => api.post<void>('/auth/logout'),
+  forgotPassword: (email: string) => api.post<ResetChallenge>('/auth/forgot-password', { email }),
+  forgotResend: (reset_token: string) => api.post<{ delivery: string; resend_in_seconds: number }>('/auth/forgot-password/resend', { reset_token }),
+  resetPassword: (reset_token: string, code: string, new_password: string) => api.post<{ detail: string }>('/auth/reset-password', { reset_token, code, new_password }),
 }
+export type ResetChallenge = { detail: string; reset_token: string; delivery: 'email' | 'console'; expires_in_minutes: number; resend_in_seconds: number }
 export const profileApi = {
   get: () => api.get<Profile | null>('/profile'),
   save: (p: Partial<Profile>) => api.put<Profile>('/profile', p),
@@ -82,6 +86,25 @@ export const progressApi = {
 export const settingsApi = {
   get: () => api.get<any>('/settings'),
   update: (b: any) => api.put<any>('/settings', b),
-  password: (current_password: string, new_password: string) => api.post<void>('/settings/password', { current_password, new_password }),
+  password: (current_password: string, new_password: string) => api.post<{ detail: string; access_token: string }>('/settings/password', { current_password, new_password }),
   deleteAccount: () => api.del<void>('/settings/account'),
+}
+
+export type CheckinFacts = {
+  period: { start: string; end: string }; goal: string; goal_label: string; score: number
+  workouts: { done: number; planned: number; minutes: number; names: string[] }
+  nutrition: { days_logged: number; avg_calories: number | null; calorie_target: number; avg_protein_g: number | null; protein_target_g: number; protein_days: number }
+  weight: { weigh_ins: number; avg_kg: number | null; prev_avg_kg: number | null; change_kg: number | null; latest_kg: number; target_kg: number; losing_too_fast: boolean }
+  achievements: string[]; challenges: { completed: number; total: number }
+}
+export type Checkin = {
+  id: number; week_start: string; period_start: string; period_end: string; score: number; facts: CheckinFacts
+  summary: { headline: string; wins: string[]; focus: string[]; next_week: string[] }
+  generated_by: string; is_ai: boolean; created_at: string; notice?: string | null
+}
+export const checkinApi = {
+  list: () => api.get<Checkin[]>('/checkins'),
+  current: () => api.get<{ week_start: string; due: boolean; checkin: Checkin | null }>('/checkins/current'),
+  generate: () => api.post<Checkin>('/checkins/generate'),
+  remove: (id: number) => api.del<void>(`/checkins/${id}`),
 }

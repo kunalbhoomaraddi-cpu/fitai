@@ -144,4 +144,8 @@ def test_demo_account(client):
 def test_settings_and_password(client, auth):
     assert client.put("/api/settings", json={"unit_system": "imperial", "ai_provider_pref": "mock"}, headers=auth).json()["unit_system"] == "imperial"
     assert client.post("/api/settings/password", json={"current_password": "bad", "new_password": "newpass123"}, headers=auth).status_code == 400
-    assert client.post("/api/settings/password", json={"current_password": "secret123", "new_password": "newpass123"}, headers=auth).status_code == 204
+    r = client.post("/api/settings/password", json={"current_password": "secret123", "new_password": "newpass123"}, headers=auth)
+    assert r.status_code == 200
+    assert client.get("/api/auth/me", headers=auth).status_code == 401  # old session signed out
+    auth.update({"Authorization": f"Bearer {r.json()['access_token']}"})
+    assert client.get("/api/auth/me", headers=auth).status_code == 200

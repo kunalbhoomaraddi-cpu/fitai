@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from app.ai.provider import available_providers
 from app.config import get_settings
 from app.database import init_db
-from app.routers import auth, coach, dashboard, diet, nutrition, profile, progress, settings as settings_router, workouts
+from app.routers import auth, checkins, coach, dashboard, diet, nutrition, profile, progress, settings as settings_router, workouts
 from app.utils.errors import register_exception_handlers
 
 settings = get_settings()
@@ -37,7 +37,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allo
 register_exception_handlers(app)
 
 API = "/api"
-for r in (auth, profile, dashboard, coach, diet, workouts, nutrition, progress, settings_router):
+for r in (auth, profile, dashboard, coach, diet, workouts, nutrition, progress, checkins, settings_router):
     app.include_router(r.router, prefix=API)
 
 

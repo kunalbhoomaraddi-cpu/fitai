@@ -29,7 +29,7 @@ Restart with `./start.sh` after you add the key. See [LOCAL_SETUP.md](LOCAL_SETU
 | Module | What it does |
 |---|---|
 | **Landing page** | Public home page with hero, features, AI coach showcase, meal and workout highlights, how it works, FAQ and calls to action; responsive with scroll animations |
-| **Authentication** | Registration with **email verification** and **two-step login** (6-digit email code on every login, via free Gmail SMTP), login, logout, bcrypt password hashing, JWT sessions persisted across reloads, protected routes, input validation, rate-limited auth |
+| **Authentication** | Registration with **email verification** and **two-step login** (6-digit email code on every login, via free Gmail SMTP), login, logout, bcrypt password hashing, JWT sessions persisted across reloads, protected routes, input validation, **forgot password** (emailed reset code; changing or resetting a password signs out every other device), rate-limited auth |
 | **Onboarding & profile** | 6-step guided onboarding (metric or imperial), a live preview of BMR, TDEE, calorie target and macros, editable in Settings |
 | **Dashboard** | Personalised hero with goal-progress ring, AI daily recommendation, stat cards, charts for weight, calories, protein and weekly activity, upcoming workout, daily quote, weekly challenges, achievements, quick actions |
 | **AI Fitness Coach** | Chat with persistent conversations, Gemini function calling over **12 backend tools**, structured response cards (metrics, macros, weight trend, workout, foods, insights), Markdown, typing indicator, suggested prompts, save to dashboard |
@@ -38,6 +38,7 @@ Restart with `./start.sh` after you add the key. See [LOCAL_SETUP.md](LOCAL_SETU
 | **Calculator** | BMI, Mifflin-St Jeor BMR, TDEE (5 activity levels), a safe calorie target (deficit capped at 500 kcal, with calorie floors) and macros, all deterministic Python |
 | **Nutrition Tracker** | Open Food Facts search with an offline reference database, custom foods, entries you can edit and delete, meal categories, progress rings, meal breakdown, 14-day history |
 | **Progress Tracker** | Weight and body-measurement logging, target setting, weekly averages, a 4-week trend from linear regression, plateau detection, goal percentage, milestones and AI analysis grounded in stored data |
+| **Weekly AI Check-in** | Once a week the coach reviews your last 7 days: workouts done vs planned, food-logging days, protein-target days and the weekly-average weight change. You get a 0–100 consistency score, wins, focus areas and measurable targets for next week, plus a warning if weight is dropping too fast. The numbers are calculated by the app and the AI only writes the wording (rules engine in demo mode). Includes a dashboard reminder and history |
 | **Motivation** | 35 original daily quotes in 7 categories, 7 achievements, healthy streak logic, weekly challenges, confetti and notifications |
 | **Settings** | Personal info, fitness and diet preferences, units, AI provider preference, password change, logout, account deletion |
 | **Demo mode** | One-click sample account with 9 weeks of data, a rule-based coach that uses the *same tools* and is always labelled, and fallbacks for every external API |

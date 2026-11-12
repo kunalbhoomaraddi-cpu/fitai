@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowRight, ArrowUpRight, Award, Beef, Bot, Calendar, CheckCircle2, Dumbbell, Flame, Lock, NotebookPen, Plus, Quote, RefreshCw, Scale, Sparkles, Target, Timer, Trophy, TrendingDown, TrendingUp, UtensilsCrossed, Zap } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Award, Beef, Bot, Calendar, CalendarCheck, CheckCircle2, Dumbbell, Flame, Lock, NotebookPen, Plus, Quote, RefreshCw, Scale, Sparkles, Target, Timer, Trophy, TrendingDown, TrendingUp, UtensilsCrossed, Zap } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ActivityChart, CaloriesChart, ProteinChart, WeightChart } from '../../components/charts/Charts'
@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { useCountUp } from '../../hooks/useCountUp'
-import { dashboardApi, progressApi } from '../../services/fitai'
+import { checkinApi, dashboardApi, progressApi } from '../../services/fitai'
 import { fmtWeight, weightUnit, weightValue } from '../../utils/format'
 
 const CH_ICON: Record<string, any> = { dumbbell: Dumbbell, notebook: NotebookPen, beef: Beef, scale: Scale }
@@ -45,6 +45,24 @@ function Stat({ label, value, unit, sub, icon, accent, delay = 0, spark, sparkCo
       {spark && <Spark data={spark} color={sparkColor} />}
       {sub && <div className="mt-2 text-xs text-fg-muted">{sub}</div>}
     </Card>
+  )
+}
+
+function CheckinPrompt() {
+  const nav = useNavigate()
+  const { data } = useAsync(() => checkinApi.current(), [])
+  if (!data) return null
+  const c = data.checkin
+  return (
+    <button onClick={() => nav('/checkins')} className="glow-border group flex w-full items-center gap-4 rounded-2xl border border-line bg-ink-800 px-5 py-4 text-left transition hover:border-line-strong">
+      {c ? <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime/10 font-display text-base font-bold text-lime">{c.score}</span>
+        : <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime text-ink-950"><CalendarCheck className="h-5 w-5" /></span>}
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-lime/80">Weekly check-in</p>
+        <p className="truncate text-sm font-medium text-fg">{c ? c.summary.headline : "Your weekly review is due — see how the last 7 days went and get next week's targets."}</p>
+      </div>
+      <span className="hidden shrink-0 items-center gap-1 text-sm font-medium text-lime sm:flex">{c ? 'View' : 'Run it'}<ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+    </button>
   )
 }
 
@@ -85,6 +103,8 @@ export default function Dashboard() {
           <Badge tone="amber">Demo</Badge><span>You're viewing <b className="text-fg">sample data</b> for a fictional user. Tracking works — try logging food or a weigh-in.</span>
         </div>
       )}
+
+      <CheckinPrompt />
 
       {/* HERO */}
       <section className="group relative overflow-hidden rounded-3xl border border-line">

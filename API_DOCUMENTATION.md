@@ -98,3 +98,25 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 
 ## Health
 `GET /api/health` → `{"status":"ok", "environment", "ai": {gemini, groq, mock}}`
+
+
+## Forgot password
+
+| Method | Path | Body | Notes |
+|---|---|---|---|
+| POST | `/api/auth/forgot-password` | `{email}` | If the account exists, emails a 6-digit code and returns `{detail, reset_token, delivery, expires_in_minutes, resend_in_seconds}`. Unknown email → `404` ("No FitAI account found…"); demo account → `400`. Rate-limited per IP. |
+| POST | `/api/auth/forgot-password/resend` | `{reset_token}` | 60-second cooldown (`429` if sooner). |
+| POST | `/api/auth/reset-password` | `{reset_token, code, new_password}` | Codes are single-use, expire after 15 minutes and allow 5 attempts. On success the password is set and **every existing session is revoked**. |
+
+`POST /api/settings/password` now returns `200 {detail, access_token}`. It signs out other devices; the client stores the new token so the current session continues.
+
+## Weekly check-ins
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/checkins/current` | `{week_start, due, checkin}`. `due` is true when this week (starting Monday) has no check-in yet. |
+| POST | `/api/checkins/generate` | Builds this week's check-in from the last 7 days, replacing any existing one for the same week. Returns `{id, score, facts, summary:{headline, wins[], focus[], next_week[]}, generated_by, is_ai, notice}`. AI rate-limited. |
+| GET | `/api/checkins` | History, newest first (up to 26). |
+| DELETE | `/api/checkins/{id}` | Deletes one of your check-ins. |
+
+`facts` and `score` are deterministic. Score = 40 × min(workouts / planned, 1) + 30 × min(days logged / 5, 1) + 30 × min(protein days / 4, 1). A protein day means reaching at least 90% of the target. The weight change compares this week's average with the previous week's. Weight loss faster than about 1% of body weight per week is flagged.

@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Bell, Bot, ChartLine, Dumbbell, LayoutDashboard, LogOut, Menu, Salad, Settings, Sparkles, Trophy, UtensilsCrossed, X } from 'lucide-react'
+import { Bell, Bot, CalendarCheck, ChartLine, Dumbbell, LayoutDashboard, LogOut, Menu, Salad, Settings, Sparkles, Trophy, UtensilsCrossed, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Badge, Logo } from '../components/ui'
@@ -15,6 +15,7 @@ export const NAV = [
   { to: '/workouts', label: 'Workout Planner', short: 'Train', icon: Dumbbell },
   { to: '/nutrition', label: 'Nutrition Tracker', short: 'Food', icon: UtensilsCrossed },
   { to: '/progress', label: 'Progress Tracker', short: 'Progress', icon: ChartLine },
+  { to: '/checkins', label: 'Weekly Check-in', short: 'Check-in', icon: CalendarCheck },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 const MOBILE = ['/dashboard', '/coach', '/workouts', '/nutrition', '/progress']

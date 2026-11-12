@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Integer, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -15,6 +17,8 @@ class User(TimestampMixin, Base):
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # Existing rows are treated as verified by the startup migration (see database.run_light_migrations)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # sessions issued before this moment are rejected (set on password change/reset)
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # per-user AI preference: auto | gemini | groq | mock (keys always stay server-side)
     ai_provider_pref: Mapped[str] = mapped_column(String(20), default="auto", nullable=False)

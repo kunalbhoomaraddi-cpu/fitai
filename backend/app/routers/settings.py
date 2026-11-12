@@ -6,7 +6,8 @@ from app.database import get_db
 from app.models import User
 from app.schemas.auth import PasswordChangeIn, UserOut
 from app.schemas.coach import SettingsIn
-from app.services.auth_service import get_authenticated_user, get_current_user, hash_password, verify_password
+from app.models._mixins import utcnow
+from app.services.auth_service import create_access_token, get_authenticated_user, get_current_user, hash_password, verify_password
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -29,14 +30,16 @@ def update(body: SettingsIn, user: User = Depends(get_current_user), db: Session
     return get_settings_(user)
 
 
-@router.post("/password", status_code=204)
+@router.post("/password")
 def change_password(body: PasswordChangeIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if user.is_demo:
         raise HTTPException(403, "The demo account's password can't be changed")
     if not verify_password(body.current_password, user.hashed_password):
         raise HTTPException(400, "Current password is incorrect")
     user.hashed_password = hash_password(body.new_password)
+    user.password_changed_at = utcnow()  # signs out every other device
     db.commit()
+    return {"detail": "Password changed. Other devices have been signed out.", "access_token": create_access_token(user.id)}
 
 
 @router.delete("/account", status_code=204)

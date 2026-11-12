@@ -1,3 +1,4 @@
+import { tokenStore } from '../../services/api'
 import { Bot, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, User } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -65,7 +66,7 @@ export default function Settings() {
   }
   const changePw = async () => {
     setPwBusy(true)
-    try { await settingsApi.password(pw.current, pw.next); setPw({ current: '', next: '' }); toast('success', 'Password changed') } catch (e) { toast('error', 'Could not change password', (e as Error).message) } finally { setPwBusy(false) }
+    try { const r = await settingsApi.password(pw.current, pw.next); tokenStore.set(r.access_token); setPw({ current: '', next: '' }); toast('success', 'Password changed', 'You stay logged in here. Other devices were signed out.') } catch (e) { toast('error', 'Could not change password', (e as Error).message) } finally { setPwBusy(false) }
   }
   const del = async () => { try { await settingsApi.deleteAccount(); logout(); nav('/login') } catch (e) { toast('error', 'Delete failed', (e as Error).message) } }
   const toggle = (k: 'equipment' | 'food_restrictions', v: string) => upd(k, p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v])

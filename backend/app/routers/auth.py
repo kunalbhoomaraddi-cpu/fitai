@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.config import get_settings
-from app.schemas.auth import LoginIn, LoginOtpIn, OtpTokenIn, RegisterIn, TokenOut, UserOut, VerifyCodeIn
-from app.services import demo_service, login_otp_service, verification_service
+from app.schemas.auth import ForgotPasswordIn, ResetPasswordIn, ResetTokenIn, LoginIn, LoginOtpIn, OtpTokenIn, RegisterIn, TokenOut, UserOut, VerifyCodeIn
+from app.services import demo_service, login_otp_service, password_reset_service, verification_service
 from app.services.auth_service import create_access_token, get_authenticated_user, hash_password, verify_password
 from app.utils.ratelimit import auth_rate_limit
 
@@ -91,3 +91,22 @@ def resend_code(user: User = Depends(get_authenticated_user), db: Session = Depe
 def logout(_: User = Depends(get_authenticated_user)):
     """JWTs are stateless; the client discards the token. Endpoint exists for symmetry/auditing."""
     return Response(status_code=204)
+
+
+@router.post("/forgot-password")
+def forgot_password(body: ForgotPasswordIn, request: Request, db: Session = Depends(get_db)):
+    """Emails a reset code if the account exists; 404 if no account uses this email."""
+    auth_rate_limit(f"forgot:{request.client.host if request.client else 'x'}")
+    return password_reset_service.start(db, body.email)
+
+
+@router.post("/forgot-password/resend")
+def forgot_password_resend(body: ResetTokenIn, db: Session = Depends(get_db)):
+    return password_reset_service.resend(db, body.reset_token)
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetPasswordIn, request: Request, db: Session = Depends(get_db)):
+    auth_rate_limit(f"reset:{request.client.host if request.client else 'x'}")
+    password_reset_service.complete(db, body.reset_token, body.code, body.new_password)
+    return {"detail": "Your password has been reset. Please log in with your new password."}

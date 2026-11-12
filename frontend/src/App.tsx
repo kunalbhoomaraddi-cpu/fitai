@@ -6,6 +6,7 @@ import { Logo, PageSkeleton } from './components/ui'
 import Login from './pages/Login/Login'
 import Register from './pages/Register/Register'
 import VerifyEmail from './pages/VerifyEmail/VerifyEmail'
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
 
 const Landing = lazy(() => import('./pages/Landing/Landing'))
 const Onboarding = lazy(() => import('./pages/Onboarding/Onboarding'))
@@ -15,6 +16,7 @@ const DietPlanner = lazy(() => import('./pages/DietPlanner/DietPlanner'))
 const WorkoutPlanner = lazy(() => import('./pages/WorkoutPlanner/WorkoutPlanner'))
 const NutritionTracker = lazy(() => import('./pages/NutritionTracker/NutritionTracker'))
 const ProgressTracker = lazy(() => import('./pages/ProgressTracker/ProgressTracker'))
+const Checkins = lazy(() => import('./pages/Checkins/Checkins'))
 const Settings = lazy(() => import('./pages/Settings/Settings'))
 
 function Splash() {
@@ -53,6 +55,7 @@ export default function App() {
         <Route path="/" element={<PublicOnly><Landing /></PublicOnly>} />
         <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
         <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+        <Route path="/forgot-password" element={<PublicOnly><ForgotPassword /></PublicOnly>} />
         <Route path="/verify-email" element={<VerifyRoute />} />
         <Route path="/onboarding" element={<Protected needsProfile={false}><Onboarding /></Protected>} />
         <Route element={<Protected><AppLayout /></Protected>}>
@@ -62,6 +65,7 @@ export default function App() {
           <Route path="/workouts" element={<Suspense fallback={<PageSkeleton />}><WorkoutPlanner /></Suspense>} />
           <Route path="/nutrition" element={<Suspense fallback={<PageSkeleton />}><NutritionTracker /></Suspense>} />
           <Route path="/progress" element={<Suspense fallback={<PageSkeleton />}><ProgressTracker /></Suspense>} />
+          <Route path="/checkins" element={<Suspense fallback={<PageSkeleton />}><Checkins /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={<PageSkeleton />}><Settings /></Suspense>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

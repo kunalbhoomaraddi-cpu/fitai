@@ -29,8 +29,21 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def create_access_token(user_id: int) -> str:
     now = datetime.now(timezone.utc)
-    payload = {"sub": str(user_id), "iat": now, "exp": now + timedelta(minutes=settings.jwt_expire_minutes)}
+    payload = {"sub": str(user_id), "iat": now, "ims": int(now.timestamp() * 1000),
+               "exp": now + timedelta(minutes=settings.jwt_expire_minutes)}
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def decode_token_payload(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        if payload.get("typ", "access") != "access":
+            raise ValueError("wrong token type")
+        int(payload["sub"])
+        return payload
+    except (jwt.PyJWTError, KeyError, ValueError):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired session. Please log in again.",
+                            headers={"WWW-Authenticate": "Bearer"})
 
 
 def decode_token(token: str) -> int:
@@ -49,9 +62,16 @@ def get_authenticated_user(creds: HTTPAuthorizationCredentials | None = Depends(
     """Any logged-in user, verified or not (used by /auth/me and the verification endpoints)."""
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated", headers={"WWW-Authenticate": "Bearer"})
-    user = db.get(User, decode_token(creds.credentials), options=[joinedload(User.profile)])
+    payload = decode_token_payload(creds.credentials)
+    user = db.get(User, int(payload["sub"]), options=[joinedload(User.profile)])
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User no longer exists")
+    if user.password_changed_at is not None:
+        changed_ms = int(user.password_changed_at.replace(tzinfo=timezone.utc).timestamp() * 1000)
+        issued_ms = int(payload.get("ims", int(payload.get("iat", 0)) * 1000))
+        if issued_ms < changed_ms:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Your password was changed. Please log in again.",
+                                headers={"WWW-Authenticate": "Bearer"})
     return user
 
 

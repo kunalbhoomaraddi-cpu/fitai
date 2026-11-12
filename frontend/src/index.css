@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: dark; }
+  html, body, #root { min-height: 100%; }
+  body {
+    @apply bg-ink-950 font-sans text-fg antialiased;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, h4 { @apply font-display; letter-spacing: -0.015em; }
+  ::selection { background: rgba(198, 243, 107, .3); }
+  * { scrollbar-width: thin; scrollbar-color: #29312B transparent; }
+  input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+  :focus-visible { outline: none; }
+}
+
+@layer components {
+  .tabular { font-variant-numeric: tabular-nums; }
+  .glass { @apply border border-white/[0.07] bg-ink-950/50 backdrop-blur-md; }
+  .page-enter { animation: fade-in .3s ease both; }
+  .stagger > * { animation: fade-up .5s cubic-bezier(.2,.7,.2,1) both; }
+  .stagger > *:nth-child(2) { animation-delay: .05s } .stagger > *:nth-child(3) { animation-delay: .1s }
+  .stagger > *:nth-child(4) { animation-delay: .15s } .stagger > *:nth-child(5) { animation-delay: .2s }
+  .stagger > *:nth-child(6) { animation-delay: .25s } .stagger > *:nth-child(n+7) { animation-delay: .3s }
+  .prose-chat { @apply text-[14.5px] leading-relaxed text-fg/90; }
+  .prose-chat p { @apply my-2 first:mt-0 last:mb-0; }
+  .prose-chat strong { @apply font-semibold text-fg; }
+  .prose-chat ul { @apply my-2 list-disc space-y-1 pl-5 marker:text-lime/70; }
+  .prose-chat ol { @apply my-2 list-decimal space-y-1 pl-5 marker:text-fg-dim; }
+  .prose-chat h1, .prose-chat h2, .prose-chat h3 { @apply mb-1.5 mt-3 text-[15px] font-semibold text-fg; }
+  .prose-chat code { @apply rounded bg-white/[0.06] px-1.5 py-0.5 text-[13px] text-lime; }
+  .prose-chat blockquote { @apply my-2 border-l-2 border-amber/60 pl-3 text-fg-muted; }
+  .prose-chat hr { @apply my-3 border-line; }
+  .prose-chat em { @apply text-fg-muted; }
+  .prose-chat table { @apply my-2 w-full text-left text-[13px]; }
+  .prose-chat th, .prose-chat td { @apply border-b border-line px-2 py-1.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+@layer components {
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.is-visible { opacity: 1; transform: none; }
+  .reveal-d1 { transition-delay: .08s } .reveal-d2 { transition-delay: .16s } .reveal-d3 { transition-delay: .24s }
+  .text-gradient { background: linear-gradient(100deg, #F5F7F2 0%, #D4F78F 55%, #49B675 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .grid-bg { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; }
+  .glow-border { position: relative; }
+  .glow-border::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: linear-gradient(140deg, rgba(198,243,107,.55), rgba(73,182,117,.1) 40%, transparent 60%, rgba(198,243,107,.25));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .btn-shine { position: relative; overflow: hidden; }
+  .btn-shine::after { content: ''; position: absolute; inset: 0; transform: translateX(-120%); pointer-events: none;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.45) 50%, transparent 70%); }
+  .btn-shine:hover::after { transform: translateX(120%); transition: transform .8s ease; }
+  .marquee { animation: marquee 32s linear infinite; }
+  @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+  @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+  .float { animation: float 6s ease-in-out infinite; }
+  .float-delayed { animation: float 7s ease-in-out 1.2s infinite; }
+}
+
+@layer components {
+  .toast-timer { width: 100%; transform-origin: left; animation-name: toast-shrink; animation-timing-function: linear; animation-fill-mode: forwards; }
+  @keyframes toast-shrink { from { transform: scaleX(1) } to { transform: scaleX(0) } }
+  /* polished interactive surfaces */
+  a, button { -webkit-tap-highlight-color: transparent; }
+  .shadow-card { transition: box-shadow .3s ease, border-color .3s ease, transform .3s ease; }
+  table tbody tr { transition: background-color .15s ease; }
+  table tbody tr:hover { background-color: rgba(255,255,255,.02); }
+  input[type="checkbox"] { cursor: pointer; }
+}

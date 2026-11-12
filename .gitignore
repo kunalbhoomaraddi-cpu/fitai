@@ -1,0 +1,28 @@
+# secrets
+.env
+*.env
+!.env.example
+backend/.env
+frontend/.env
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.db
+*.sqlite3
+backend/tests/test_fitai.db
+# node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+.vite/
+# os / editors
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# downloaded photos (re-fetch with scripts/fetch_photos.sh)
+frontend/public/images/photos/*.jpg

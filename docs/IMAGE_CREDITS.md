@@ -3,11 +3,11 @@
 ## Bundled artwork (in the repo)
 `frontend/public/images/art/*.svg`: 57 original illustrations made for FitAI (scene backgrounds, workout categories, plated-meal illustrations and muscle-group diagrams). They're generated programmatically and owned by the project, with no third-party rights.
 
-## Photography (downloaded locally)
-`scripts/fetch_photos.sh` downloads 46 curated photos listed in `scripts/photos.txt` from **Unsplash** into `frontend/public/images/photos/`, so they're served locally rather than hotlinked.
+## Photography (in the repo)
+`frontend/public/images/photos/*.jpg`: 46 curated photos from **Unsplash**, listed in `scripts/photos.txt`, resized to 1280 px and stored in the repo so the live site and local copies look the same. They're served from FitAI's own domain, never hotlinked. `scripts/fetch_photos.sh` can re-download the originals.
 
 - License: [Unsplash License](https://unsplash.com/license). Free for commercial and non-commercial use, no permission or attribution required (credit appreciated). You may not sell unaltered copies or build a competing stock-photo service.
-- If a photo can't be downloaded (offline, or removed by its author), the app shows the matching bundled artwork automatically.
+- If a photo is ever missing, the app shows the matching bundled artwork automatically.
 - To swap a photo, edit its ID in `scripts/photos.txt`, delete the old JPG and rerun the script.
 
 ## Third-party data

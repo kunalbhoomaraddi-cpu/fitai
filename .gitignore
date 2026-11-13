@@ -24,5 +24,3 @@ frontend/dist/
 .vscode/
 *.log
 
-# downloaded stock photos (fetched by scripts/fetch_photos.sh)
-frontend/public/images/photos/*.jpg

@@ -7,7 +7,7 @@ FitAI goes live on three free services:
 | Database | **Neon** (PostgreSQL) | Already in use. |
 | Backend API | **Render** (free web service) | Configured by `render.yaml`. Sleeps after ~15 idle minutes; the first request then takes about a minute. |
 | Frontend | **Vercel** | Configured by `frontend/vercel.json`. |
-| Email codes | **Brevo** (300 emails/day free) | Render's free plan blocks SMTP, so Gmail SMTP won't work there. |
+| Email codes | **Gmail API** (free, ~500/day) | Render's free plan blocks SMTP. The Gmail API works over HTTPS and sends from your own Gmail, so codes reach the inbox. Brevo is supported too, but Gmail tends to drop its mail when the sender is a Gmail address. |
 
 The backend **refuses to start in production** if a setting is unsafe or missing (weak `JWT_SECRET`,
 SQLite database, no email sender, no public `CORS_ORIGINS`). Render's log lists exactly what to fix.
@@ -24,11 +24,17 @@ These were shared in chats earlier, so replace them; never paste the new values 
 
 Update `backend/.env` on your Mac with the new values. It is git-ignored and never committed.
 
-## 1. Brevo (email)
+## 1. Gmail API (email codes)
 
-1. Sign up at brevo.com (free plan).
-2. Settings → **Senders, domains & dedicated IPs** → Senders → **Add a sender** with your Gmail address → click the link in the email Brevo sends.
-3. Settings → **SMTP & API** → API keys → **Generate a new API key**. Keep it for step 2.
+1. Open https://console.cloud.google.com → create a project called **FitAI**.
+2. **APIs & Services → Library** → search **Gmail API** → **Enable**.
+3. **Google Auth Platform → Get started**: app name `FitAI`, your Gmail as support email, audience **External**, your Gmail as contact → **Create**.
+4. **Audience** → **Publish app** → **Confirm** (otherwise Google expires the access after 7 days).
+5. **Clients → Create client** → type **Desktop app**, name `FitAI` → **Create**. Keep the Client ID and Client secret.
+6. On your Mac: `python3 scripts/gmail_token.py` → paste both → sign in → *Advanced → Go to FitAI (unsafe)* → **Continue**. It prints the refresh token.
+7. In Render, add `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, and set `EMAIL_FROM` to `FitAI <your.gmail@gmail.com>`.
+
+Changing your Google password or removing FitAI at myaccount.google.com/permissions stops sending; run step 6 again.
 
 ## 2. Render (backend)
 
@@ -37,7 +43,7 @@ Update `backend/.env` on your Mac with the new values. It is git-ignored and nev
    - `DATABASE_URL`: Neon connection string (`postgresql://…?sslmode=require` is fine; FitAI adds the driver itself)
    - `CORS_ORIGINS`: leave as `https://example.com` for now; you set the real Vercel URL in step 4
    - `GEMINI_API_KEY`: the new key
-   - `BREVO_API_KEY`: from Brevo
+   - `BREVO_API_KEY`: leave empty when using Gmail (add `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` under Environment afterwards)
    - `EMAIL_FROM`: `FitAI <your.verified@gmail.com>`
 3. **Apply**. When it's live, open `https://<your-service>.onrender.com/api/health` → you should see `"status":"ok"`.
 

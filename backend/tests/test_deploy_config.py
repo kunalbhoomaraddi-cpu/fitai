@@ -86,3 +86,44 @@ def test_brevo_network_error_hides_headers(monkeypatch):
     with pytest.raises(RuntimeError) as e:
         email_service.real_send_verification_code("a@b.com", "K", "123456")
     assert "SECRET" not in str(e.value) and "LocalProtocolError" in str(e.value)
+
+
+def _gmail_settings(**kw):
+    return _s(gmail_client_id="cid.apps.googleusercontent.com", gmail_client_secret="GOCSPX-secret",
+              gmail_refresh_token="1//refresh-SECRET", brevo_api_key="", **kw)
+
+
+def test_gmail_is_preferred_and_sends_mime(monkeypatch):
+    import base64
+    import email
+    calls = []
+
+    def fake_post(url, **kw):
+        calls.append((url, kw))
+        if url == email_service.GOOGLE_TOKEN_URL:
+            assert kw["data"]["refresh_token"] == "1//refresh-SECRET"
+            return httpx.Response(200, json={"access_token": "ya29.token", "expires_in": 3599})
+        return httpx.Response(200, json={"id": "abc"})
+
+    email_service._gmail_token.update(value="", expires=0.0)
+    monkeypatch.setattr(email_service, "get_settings", lambda: _gmail_settings(email_from="FitAI <me@gmail.com>"))
+    monkeypatch.setattr(email_service.httpx, "post", fake_post)
+    assert email_service.real_send_verification_code("a@b.com", "Kunal", "123456", purpose="login") == "email"
+    assert email_service.real_send_verification_code("c@d.com", "Kunal", "654321", purpose="login") == "email"
+    urls = [u for u, _ in calls]
+    assert urls.count(email_service.GOOGLE_TOKEN_URL) == 1  # access token cached between sends
+    send = [kw for u, kw in calls if u == email_service.GMAIL_SEND_URL][0]
+    assert send["headers"]["Authorization"] == "Bearer ya29.token"
+    msg = email.message_from_bytes(base64.urlsafe_b64decode(send["json"]["raw"]))
+    assert msg["To"] == "a@b.com" and msg["From"] == "FitAI <me@gmail.com>" and "123456" in msg["Subject"]
+    assert _gmail_settings().email_configured and _gmail_settings().production_problems() == []
+
+
+def test_gmail_bad_refresh_token_is_explained(monkeypatch):
+    email_service._gmail_token.update(value="", expires=0.0)
+    monkeypatch.setattr(email_service, "get_settings", lambda: _gmail_settings())
+    monkeypatch.setattr(email_service.httpx, "post", lambda url, **kw: httpx.Response(
+        400, json={"error": "invalid_grant", "error_description": "Token has been expired or revoked."}))
+    with pytest.raises(RuntimeError, match="gmail_token.py") as e:
+        email_service.real_send_verification_code("a@b.com", "K", "123456")
+    assert "SECRET" not in str(e.value)

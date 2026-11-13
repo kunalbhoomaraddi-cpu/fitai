@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     # Brevo email API (HTTPS). Use this on hosts that block SMTP ports, e.g. Render's free plan.
     # Free: 300 emails/day. The sender address (EMAIL_FROM) must be verified in Brevo first.
     brevo_api_key: str = ""
+    # Gmail API (HTTPS): sends from your own Gmail address, so Gmail trusts it. Used first when set.
+    # Get these with scripts/gmail_token.py (see docs/DEPLOYMENT_GUIDE.md).
+    gmail_client_id: str = ""
+    gmail_client_secret: str = ""
+    gmail_refresh_token: str = ""
     email_from: str = ""  # e.g. "FitAI <you@gmail.com>"; falls back to SMTP_FROM
     verification_code_minutes: int = 15
 
@@ -87,7 +92,11 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        return bool(self.brevo_api_key) or self.smtp_configured
+        return self.gmail_configured or bool(self.brevo_api_key) or self.smtp_configured
+
+    @property
+    def gmail_configured(self) -> bool:
+        return bool(self.gmail_client_id and self.gmail_client_secret and self.gmail_refresh_token)
 
     def production_problems(self) -> list[str]:
         """Settings that are unsafe or broken for a public deployment. Start-up stops if any are found."""
@@ -97,7 +106,8 @@ class Settings(BaseSettings):
         if self.database_url.startswith("sqlite"):
             p.append("DATABASE_URL points to SQLite; use your Neon PostgreSQL URL (SQLite files are wiped on redeploy).")
         if (self.email_verification_required or self.login_otp_required) and not self.email_configured:
-            p.append("Email is not configured: set BREVO_API_KEY + EMAIL_FROM (or SMTP_*), or users can't sign up or log in.")
+            p.append("Email is not configured: set GMAIL_CLIENT_ID/SECRET/REFRESH_TOKEN or BREVO_API_KEY, plus EMAIL_FROM, "
+                     "or users can't sign up or log in.")
         if not [o for o in self.cors_origin_list if "localhost" not in o and "127.0.0.1" not in o]:
             p.append("CORS_ORIGINS has no public site; add your Vercel URL, e.g. https://fitai.vercel.app")
         return p

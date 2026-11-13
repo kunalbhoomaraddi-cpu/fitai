@@ -74,7 +74,7 @@ Security: codes are stored only as hashes, expire after 15 minutes, lock after 5
 
 ## 6. Database
 
-SQLite file: `backend/fitai.db`. Tables are created automatically on startup. To reset: `./scripts/reset-db.sh`. The **Explore the demo** button recreates the demo account each time.
+SQLite file: `backend/fitai.db`. Tables are created automatically on startup. To reset: `./scripts/reset-db.sh`. The **Explore the demo** button creates a fresh private demo copy for each visitor; copies are deleted after 6 hours.
 
 ## Troubleshooting
 

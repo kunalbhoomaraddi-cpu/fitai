@@ -40,7 +40,7 @@ def list_photos(user: User = Depends(require_profile), db: Session = Depends(get
 async def upload(file: UploadFile = File(...), pose: str = Form("front"), taken_on: date | None = Form(None),
                  note: str | None = Form(None), user: User = Depends(require_profile), db: Session = Depends(get_db)):
     if user.is_demo:
-        raise HTTPException(403, "Photos are turned off on the shared demo account. Create your own account to upload private photos.")
+        raise HTTPException(403, "Photos are turned off in the demo. Create your own account to upload private photos.")
     if pose not in svc.POSES:
         raise HTTPException(422, "Pose must be front, side or back.")
     d = taken_on or local_today()

@@ -124,7 +124,7 @@ export default function Settings() {
         </Section>
         <Section id="account" icon={<KeyRound className="h-4 w-4" />} title="Account" desc={user.email}>
           <div className="space-y-5">
-            {user.is_demo ? <Notice tone="demo">This is the shared demo account. Create your own account to set a password.</Notice> : (
+            {user.is_demo ? <Notice tone="demo">This is a demo account. Create your own account to set a password.</Notice> : (
               <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                 <div><Label htmlFor="cp">Current password</Label><Input id="cp" type="password" autoComplete="current-password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} /></div>
                 <div><Label htmlFor="np">New password</Label><Input id="np" type="password" autoComplete="new-password" value={pw.next} onChange={e => setPw({ ...pw, next: e.target.value })} /></div>

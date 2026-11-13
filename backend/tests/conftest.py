@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 _db = Path(__file__).parent / "test_fitai.db"
 if _db.exists():
     _db.unlink()
-os.environ.update({"DATABASE_URL": os.environ.get("TEST_DATABASE_URL", f"sqlite:///{_db}"), "GEMINI_API_KEY": "", "GROQ_API_KEY": "",
+os.environ.update({"DATABASE_URL": os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{_db}", "GEMINI_API_KEY": "", "GROQ_API_KEY": "",
                    "AI_PROVIDER": "auto", "ENABLE_EXTERNAL_APIS": "false", "ENVIRONMENT": "test",
                    "JWT_SECRET": "test-secret-key-for-pytest-only-0123456789", "AI_REQUESTS_PER_MINUTE": "1000", "AUTH_REQUESTS_PER_MINUTE": "1000"})
 

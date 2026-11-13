@@ -288,7 +288,7 @@ export default function ProgressPhotos() {
         <span><b className="text-fg">Private to you.</b> Photos are only viewable when you're logged in, never shared, never sent to the AI, and location data from your camera is removed on upload.</span>
       </div>
 
-      {demo && <Notice tone="demo" icon={<Lock className="h-4 w-4" />}>Photos are turned off on the shared demo account. Create your own account to keep private progress photos.</Notice>}
+      {demo && <Notice tone="demo" icon={<Lock className="h-4 w-4" />}>Photos are turned off in the demo. Create your own account to keep private progress photos.</Notice>}
 
       {loading ? <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-[3/4]" />)}</div>
         : error ? <ErrorState message={error} onRetry={() => reload()} />

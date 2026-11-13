@@ -192,7 +192,7 @@ export default function WorkoutPlanner() {
     <div>
       <Celebration fire={confetti} />
       <div className="group relative mb-6 overflow-hidden rounded-3xl border border-line">
-        <Photo name="workout-hero" alt="Strength training" className="absolute inset-0" overlay="left" position="center 40%" />
+        <Photo name="workout-hero" alt="Strength training" className="absolute inset-0 max-sm:hidden" overlay="left" position="center 40%" />
         <div className="relative p-6 sm:p-8">
           <PageHeader eyebrow="AI Workout Planner" title="Train with a plan that fits you" subtitle={`Programmed for ${GOAL_LABEL[profile?.goal ?? 'general_fitness'].toLowerCase()}, your experience and the equipment you actually have.`} />
           <div className="flex flex-wrap gap-2">

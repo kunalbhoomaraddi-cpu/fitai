@@ -79,7 +79,7 @@ export default function Dashboard() {
     if (!d || celebrated.current || !d.new_achievements?.length) return
     celebrated.current = true
     progressApi.markSeen().catch(() => undefined)
-    if (d.user?.is_demo) return  // the shared demo account would celebrate the same milestones on every visit
+    if (d.user?.is_demo) return  // every demo copy would celebrate the same sample milestones on every visit
     d.new_achievements.slice(0, 2).forEach((a: any) => toast('achievement', `Achievement unlocked: ${a.title}`, a.description))
     setConfetti(Date.now())
   }, [d, toast])

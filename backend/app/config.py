@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     wger_base_url: str = "https://wger.de/api/v2"
     external_timeout_seconds: float = 6.0
 
+    @field_validator("*", mode="before")
+    @classmethod
+    def _strip_text(cls, v):
+        """Pasted secrets often end with an invisible newline or space; it breaks HTTP headers and URLs."""
+        return v.strip() if isinstance(v, str) else v
+
     @field_validator("database_url")
     @classmethod
     def _psycopg_driver(cls, v: str) -> str:

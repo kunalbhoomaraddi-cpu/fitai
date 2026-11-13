@@ -61,7 +61,7 @@ def _send(db: Session, rec: PasswordReset, user: User | None) -> str:
         except email_service.EmailNotConfigured as e:
             raise HTTPException(503, str(e)) from None
         except Exception as exc:
-            log.error("Sending password reset email failed: %s: %s", type(exc).__name__, exc)
+            log.error("Sending password reset email failed: %s", email_service.describe_error(exc))
             raise HTTPException(502, "We couldn't send the reset email. Please try again in a moment.") from None
     elif not get_settings().email_configured and get_settings().environment != "production":
         channel = "console"  # keep dev responses identical for unknown emails too

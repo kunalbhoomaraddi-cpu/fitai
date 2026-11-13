@@ -32,6 +32,11 @@ def test_bad_production_settings_are_reported(kw, needle):
     assert any(needle in p for p in _s(**kw).production_problems())
 
 
+def test_free_mode_without_email_is_allowed():
+    s = _s(brevo_api_key="", email_verification_required=False, login_otp_required=False)
+    assert s.production_problems() == []
+
+
 def test_brevo_send(monkeypatch):
     sent = {}
 
@@ -53,3 +58,31 @@ def test_brevo_error_is_raised(monkeypatch):
     monkeypatch.setattr(email_service.httpx, "post", lambda url, **kw: httpx.Response(400, json={"message": "sender invalid"}))
     with pytest.raises(RuntimeError, match="sender invalid"):
         email_service.real_send_verification_code("a@b.com", "Kunal", "123456")
+
+
+def test_pasted_values_are_trimmed():
+    s = _s(brevo_api_key="xkeysib-abc123\n", email_from=" FitAI <me@gmail.com>\n",
+           cors_origins="https://fitai.vercel.app\n")
+    assert s.brevo_api_key == "xkeysib-abc123" and s.email_from == "FitAI <me@gmail.com>"
+    assert s.cors_origin_list == ["https://fitai.vercel.app"]
+
+
+def test_logged_errors_never_contain_keys(monkeypatch):
+    from app.utils import redact
+    key = "xkeysib-75c6d76f9a0d6898b0d93b7c346d0e3c-SECRET"
+    monkeypatch.setattr(redact, "get_settings", lambda: _s(brevo_api_key=key, gemini_api_key="AIzaSyFAKEKEY1234567890"))
+    msg = redact.describe_error(ValueError(f"Illegal header value b'{key}\\n' and AIzaSyFAKEKEY1234567890 and xkeysib-other"))
+    assert "SECRET" not in msg and "75c6d76f" not in msg and "AIzaSyFAKE" not in msg and "other" not in msg
+    assert msg.startswith("ValueError:") and "[hidden]" in msg
+
+
+def test_brevo_network_error_hides_headers(monkeypatch):
+    monkeypatch.setattr(email_service, "get_settings", lambda: _s(brevo_api_key="xkeysib-SECRET"))
+
+    def boom(url, **kw):
+        raise httpx.LocalProtocolError(f"Illegal header value {kw['headers']['api-key']!r}")
+
+    monkeypatch.setattr(email_service.httpx, "post", boom)
+    with pytest.raises(RuntimeError) as e:
+        email_service.real_send_verification_code("a@b.com", "K", "123456")
+    assert "SECRET" not in str(e.value) and "LocalProtocolError" in str(e.value)

@@ -14,6 +14,7 @@ from app.ai.prompts import coach_system_prompt
 from app.ai.provider import LLMProvider, ProviderError, get_provider
 from app.models import User
 from app.tools.registry import execute_tool, tool_specs
+from app.utils.redact import describe_error
 
 log = logging.getLogger("fitai.agent")
 MAX_STEPS = 5
@@ -57,7 +58,7 @@ def run_coach(db: Session, user: User, history: list[tuple[str, str]], text: str
         if not reply:
             reply = "I ran the numbers above — let me know what you'd like to dig into next."
     except ProviderError as e:
-        log.warning("AI provider %s failed: %s", provider.name, e)
+        log.warning("AI provider %s failed: %s", provider.name, describe_error(e))
         notice = f"{provider.name.title()} is unavailable right now ({e}). Showing a demo response instead."
         provider = MockProvider()
         reply, cards, tools_used = _run(provider, db, user, history, text)

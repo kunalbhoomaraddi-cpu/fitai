@@ -33,8 +33,8 @@ def _send(db: Session, user: User, ch: LoginChallenge) -> str:
         channel = email_service.send_verification_code(user.email, user.full_name.split(" ")[0], code, purpose="login")
     except email_service.EmailNotConfigured as e:
         raise HTTPException(503, str(e)) from None
-    except Exception as exc:  # show the SMTP reason in the terminal (never includes the password)
-        log.error("Sending login email failed: %s: %s", type(exc).__name__, exc)
+    except Exception as exc:  # log the reason, with any keys hidden
+        log.error("Sending login email failed: %s", email_service.describe_error(exc))
         raise HTTPException(502, "We couldn't send your login code. Please try again in a moment.") from None
     now = utcnow()
     ch.code_hash = _hash(ch.id, code)

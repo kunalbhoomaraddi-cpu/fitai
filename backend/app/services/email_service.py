@@ -20,6 +20,9 @@ class EmailNotConfigured(Exception):
     pass
 
 
+from app.utils.redact import describe_error  # noqa: E402,F401  (re-exported for the services)
+
+
 def _verification_html(name: str, code: str, minutes: int, purpose: str = "verify") -> str:
     title, lead, ignore = {
         "login": ("Your login code", "use this code to finish logging in to FitAI.",
@@ -53,7 +56,7 @@ def send_verification_code(to_email: str, name: str, code: str, purpose: str = "
             f"It expires in {s.verification_code_minutes} minutes. If you didn't sign up, ignore this email.")
     if not s.email_configured:
         if s.environment == "production":
-            raise EmailNotConfigured("Email sending is not configured on the server.")
+            raise EmailNotConfigured("Email isn't switched on for this FitAI site yet, so codes can't be sent. Please contact the site owner.")
         bar = "=" * 60
         log.warning("\n%s\n  EMAIL NOT CONFIGURED (development) — %s code\n  To: %s\n  CODE: %s\n%s",
                     bar, label, to_email, code, bar)
@@ -78,9 +81,13 @@ def _send_brevo(to_email: str, name: str, subject: str, text: str, html: str) ->
     sender_name, sender_addr = _sender()
     if not sender_addr:
         raise EmailNotConfigured("Set EMAIL_FROM to the sender address you verified in Brevo.")
-    r = httpx.post(BREVO_URL, timeout=20, headers={"api-key": s.brevo_api_key, "accept": "application/json"},
-                   json={"sender": {"name": sender_name, "email": sender_addr}, "to": [{"email": to_email, "name": name}],
-                         "subject": subject, "textContent": text, "htmlContent": html})
+    try:
+        r = httpx.post(BREVO_URL, timeout=20, headers={"api-key": s.brevo_api_key, "accept": "application/json"},
+                       json={"sender": {"name": sender_name, "email": sender_addr}, "to": [{"email": to_email, "name": name}],
+                             "subject": subject, "textContent": text, "htmlContent": html})
+    except httpx.HTTPError as e:
+        # httpx errors can quote request headers (the API key), so only the error type is kept
+        raise RuntimeError(f"Brevo request failed ({type(e).__name__})") from None
     if r.status_code >= 300:
         # Brevo's message explains the cause (e.g. unverified sender); it never contains the key
         raise RuntimeError(f"Brevo API {r.status_code}: {r.text[:300]}")

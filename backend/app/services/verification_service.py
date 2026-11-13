@@ -38,8 +38,8 @@ def issue_code(db: Session, user: User, enforce_cooldown: bool = True) -> dict:
         channel = email_service.send_verification_code(user.email, user.full_name.split(" ")[0], code)
     except email_service.EmailNotConfigured as e:
         raise HTTPException(503, str(e)) from None
-    except Exception as exc:  # show the SMTP reason in the terminal (never includes the password)
-        log.error("Sending verification email failed: %s: %s", type(exc).__name__, exc)
+    except Exception as exc:  # log the reason, with any keys hidden
+        log.error("Sending verification email failed: %s", email_service.describe_error(exc))
         raise HTTPException(502, "We couldn't send the verification email. Check the SMTP settings and try again.") from None
     if rec is None:
         rec = EmailVerification(user_id=user.id, code_hash="", expires_at=now, sent_at=now, attempts=0)

@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models import ProgressPhoto, User
 from app.services import photo_service as svc
 from app.services.auth_service import require_profile
+from app.utils.clock import local_today
 
 router = APIRouter(prefix="/photos", tags=["photos"])
 
@@ -42,8 +43,8 @@ async def upload(file: UploadFile = File(...), pose: str = Form("front"), taken_
         raise HTTPException(403, "Photos are turned off on the shared demo account. Create your own account to upload private photos.")
     if pose not in svc.POSES:
         raise HTTPException(422, "Pose must be front, side or back.")
-    d = taken_on or date.today()
-    if d > date.today() or d.year < 2000:
+    d = taken_on or local_today()
+    if d > local_today() or d.year < 2000:
         raise HTTPException(422, "Choose a date that isn't in the future.")
     count = db.scalar(select(func.count()).select_from(ProgressPhoto).where(ProgressPhoto.user_id == user.id))
     if count >= svc.MAX_PHOTOS_PER_USER:

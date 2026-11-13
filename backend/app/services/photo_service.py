@@ -48,7 +48,7 @@ def process(raw: bytes) -> dict:
     except HTTPException:
         raise
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError, ValueError):
-        raise HTTPException(415, "We couldn't read that file as a photo. Try a JPG or PNG.")
+        raise HTTPException(415, "We couldn't read that file as a photo. Try a JPG or PNG.") from None
     if min(img.size) < 120:
         raise HTTPException(400, "That photo is too small.")
     full = _encode(img, FULL_PX, 84)

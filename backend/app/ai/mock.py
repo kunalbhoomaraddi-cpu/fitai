@@ -100,7 +100,7 @@ def _compose(intent: str, user_text: str, r: dict) -> str:
         n = ap.get("nutrition") or {}
         if n:
             out.append(f"\n**Consistency:** food logged on {n.get('days_logged')} of the last 14 days; "
-                       f"{ap.get('workouts_this_week')} workout(s) this week, streak {ap.get('streak')}.")
+                       f"{ap.get('workouts_this_week')} {'workout' if ap.get('workouts_this_week') == 1 else 'workouts'} this week, streak {ap.get('streak')}.")
     if intent == "preworkout":
         out.append("**Pre-workout fuel (1–2 hours before):** a carb-forward meal with some protein and little fat, e.g. "
                    "a banana with Greek yogurt, oats with milk, or poha with sprouts. Within 30–45 minutes, keep it light "

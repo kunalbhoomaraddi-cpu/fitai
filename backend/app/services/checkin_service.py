@@ -14,13 +14,14 @@ from app.ai.prompts import GOAL_LABEL, SAFETY_RULES
 from app.ai.provider import ProviderError, get_provider
 from app.models import FoodEntry, User, UserAchievement, WeeklyCheckin
 from app.services import fitness_service, progress_service
+from app.utils.clock import local_date, local_today
 
 log = logging.getLogger("fitai.checkins")
 ACHIEVEMENT_TITLES = {a["code"]: a["title"] for a in progress_service.ACHIEVEMENTS}
 
 
 def week_start(d: date | None = None) -> date:
-    d = d or date.today()
+    d = d or local_today()
     return d - timedelta(days=d.weekday())
 
 
@@ -30,12 +31,12 @@ def _avg(xs: list[float]) -> float | None:
 
 def compute_facts(db: Session, user: User, today: date | None = None) -> dict:
     p = user.profile
-    today = today or date.today()
+    today = today or local_today()
     start = today - timedelta(days=6)
     prev_start = start - timedelta(days=7)
 
     # workouts
-    sessions = [s for s in progress_service.completed_sessions(db, user.id, 10) if start <= s.started_at.date() <= today]
+    sessions = [s for s in progress_service.completed_sessions(db, user.id, 10) if start <= local_date(s.started_at) <= today]
     planned = max(1, min(p.workout_days_per_week, 7))
     w_done = len(sessions)
     w_minutes = sum(s.duration_minutes or 0 for s in sessions)

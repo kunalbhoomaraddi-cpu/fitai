@@ -83,7 +83,7 @@ export default function ProgressTracker() {
 
       {!a ? <div className="grid gap-4 lg:grid-cols-3"><Skeleton className="h-64" /><Skeleton className="h-64 lg:col-span-2" /></div> : (
         <div className="space-y-5">
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3 [&>*]:min-w-0">
             <Card className="p-5">
               <div className="flex items-center justify-between"><p className="font-display font-semibold">Goal progress</p><button onClick={() => { setTarget(String(+(units === 'imperial' ? kgToLb(wa.target_weight_kg) : wa.target_weight_kg).toFixed(1))); setTOpen(true) }} className="flex items-center gap-1 text-xs text-fg-muted hover:text-lime"><Pencil className="h-3 w-3" />Edit target</button></div>
               <div className="mt-4 flex items-center gap-5">
@@ -126,7 +126,7 @@ export default function ProgressTracker() {
             <div className="px-2 pb-4 pt-2">{series.length >= 2 ? <WeightChart data={series} target={wa.target_weight_kg} units={units} height={300} /> : <EmptyState className="m-3" icon={<Scale className="h-5 w-5" />} title="Log at least two weigh-ins" art="progress-hero" text="Your chart and weekly averages will appear here." />}</div>
           </Card>
 
-          <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr] [&>*]:min-w-0">
             <Card className="relative overflow-hidden border-lime/25">
               <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-lime/10 blur-3xl" />
               <CardHeader title="AI progress analysis" subtitle="Grounded in your stored weigh-ins, workouts and food logs" icon={<Bot className="h-4 w-4" />}
@@ -152,7 +152,7 @@ export default function ProgressTracker() {
             </Card>
             <Card>
               <CardHeader title="Weekly averages" subtitle="Smooths out daily water fluctuations" icon={<Target className="h-4 w-4" />} />
-              <div className="p-3">
+              <div className="overflow-x-auto p-3">
                 {wk.length === 0 ? <p className="p-3 text-sm text-fg-muted">No weigh-ins yet.</p> : (
                   <table className="w-full text-sm">
                     <thead><tr className="text-left text-[11px] uppercase tracking-wider text-fg-dim"><th className="px-3 py-2 font-medium">Week of</th><th className="px-3 py-2 font-medium">Average</th><th className="px-3 py-2 font-medium">Change</th><th className="px-3 py-2 text-right font-medium">Entries</th></tr></thead>
@@ -165,7 +165,7 @@ export default function ProgressTracker() {
             </Card>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2 [&>*]:min-w-0">
             <Card>
               <CardHeader title="Body measurements" subtitle={`${measures.data?.length ?? 0} entries`} icon={<Ruler className="h-4 w-4" />} action={<Button size="sm" variant="secondary" onClick={() => setMOpen(true)} icon={<Plus className="h-3.5 w-3.5" />}>Add</Button>} />
               <div className="px-2 pb-3 pt-2">

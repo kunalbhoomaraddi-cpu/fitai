@@ -6,7 +6,7 @@ import hashlib
 import hmac
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from fastapi import HTTPException
@@ -32,7 +32,7 @@ def _hash(rid: int, code: str) -> str:
 
 def _token(rid: int, nonce: str) -> str:
     s = get_settings()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return jwt.encode({"rid": rid, "n": nonce, "typ": "pwd_reset", "iat": now,
                        "exp": now + timedelta(minutes=TOKEN_MINUTES)}, s.jwt_secret, algorithm=s.jwt_algorithm)
 
@@ -45,7 +45,7 @@ def _read(db: Session, token: str) -> PasswordReset:
             raise ValueError
         rid, nonce = int(p["rid"]), str(p["n"])
     except (jwt.PyJWTError, KeyError, ValueError):
-        raise HTTPException(400, "This reset session expired. Please start again.")
+        raise HTTPException(400, "This reset session expired. Please start again.") from None
     rec = db.get(PasswordReset, rid)
     if rec is None or not hmac.compare_digest(rec.nonce, nonce):
         raise HTTPException(400, "This reset session expired. Please start again.")
@@ -59,11 +59,11 @@ def _send(db: Session, rec: PasswordReset, user: User | None) -> str:
         try:
             channel = email_service.send_verification_code(user.email, user.full_name.split(" ")[0], code, purpose="reset")
         except email_service.EmailNotConfigured as e:
-            raise HTTPException(503, str(e))
+            raise HTTPException(503, str(e)) from None
         except Exception as exc:
             log.error("Sending password reset email failed: %s: %s", type(exc).__name__, exc)
-            raise HTTPException(502, "We couldn't send the reset email. Please try again in a moment.")
-    elif not get_settings().smtp_configured and get_settings().environment != "production":
+            raise HTTPException(502, "We couldn't send the reset email. Please try again in a moment.") from None
+    elif not get_settings().email_configured and get_settings().environment != "production":
         channel = "console"  # keep dev responses identical for unknown emails too
     now = utcnow()
     rec.code_hash = _hash(rec.id, code)

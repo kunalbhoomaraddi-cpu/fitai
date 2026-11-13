@@ -1,7 +1,7 @@
 """6-digit email verification codes: hashed at rest, 15-minute expiry, 5 attempts, 60 s resend cooldown."""
 import hashlib
-import logging
 import hmac
+import logging
 import secrets
 from datetime import timedelta
 
@@ -37,10 +37,10 @@ def issue_code(db: Session, user: User, enforce_cooldown: bool = True) -> dict:
     try:
         channel = email_service.send_verification_code(user.email, user.full_name.split(" ")[0], code)
     except email_service.EmailNotConfigured as e:
-        raise HTTPException(503, str(e))
+        raise HTTPException(503, str(e)) from None
     except Exception as exc:  # show the SMTP reason in the terminal (never includes the password)
         log.error("Sending verification email failed: %s: %s", type(exc).__name__, exc)
-        raise HTTPException(502, "We couldn't send the verification email. Check the SMTP settings and try again.")
+        raise HTTPException(502, "We couldn't send the verification email. Check the SMTP settings and try again.") from None
     if rec is None:
         rec = EmailVerification(user_id=user.id, code_hash="", expires_at=now, sent_at=now, attempts=0)
         db.add(rec)

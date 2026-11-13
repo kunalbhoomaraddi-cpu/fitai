@@ -1,31 +1,63 @@
 """Demo mode: a clearly-labelled sample account with realistic sample data so every screen
-is demonstrable without API keys. Data is synthetic and flagged (`users.is_demo`)."""
+is demonstrable without API keys. Data is synthetic and flagged (`users.is_demo`).
+
+Every "Try the demo" click gets its OWN throwaway copy, so visitors never see each other's
+changes and one visitor can't sign another out. Copies are deleted after DEMO_TTL_HOURS, and at
+most DEMO_MAX_ACCOUNTS live at once (oldest go first)."""
 import random
 import secrets
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import (BodyMeasurement, DietPlan, FitnessProfile, FoodEntry, User, WeightRecord, WorkoutPlan,
-                        WorkoutSession)
+from app.config import get_settings
+from app.models import BodyMeasurement, DietPlan, FitnessProfile, FoodEntry, User, WeightRecord, WorkoutPlan, WorkoutSession
+from app.models._mixins import utcnow
 from app.services import fitness_service, nutrition_service, progress_service, workout_service
 from app.services.auth_service import hash_password
+from app.utils.clock import local_today
 
-DEMO_EMAIL = "demo@fitai.app"
+DEMO_DOMAIN = "demo.fitai.app"  # reserved: real users can't register with it
+LEGACY_DEMO_EMAIL = "demo@fitai.app"
+
+
+def is_demo_email(email: str) -> bool:
+    e = email.lower().strip()
+    return e.endswith("@" + DEMO_DOMAIN) or e == LEGACY_DEMO_EMAIL
+
+
+def purge_expired_demos(db: Session, keep_newest: int | None = None) -> int:
+    """Delete demo copies older than the TTL, and the oldest ones beyond the cap."""
+    st = get_settings()
+    cutoff = utcnow() - timedelta(hours=st.demo_ttl_hours)
+    ids = list(db.scalars(select(User.id).where(User.is_demo.is_(True), User.created_at < cutoff)))
+    cap = st.demo_max_accounts if keep_newest is None else keep_newest
+    live = list(db.scalars(select(User.id).where(User.is_demo.is_(True), User.created_at >= cutoff)
+                           .order_by(User.created_at.desc(), User.id.desc())))
+    ids += live[cap:]
+    if ids:
+        # ORM delete so relationship cascades run on every database (SQLite needs this too)
+        for u in db.scalars(select(User).where(User.id.in_(ids))):
+            db.delete(u)
+        db.commit()
+    return len(ids)
 
 
 def create_or_reset_demo(db: Session) -> User:
-    existing = db.scalar(select(User).where(User.email == DEMO_EMAIL))
-    if existing:
-        db.delete(existing)
-        db.commit()
-    rng = random.Random(42)
-    user = User(email=DEMO_EMAIL, full_name="Alex Morgan", hashed_password=hash_password(secrets.token_urlsafe(24)),
+    """Kept for compatibility: always returns a fresh, private demo copy."""
+    return create_demo(db)
+
+
+def create_demo(db: Session) -> User:
+    purge_expired_demos(db, keep_newest=max(get_settings().demo_max_accounts - 1, 0))
+    rng = random.Random(42)  # same sample story for every visitor
+    email = f"visitor-{secrets.token_hex(6)}@{DEMO_DOMAIN}"
+    user = User(email=email, full_name="Alex Morgan", hashed_password=hash_password(secrets.token_urlsafe(24)),
                 is_demo=True, email_verified=True, onboarding_complete=True)
     db.add(user)
     db.flush()
-    today = date.today()
+    today = local_today()
     start_w, days_back = 84.6, 63
     prof = FitnessProfile(user_id=user.id, age=29, gender="male", height_cm=178, current_weight_kg=start_w,
                           start_weight_kg=start_w, target_weight_kg=76.0, activity_level="moderate",

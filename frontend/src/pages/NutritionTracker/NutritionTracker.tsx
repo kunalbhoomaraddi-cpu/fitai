@@ -165,7 +165,7 @@ export default function NutritionTracker() {
       </div>
 
       {day.error ? <ErrorState message={day.error} onRetry={() => day.reload()} /> : !d ? <div className="grid gap-4 lg:grid-cols-3"><Skeleton className="h-64 lg:col-span-2" /><Skeleton className="h-64" /></div> : (
-        <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px] [&>*]:min-w-0">
           <div className="space-y-5">
             <Card className="p-5 sm:p-6">
               <div className="grid items-center gap-6 sm:grid-cols-[auto_1fr]">

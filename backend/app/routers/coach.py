@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,8 +7,6 @@ from app.ai.agent import HISTORY_TURNS, run_coach
 from app.ai.provider import ai_status
 from app.database import get_db
 from app.models import Conversation, Message, SavedRecommendation, User
-from pydantic import BaseModel, Field
-
 from app.schemas.coach import ChatIn, MessageOut
 from app.services.auth_service import require_profile
 from app.utils.ratelimit import ai_rate_limit

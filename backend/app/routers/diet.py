@@ -1,7 +1,6 @@
 import copy
 import json
 import logging
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -13,8 +12,10 @@ from app.ai.provider import ProviderError, get_provider
 from app.database import get_db
 from app.models import DietPlan, FoodEntry, User
 from app.schemas.plans import DietPlanIn, MealCompleteIn, RegenerateMealIn, ReplaceItemIn
-from app.services import fitness_service, nutrition_service as ns
+from app.services import fitness_service
+from app.services import nutrition_service as ns
 from app.services.auth_service import require_profile
+from app.utils.clock import local_today
 from app.utils.ratelimit import ai_rate_limit
 
 router = APIRouter(prefix="/diet", tags=["diet"])
@@ -75,7 +76,7 @@ def generate(body: DietPlanIn, user: User = Depends(ai_rate_limit), db: Session 
                 f"This plan provides about {tot['protein_g']:.0f} g protein vs your {targets['protein_g']} g target — "
                 "swap items or regenerate meals to fine-tune.")
     plan = DietPlan(user_id=user.id, title=f"{prefs['diet'].replace('_', ' ').title()[:120]} plan · {cal} kcal",
-                    plan_date=date.today(), targets=targets, preferences=prefs, meals=meals,
+                    plan_date=local_today(), targets=targets, preferences=prefs, meals=meals,
                     generated_by=generated_by, coach_note=note, is_saved=False)
     db.add(plan)
     db.commit()
@@ -151,13 +152,13 @@ def complete_meal(pid: int, body: MealCompleteIn, user: User = Depends(require_p
     meal["completed"] = body.completed
     if body.completed and not was and body.log_to_tracker:
         t = meal["totals"]
-        db.add(FoodEntry(user_id=user.id, eaten_on=date.today(), meal=meal["meal_type"], name=meal["name"][:200],
+        db.add(FoodEntry(user_id=user.id, eaten_on=local_today(), meal=meal["meal_type"], name=meal["name"][:200],
                          quantity_g=sum(i["grams"] for i in meal["items"]) or 1, calories=t["calories"],
                          protein_g=t["protein_g"], carbs_g=t["carbs_g"], fat_g=t["fat_g"], source="meal_plan",
                          source_id=f"plan{p.id}:{meal['slot']}"))
     if not body.completed and was:
         e = db.scalar(select(FoodEntry).where(FoodEntry.user_id == user.id, FoodEntry.source_id == f"plan{p.id}:{meal['slot']}",
-                                              FoodEntry.eaten_on == date.today()))
+                                              FoodEntry.eaten_on == local_today()))
         if e:
             db.delete(e)
     p.meals = meals

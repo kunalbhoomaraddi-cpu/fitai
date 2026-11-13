@@ -1,4 +1,4 @@
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, Legend, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { Units } from '../../types'
 import { kgToLb, shortDate } from '../../utils/format'
 
@@ -20,6 +20,18 @@ function Tip({ active, payload, label, unit, fmt }: any) {
   )
 }
 
+/** Evenly spaced, round tick values covering [lo, hi] (avoids uneven labels like 86, 81, 78, 75). */
+function niceTicks(lo: number, hi: number, count = 4) {
+  const span = Math.max(hi - lo, 1e-6)
+  const raw = span / count
+  const mag = 10 ** Math.floor(Math.log10(raw))
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(x => x >= raw) ?? raw
+  const start = Math.floor(lo / step) * step, end = Math.ceil(hi / step) * step
+  const ticks: number[] = []
+  for (let v = start; v <= end + step / 2; v += step) ticks.push(+v.toFixed(2))
+  return { ticks, domain: [start, end] as [number, number] }
+}
+
 export function WeightChart({ data, target, units, height = 240 }: { data: { date: string; weight_kg: number }[]; target?: number; units: Units; height?: number }) {
   const conv = (v: number) => (units === 'imperial' ? +kgToLb(v).toFixed(1) : v)
   const rows = data.map(d => ({ date: d.date, weight: conv(d.weight_kg) }))
@@ -32,7 +44,7 @@ export function WeightChart({ data, target, units, height = 240 }: { data: { dat
         <defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#C6F36B" stopOpacity={0.35} /><stop offset="1" stopColor="#C6F36B" stopOpacity={0} /></linearGradient></defs>
         {GRID}
         <XAxis dataKey="date" {...AXIS} tickFormatter={shortDate} minTickGap={28} />
-        <YAxis {...AXIS} domain={[lo, hi]} width={44} />
+        <YAxis {...AXIS} domain={niceTicks(lo, hi).domain} ticks={niceTicks(lo, hi).ticks} width={44} />
         <Tooltip content={<Tip unit={u} fmt={shortDate} />} cursor={{ stroke: '#C6F36B', strokeOpacity: 0.3 }} />
         {target && <ReferenceLine y={conv(target)} stroke="#49B675" strokeDasharray="5 5" label={{ value: 'Target', fill: '#49B675', fontSize: 11, position: 'insideTopRight' }} />}
         <Area type="monotone" dataKey="weight" name="Weight" stroke="#C6F36B" strokeWidth={2.2} fill="url(#wg)" dot={false} activeDot={{ r: 4, fill: '#C6F36B', stroke: '#0B0D0C', strokeWidth: 2 }} animationDuration={900} />
@@ -86,7 +98,8 @@ export function ActivityChart({ data, height = 200, dataKey = 'workouts', xKey =
         <defs><linearGradient id="actOn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#D4F78F" /><stop offset="1" stopColor="#A9D84F" stopOpacity={0.75} /></linearGradient></defs>
         {GRID}
         <XAxis dataKey={xKey} {...AXIS} tickFormatter={xKey === 'week_start' ? shortDate : undefined} />
-        <YAxis {...AXIS} allowDecimals={false} width={36} />
+        <YAxis {...AXIS} allowDecimals={false} width={36} domain={[0, Math.max(2, ...data.map(d => Number(d[dataKey]) || 0))]}
+          ticks={Array.from({ length: Math.max(2, ...data.map(d => Number(d[dataKey]) || 0)) + 1 }, (_, i) => i)} />
         <Tooltip content={<Tip fmt={xKey === 'week_start' ? (l: string) => `Week of ${shortDate(l)}` : undefined} />} cursor={{ fill: '#ffffff', fillOpacity: 0.03 }} />
         <Bar dataKey={dataKey} name="Workouts" radius={[6, 6, 2, 2]} maxBarSize={30} animationDuration={900}>
           {data.map((d, i) => <Cell key={i} fill={d[dataKey] > 0 ? 'url(#actOn)' : '#29312B'} />)}
@@ -119,7 +132,8 @@ export function MeasureChart({ data, keys, height = 220 }: { data: any[]; keys: 
       <LineChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
         {GRID}
         <XAxis dataKey="recorded_on" {...AXIS} tickFormatter={shortDate} minTickGap={24} />
-        <YAxis {...AXIS} width={40} domain={['auto', 'auto']} />
+        <YAxis {...AXIS} width={48} domain={['auto', 'auto']} allowDecimals={false} />
+        <Legend iconType="plainline" iconSize={14} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
         <Tooltip content={<Tip unit=" cm" fmt={shortDate} />} />
         {keys.map(([k, n, c]) => <Line key={k} type="monotone" dataKey={k} name={n} stroke={c} strokeWidth={2} dot={{ r: 2.5 }} connectNulls animationDuration={900} />)}
       </LineChart>

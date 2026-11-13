@@ -19,6 +19,7 @@ class User(TimestampMixin, Base):
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # sessions issued before this moment are rejected (set on password change/reset)
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)  # IANA name from the browser, e.g. Asia/Kolkata
     onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # per-user AI preference: auto | gemini | groq | mock (keys always stay server-side)
     ai_provider_pref: Mapped[str] = mapped_column(String(20), default="auto", nullable=False)

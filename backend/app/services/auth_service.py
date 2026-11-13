@@ -1,5 +1,5 @@
 """Password hashing (bcrypt) and JWT handling."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
@@ -28,7 +28,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def create_access_token(user_id: int) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {"sub": str(user_id), "iat": now, "ims": int(now.timestamp() * 1000),
                "exp": now + timedelta(minutes=settings.jwt_expire_minutes)}
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
@@ -43,7 +43,7 @@ def decode_token_payload(token: str) -> dict:
         return payload
     except (jwt.PyJWTError, KeyError, ValueError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired session. Please log in again.",
-                            headers={"WWW-Authenticate": "Bearer"})
+                            headers={"WWW-Authenticate": "Bearer"}) from None
 
 
 def decode_token(token: str) -> int:
@@ -54,7 +54,7 @@ def decode_token(token: str) -> int:
         return int(payload["sub"])
     except (jwt.PyJWTError, KeyError, ValueError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired session. Please log in again.",
-                            headers={"WWW-Authenticate": "Bearer"})
+                            headers={"WWW-Authenticate": "Bearer"}) from None
 
 
 def get_authenticated_user(creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
@@ -66,8 +66,15 @@ def get_authenticated_user(creds: HTTPAuthorizationCredentials | None = Depends(
     user = db.get(User, int(payload["sub"]), options=[joinedload(User.profile)])
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User no longer exists")
+    from app.utils.clock import sent_tz, set_request_tz
+    sent = sent_tz()
+    if sent and sent != user.timezone:
+        user.timezone = sent  # remember it for emails and background jobs
+        db.commit()
+    elif not sent and user.timezone:
+        set_request_tz(user.timezone)
     if user.password_changed_at is not None:
-        changed_ms = int(user.password_changed_at.replace(tzinfo=timezone.utc).timestamp() * 1000)
+        changed_ms = int(user.password_changed_at.replace(tzinfo=UTC).timestamp() * 1000)
         issued_ms = int(payload.get("ims", int(payload.get("iat", 0)) * 1000))
         if issued_ms < changed_ms:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Your password was changed. Please log in again.",

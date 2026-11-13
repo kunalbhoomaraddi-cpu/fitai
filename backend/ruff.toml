@@ -1,0 +1,17 @@
+# Backend lint: run `ruff check .` from the backend folder.
+target-version = "py311"
+line-length = 140
+extend-exclude = ["tests/test_fitai.db"]
+
+[lint]
+# pyflakes, pycodestyle errors, import order, bugbear, pyupgrade
+select = ["F", "E", "W", "I", "B", "UP"]
+ignore = [
+  "E501",   # long lines: data tables (foods, exercises) are clearer on one line
+  "B008",   # FastAPI's Depends()/Query() in defaults is the intended pattern
+  "E731",   # small lambdas are used for readability in a few places
+]
+
+[lint.per-file-ignores]
+"app/models/__init__.py" = ["F401"]
+"tests/*" = ["B011"]

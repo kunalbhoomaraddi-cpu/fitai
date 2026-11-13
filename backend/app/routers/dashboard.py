@@ -1,17 +1,18 @@
 import json
-from datetime import date, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.ai.provider import ProviderError, get_provider
 from app.ai.prompts import SAFETY_RULES
+from app.ai.provider import ProviderError, get_provider
 from app.data.quotes import quote_of_the_day
 from app.database import get_db
 from app.models import SavedRecommendation, User, WorkoutPlan
 from app.services import fitness_service, nutrition_service, progress_service
 from app.services.auth_service import require_profile
+from app.utils.clock import local_today
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -26,7 +27,7 @@ def _upcoming_workout(db: Session, user: User):
         db.scalar(select(WorkoutPlan).where(WorkoutPlan.user_id == user.id).order_by(WorkoutPlan.id.desc()))
     if not p or not p.days:
         return None
-    today = date.today().weekday()
+    today = local_today().weekday()
     best = None
     for offset in range(7):
         wd = WEEK[(today + offset) % 7]
@@ -65,7 +66,7 @@ def _rule_recommendation(user: User, today_n: dict, targets: dict, analysis: dic
 
 
 def _daily_recommendation(db: Session, user: User, today_n, targets, analysis, upcoming, refresh: bool) -> dict:
-    key = f"daily:{date.today().isoformat()}"
+    key = f"daily:{local_today().isoformat()}"
     cached = db.scalar(select(SavedRecommendation).where(SavedRecommendation.user_id == user.id,
                                                          SavedRecommendation.category == "daily",
                                                          SavedRecommendation.title == key))
@@ -103,13 +104,13 @@ def dashboard(refresh_recommendation: bool = False, user: User = Depends(require
     calc = fitness_service.profile_targets(p)
     targets = {"calories": calc["calories"]["calorie_target"], "protein_g": calc["macros"]["protein_g"],
                "carbs_g": calc["macros"]["carbs_g"], "fat_g": calc["macros"]["fat_g"]}
-    today_n = nutrition_service.daily_summary(db, user.id, date.today())
+    today_n = nutrition_service.daily_summary(db, user.id, local_today())
     analysis = progress_service.full_analysis(db, user)
     w = analysis["weight"]
     hist = nutrition_service.history(db, user.id, 14)
     upcoming = _upcoming_workout(db, user)
     achievements = progress_service.evaluate_achievements(db, user)
-    weight_series = [r for r in w["records"] if r["date"] >= (date.today() - timedelta(days=60)).isoformat()]
+    weight_series = [r for r in w["records"] if r["date"] >= (local_today() - timedelta(days=60)).isoformat()]
     saved = db.scalars(select(SavedRecommendation).where(SavedRecommendation.user_id == user.id,
                                                          SavedRecommendation.category != "daily")
                        .order_by(SavedRecommendation.id.desc()).limit(3))

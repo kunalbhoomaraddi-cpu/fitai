@@ -29,7 +29,7 @@ const FAQ = [
   ['Which diets are supported?', 'Vegetarian, vegan, eggetarian, non-vegetarian and custom diets, plus restrictions such as dairy, gluten, nuts, soy, eggs and seafood. Meal plans strictly respect them.'],
   ['Do I need a gym?', 'No. Choose your equipment — even bodyweight only — and FitAI programs exercises you can actually do.'],
   ['How is my account protected?', 'Passwords are hashed, every new account verifies its email, and each login is confirmed with a one-time code sent to your inbox.'],
-  ['Can I try it without signing up?', 'Yes — open the live demo to explore every feature with clearly labelled sample data.'],
+  ['Can I try it without signing up?', 'Yes — open the live demo to explore every feature with clearly labelled sample data. Your demo is private to you and cleared after a few hours.'],
 ]
 
 function HeroVisual() {

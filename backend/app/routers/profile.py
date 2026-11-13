@@ -1,4 +1,3 @@
-from datetime import date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -8,6 +7,7 @@ from app.models import FitnessProfile, User, WeightRecord
 from app.schemas.profile import CalcIn, ProfileIn, ProfileOut
 from app.services import fitness_service
 from app.services.auth_service import get_current_user, require_profile
+from app.utils.clock import local_today
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -26,7 +26,7 @@ def upsert_profile(body: ProfileIn, user: User = Depends(get_current_user), db: 
     if p is None:
         p = FitnessProfile(user_id=user.id, start_weight_kg=body.current_weight_kg, **data)
         db.add(p)
-        db.add(WeightRecord(user_id=user.id, recorded_on=date.today(), weight_kg=body.current_weight_kg,
+        db.add(WeightRecord(user_id=user.id, recorded_on=local_today(), weight_kg=body.current_weight_kg,
                             note="Starting weight"))
     else:
         for k, v in data.items():

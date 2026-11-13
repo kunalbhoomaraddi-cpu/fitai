@@ -1,0 +1,31 @@
+# Render Blueprint for the FitAI API (FastAPI). Render → New → Blueprint → pick this repo.
+# Secrets marked `sync: false` are typed into the Render dashboard — never into this file.
+services:
+  - type: web
+    name: fitai-api
+    runtime: python
+    plan: free
+    region: singapore          # closest Render region to India
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # --proxy-headers: read the visitor's real IP behind Render's proxy (needed for per-IP rate limits)
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: ENVIRONMENT
+        value: production
+      - key: JWT_SECRET
+        generateValue: true    # Render creates a long random secret
+      - key: DATABASE_URL      # Neon connection string
+        sync: false
+      - key: CORS_ORIGINS      # your Vercel URL, e.g. https://fitai.vercel.app
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BREVO_API_KEY     # Render's free plan blocks SMTP, so email goes through Brevo's HTTPS API
+        sync: false
+      - key: EMAIL_FROM        # e.g. FitAI <you@gmail.com> (verified in Brevo)
+        sync: false

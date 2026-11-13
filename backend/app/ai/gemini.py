@@ -134,4 +134,4 @@ class GeminiProvider(LLMProvider):
             parts = data["candidates"][0]["content"]["parts"]
             return "".join(p.get("text", "") for p in parts if not p.get("thought"))
         except (KeyError, IndexError):
-            raise ProviderError("Gemini returned an empty JSON response")
+            raise ProviderError("Gemini returned an empty JSON response") from None

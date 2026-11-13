@@ -2,10 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.database import get_db
 from app.models import User
-from app.config import get_settings
-from app.schemas.auth import ForgotPasswordIn, ResetPasswordIn, ResetTokenIn, LoginIn, LoginOtpIn, OtpTokenIn, RegisterIn, TokenOut, UserOut, VerifyCodeIn
+from app.schemas.auth import (
+    ForgotPasswordIn,
+    LoginIn,
+    LoginOtpIn,
+    OtpTokenIn,
+    RegisterIn,
+    ResetPasswordIn,
+    ResetTokenIn,
+    TokenOut,
+    UserOut,
+    VerifyCodeIn,
+)
 from app.services import demo_service, login_otp_service, password_reset_service, verification_service
 from app.services.auth_service import create_access_token, get_authenticated_user, hash_password, verify_password
 from app.utils.ratelimit import auth_rate_limit
@@ -17,6 +28,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
     auth_rate_limit(f"reg:{request.client.host if request.client else 'x'}")
     email = body.email.lower()
+    if demo_service.is_demo_email(email):
+        raise HTTPException(400, "This email address is reserved. Please use your own email.")
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
     required = get_settings().email_verification_required
@@ -60,9 +73,10 @@ def login_resend(body: OtpTokenIn, db: Session = Depends(get_db)):
 
 
 @router.post("/demo", response_model=TokenOut)
-def demo(db: Session = Depends(get_db)):
-    """Creates (or resets) a clearly-labelled demo account populated with sample data."""
-    user = demo_service.create_or_reset_demo(db)
+def demo(request: Request, db: Session = Depends(get_db)):
+    """Creates a private, clearly-labelled demo copy with sample data. It is deleted after a few hours."""
+    auth_rate_limit(f"demo:{request.client.host if request.client else 'x'}")
+    user = demo_service.create_demo(db)
     return TokenOut(access_token=create_access_token(user.id), user=UserOut.model_validate(user))
 
 

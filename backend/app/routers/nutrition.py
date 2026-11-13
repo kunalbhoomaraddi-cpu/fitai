@@ -8,6 +8,7 @@ from app.models import FoodEntry, User
 from app.schemas.tracking import FoodEntryIn, FoodEntryOut, FoodEntryUpdate
 from app.services import fitness_service, nutrition_service
 from app.services.auth_service import get_current_user, require_profile
+from app.utils.clock import local_today
 
 router = APIRouter(prefix="/nutrition", tags=["nutrition"])
 
@@ -27,7 +28,7 @@ def search(q: str = Query(min_length=2, max_length=80), _: User = Depends(get_cu
 @router.get("/day")
 def day(d: date | None = Query(default=None, alias="date"), user: User = Depends(require_profile),
         db: Session = Depends(get_db)):
-    d = d or date.today()
+    d = d or local_today()
     entries = nutrition_service.day_entries(db, user.id, d)
     t = fitness_service.profile_targets(user.profile)
     return {**nutrition_service.summarize(entries), "date": d.isoformat(),
@@ -39,7 +40,7 @@ def day(d: date | None = Query(default=None, alias="date"), user: User = Depends
 @router.post("/entries", response_model=FoodEntryOut, status_code=201)
 def add_entry(body: FoodEntryIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     data = body.model_dump()
-    data["eaten_on"] = data["eaten_on"] or date.today()
+    data["eaten_on"] = data["eaten_on"] or local_today()
     e = FoodEntry(user_id=user.id, **data)
     db.add(e)
     db.commit()

@@ -3,7 +3,7 @@ nutrition consistency, streaks, achievements and weekly challenges. Deterministi
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.models import FoodEntry, User, UserAchievement, WeightRecord, WorkoutSession
 from app.models._mixins import utcnow
 from app.services import fitness_service
+from app.utils.clock import local_date, local_today
 
 ACHIEVEMENTS = [
     {"code": "first_workout", "title": "First Rep", "description": "Complete your first workout.", "icon": "dumbbell"},
@@ -28,7 +29,7 @@ ACH_BY_CODE = {a["code"]: a for a in ACHIEVEMENTS}
 def weight_records(db: Session, user_id: int, days: int | None = None) -> list[WeightRecord]:
     q = select(WeightRecord).where(WeightRecord.user_id == user_id)
     if days:
-        q = q.where(WeightRecord.recorded_on >= date.today() - timedelta(days=days))
+        q = q.where(WeightRecord.recorded_on >= local_today() - timedelta(days=days))
     return list(db.scalars(q.order_by(WeightRecord.recorded_on, WeightRecord.id)))
 
 
@@ -43,7 +44,7 @@ def _slope_per_week(points: list[tuple[date, float]]) -> float | None:
     den = sum((x - mx) ** 2 for x in xs)
     if den == 0:
         return None
-    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den * 7
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys, strict=True)) / den * 7
 
 
 def weekly_averages(records: list[WeightRecord]) -> list[dict]:
@@ -77,11 +78,11 @@ def weight_analysis(db: Session, user: User, days: int = 90) -> dict:
         "weekly_averages": weekly_averages(recs)[-12:],
         "trend_kg_per_week": None, "plateau": False, "flags": [], "data_points": len(recs),
     }
-    last28 = [(r.recorded_on, r.weight_kg) for r in allrecs if r.recorded_on >= date.today() - timedelta(days=28)]
+    last28 = [(r.recorded_on, r.weight_kg) for r in allrecs if r.recorded_on >= local_today() - timedelta(days=28)]
     slope = _slope_per_week(last28)
     if slope is not None:
         out["trend_kg_per_week"] = round(slope, 2)
-    month = [r for r in allrecs if r.recorded_on >= date.today() - timedelta(days=30)]
+    month = [r for r in allrecs if r.recorded_on >= local_today() - timedelta(days=30)]
     out["change_30d_kg"] = round(month[-1].weight_kg - month[0].weight_kg, 2) if len(month) >= 2 else None
     wk = out["weekly_averages"]
     if len(wk) >= 3 and p.goal in ("weight_loss", "recomposition", "muscle_gain"):
@@ -102,19 +103,19 @@ def weight_analysis(db: Session, user: User, days: int = 90) -> dict:
 def completed_sessions(db: Session, user_id: int, days: int | None = None) -> list[WorkoutSession]:
     q = select(WorkoutSession).where(WorkoutSession.user_id == user_id, WorkoutSession.status == "completed")
     if days:
-        q = q.where(WorkoutSession.started_at >= datetime.now() - timedelta(days=days))
+        q = q.where(WorkoutSession.started_at >= utcnow() - timedelta(days=days))
     return list(db.scalars(q.order_by(WorkoutSession.started_at)))
 
 
 def workout_streak(dates: list[date], today: date | None = None) -> int:
     """Consecutive workouts where gaps are at most one rest day; resets if the last workout
     was more than 2 days ago. Rest days never add to the count."""
-    today = today or date.today()
+    today = today or local_today()
     uniq = sorted(set(dates), reverse=True)
     if not uniq or (today - uniq[0]).days > 2:
         return 0
     streak = 1
-    for prev, cur in zip(uniq, uniq[1:]):
+    for prev, cur in zip(uniq, uniq[1:], strict=False):
         if (prev - cur).days <= 2:
             streak += 1
         else:
@@ -124,12 +125,12 @@ def workout_streak(dates: list[date], today: date | None = None) -> int:
 
 def workout_stats(db: Session, user_id: int) -> dict:
     sessions = completed_sessions(db, user_id)
-    dates = [s.started_at.date() for s in sessions]
-    today = date.today()
+    dates = [local_date(s.started_at) for s in sessions]
+    today = local_today()
     week = []
     for i in range(6, -1, -1):
         d = today - timedelta(days=i)
-        ss = [s for s in sessions if s.started_at.date() == d]
+        ss = [s for s in sessions if local_date(s.started_at) == d]
         week.append({"date": d.isoformat(), "day": d.strftime("%a"), "workouts": len(ss),
                      "minutes": sum(s.duration_minutes or 0 for s in ss)})
     weeks = []
@@ -141,13 +142,13 @@ def workout_stats(db: Session, user_id: int) -> dict:
             "this_week": sum(w["workouts"] for w in week[-(today.weekday() + 1):]),
             "last_7_days": week, "weekly_counts": weeks,
             "avg_duration_min": round(sum(s.duration_minutes or 0 for s in sessions) / len(sessions)) if sessions else 0,
-            "recent": [{"id": s.id, "name": s.name, "date": s.started_at.date().isoformat(),
+            "recent": [{"id": s.id, "name": s.name, "date": local_date(s.started_at).isoformat(),
                         "duration_minutes": s.duration_minutes} for s in sessions[-5:][::-1]]}
 
 
 # --------------------------------------------------------------------------- nutrition consistency
 def nutrition_consistency(db: Session, user: User, days: int = 14) -> dict:
-    start = date.today() - timedelta(days=days - 1)
+    start = local_today() - timedelta(days=days - 1)
     rows = list(db.scalars(select(FoodEntry).where(FoodEntry.user_id == user.id, FoodEntry.eaten_on >= start)))
     per_day: dict = defaultdict(lambda: {"cal": 0.0, "protein": 0.0})
     for e in rows:
@@ -158,7 +159,7 @@ def nutrition_consistency(db: Session, user: User, days: int = 14) -> dict:
     avg_cal = round(sum(v["cal"] for v in per_day.values()) / logged) if logged else 0
     avg_pro = round(sum(v["protein"] for v in per_day.values()) / logged) if logged else 0
     streak = 0
-    d = date.today()
+    d = local_today()
     if d not in per_day:
         d -= timedelta(days=1)
     while d in per_day:
@@ -185,7 +186,7 @@ def evaluate_achievements(db: Session, user: User) -> list[dict]:
         earned.add("first_workout")
     if ws["total_completed"] >= 5:
         earned.add("five_workouts")
-    dates = [s.started_at.date() for s in completed_sessions(db, user.id)]
+    dates = [local_date(s.started_at) for s in completed_sessions(db, user.id)]
     # best historical streak
     best, run = 0, 0
     prev = None
@@ -223,9 +224,9 @@ def evaluate_achievements(db: Session, user: User) -> list[dict]:
 
 def weekly_challenges(db: Session, user: User) -> list[dict]:
     p = user.profile
-    today = date.today()
+    today = local_today()
     monday = today - timedelta(days=today.weekday())
-    sessions = [s for s in completed_sessions(db, user.id, 10) if s.started_at.date() >= monday]
+    sessions = [s for s in completed_sessions(db, user.id, 10) if local_date(s.started_at) >= monday]
     rows = list(db.scalars(select(FoodEntry).where(FoodEntry.user_id == user.id, FoodEntry.eaten_on >= monday)))
     days_logged = len({e.eaten_on for e in rows})
     targets = fitness_service.profile_targets(p)
@@ -269,7 +270,7 @@ def full_analysis(db: Session, user: User) -> dict:
             insights.append({"type": "warning", "title": "Possible plateau",
                              "text": "Your last three weekly averages are within 0.3 kg. Review logging accuracy, daily steps and sleep before reducing calories; plateaus of 2–3 weeks are common."})
     insights.append({"type": "workout", "title": "Training consistency",
-                     "text": f"{ws['this_week']} workout(s) this week vs a plan of {p.workout_days_per_week}. Current streak: {ws['streak']}."})
+                     "text": f"{ws['this_week']} {'workout' if ws['this_week'] == 1 else 'workouts'} this week against a plan of {p.workout_days_per_week}. Current streak: {ws['streak']}."})
     insights.append({"type": "nutrition", "title": "Nutrition consistency",
                      "text": f"Food logged on {nc['days_logged']} of the last 14 days. Average intake on logged days: "
                              f"{nc['avg_calories']} kcal and {nc['avg_protein_g']} g protein (targets {nc['calorie_target']} kcal / {nc['protein_target_g']} g)."})

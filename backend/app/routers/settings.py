@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.ai.provider import ai_status
 from app.database import get_db
 from app.models import User
+from app.models._mixins import utcnow
 from app.schemas.auth import PasswordChangeIn, UserOut
 from app.schemas.coach import SettingsIn
-from app.models._mixins import utcnow
 from app.services.auth_service import create_access_token, get_authenticated_user, get_current_user, hash_password, verify_password
 
 router = APIRouter(prefix="/settings", tags=["settings"])

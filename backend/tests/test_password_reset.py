@@ -34,9 +34,9 @@ def test_unknown_email_is_rejected(client):
     r = client.post("/api/auth/forgot-password", json={"email": "nobody@example.com"})
     assert r.status_code == 404 and "No FitAI account" in r.json()["detail"]
     assert "nobody@example.com" not in RESET_CODES
-    assert client.post("/api/auth/demo").status_code in (200, 201)
-    from app.services.demo_service import DEMO_EMAIL
-    assert client.post("/api/auth/forgot-password", json={"email": DEMO_EMAIL}).status_code == 400
+    demo = client.post("/api/auth/demo")
+    assert demo.status_code in (200, 201)
+    assert client.post("/api/auth/forgot-password", json={"email": demo.json()["user"]["email"]}).status_code == 400
 
 
 def test_attempt_limit_expiry_and_cooldown(client):

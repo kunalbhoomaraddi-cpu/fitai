@@ -1,4 +1,3 @@
-import os
 
 from app.ai import provider as prov
 from app.ai.gemini import GeminiProvider, _to_gemini_schema

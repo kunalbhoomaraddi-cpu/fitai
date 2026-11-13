@@ -1,4 +1,4 @@
-from datetime import date
+from app.utils.clock import local_today
 
 GOAL_LABEL = {"weight_loss": "weight loss", "muscle_gain": "muscle building", "recomposition": "body recomposition",
               "general_fitness": "general fitness", "maintenance": "weight maintenance"}
@@ -32,7 +32,7 @@ def coach_system_prompt(user) -> str:
                f"Diet: {p.custom_diet if p.diet_preference == 'custom' else p.diet_preference}; restrictions: "
                f"{', '.join(p.food_restrictions) or 'none'}. Trains {p.workout_days_per_week} days/week for ~{p.workout_minutes} min. "
                f"Equipment: {', '.join(p.equipment) or 'bodyweight only'}. Preferred units: {p.unit_system}.")
-    return f"""You are FitAI Coach, the AI fitness coach inside the FitAI app. Today is {date.today().isoformat()}.
+    return f"""You are FitAI Coach, the AI fitness coach inside the FitAI app. Today is {local_today().isoformat()}.
 
 User profile (summary — use tools for exact calculations and history):
 {profile}

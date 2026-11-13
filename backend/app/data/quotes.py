@@ -1,6 +1,8 @@
 """Original FitAI motivational content (written for this project; no attribution required)."""
 from datetime import date
 
+from app.utils.clock import local_today
+
 QUOTES: list[dict] = [
     {"category": "Discipline", "text": "Motivation gets you started. Systems get you to the finish line."},
     {"category": "Discipline", "text": "Do the boring basics brilliantly. That's the whole secret."},
@@ -41,6 +43,6 @@ QUOTES: list[dict] = [
 
 
 def quote_of_the_day(d: date | None = None) -> dict:
-    d = d or date.today()
+    d = d or local_today()
     q = QUOTES[d.toordinal() % len(QUOTES)]
     return {**q, "author": "FitAI Coach", "date": d.isoformat()}

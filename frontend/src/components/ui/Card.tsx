@@ -11,7 +11,7 @@ export function Card({ className, hover, children, ...rest }: HTMLAttributes<HTM
 
 export function CardHeader({ title, subtitle, action, icon }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 px-5 pt-5">
+    <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5">
       <div className="flex min-w-0 items-center gap-3">
         {icon && <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-lime">{icon}</div>}
         <div className="min-w-0">
@@ -19,7 +19,7 @@ export function CardHeader({ title, subtitle, action, icon }: { title: ReactNode
           {subtitle && <p className="mt-0.5 truncate text-[13px] text-fg-muted">{subtitle}</p>}
         </div>
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   )
 }

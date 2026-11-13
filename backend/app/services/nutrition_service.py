@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import difflib
 import logging
-import re
 import random
+import re
 from collections import defaultdict
 from datetime import date, timedelta
 
@@ -17,6 +17,7 @@ from app.data.foods import REFERENCE_FOODS, food_allowed, nutrition_for, search_
 from app.data.indian_foods import INDIAN_FOODS, REPLACES_REFERENCE
 from app.data.meals import MEAL_TEMPLATES
 from app.models import FoodEntry
+from app.utils.clock import local_today
 from app.utils.http import SlidingWindowLimiter, TTLCache, http_get_json
 
 log = logging.getLogger("fitai.nutrition")
@@ -154,7 +155,7 @@ def daily_summary(db: Session, user_id: int, d: date) -> dict:
 
 
 def history(db: Session, user_id: int, days: int = 14, end: date | None = None) -> list[dict]:
-    end = end or date.today()
+    end = end or local_today()
     start = end - timedelta(days=days - 1)
     rows = db.scalars(select(FoodEntry).where(FoodEntry.user_id == user_id, FoodEntry.eaten_on >= start,
                                               FoodEntry.eaten_on <= end))

@@ -11,6 +11,8 @@ export function useReveal(deps: unknown[] = []) {
       entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('is-visible'); io.unobserve(en.target) } })
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 })
     els.forEach(e => io.observe(e))
-    return () => io.disconnect()
+    // safety net: never leave content invisible (link previews, print, very fast scrolling)
+    const t = setTimeout(() => document.querySelectorAll('.reveal:not(.is-visible)').forEach(e => e.classList.add('is-visible')), 2500)
+    return () => { io.disconnect(); clearTimeout(t) }
   }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 }

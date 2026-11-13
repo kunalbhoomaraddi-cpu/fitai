@@ -78,9 +78,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (!d || celebrated.current || !d.new_achievements?.length) return
     celebrated.current = true
+    progressApi.markSeen().catch(() => undefined)
+    if (d.user?.is_demo) return  // the shared demo account would celebrate the same milestones on every visit
     d.new_achievements.slice(0, 2).forEach((a: any) => toast('achievement', `Achievement unlocked: ${a.title}`, a.description))
     setConfetti(Date.now())
-    progressApi.markSeen().catch(() => undefined)
   }, [d, toast])
 
   if (loading && !d) return <PageSkeleton />
@@ -234,7 +235,7 @@ export default function Dashboard() {
           <div className="px-2 pb-3 pt-2"><CaloriesChart data={d.nutrition_history} target={tg.calories} /></div></Card>
         <Card><CardHeader title="Protein intake" subtitle={`Target ${tg.protein_g} g/day`} icon={<Beef className="h-4 w-4" />} />
           <div className="px-2 pb-3 pt-2"><ProteinChart data={d.nutrition_history} target={tg.protein_g} height={220} /></div></Card>
-        <Card><CardHeader title="Weekly activity" subtitle={`${d.workouts.this_week} workout(s) this week`} icon={<Dumbbell className="h-4 w-4" />} />
+        <Card><CardHeader title="Weekly activity" subtitle={`${d.workouts.this_week} ${d.workouts.this_week === 1 ? 'workout' : 'workouts'} this week`} icon={<Dumbbell className="h-4 w-4" />} />
           <div className="px-2 pb-3 pt-2"><ActivityChart data={d.workouts.last_7_days} height={220} /></div></Card>
       </section>
 

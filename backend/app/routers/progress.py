@@ -1,17 +1,17 @@
 import json
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.ai.provider import ProviderError, get_provider
 from app.ai.prompts import SAFETY_RULES
+from app.ai.provider import ProviderError, get_provider
 from app.database import get_db
 from app.models import BodyMeasurement, User, UserAchievement, WeightRecord
 from app.schemas.tracking import MeasurementIn, MeasurementOut, TargetWeightIn, WeightIn, WeightOut
 from app.services import progress_service
 from app.services.auth_service import require_profile
+from app.utils.clock import local_today
 from app.utils.ratelimit import ai_rate_limit
 
 router = APIRouter(prefix="/progress", tags=["progress"])
@@ -31,8 +31,8 @@ def list_weights(days: int = 365, user: User = Depends(require_profile), db: Ses
 
 @router.post("/weights", response_model=WeightOut, status_code=201)
 def add_weight(body: WeightIn, user: User = Depends(require_profile), db: Session = Depends(get_db)):
-    r = WeightRecord(user_id=user.id, recorded_on=body.recorded_on or date.today(), weight_kg=body.weight_kg, note=body.note)
-    if r.recorded_on > date.today():
+    r = WeightRecord(user_id=user.id, recorded_on=body.recorded_on or local_today(), weight_kg=body.weight_kg, note=body.note)
+    if r.recorded_on > local_today():
         raise HTTPException(400, "Date can't be in the future")
     db.add(r)
     db.flush()
@@ -63,7 +63,7 @@ def add_measurement(body: MeasurementIn, user: User = Depends(require_profile), 
     data = body.model_dump()
     if not any(v for k, v in data.items() if k != "recorded_on"):
         raise HTTPException(400, "Enter at least one measurement")
-    data["recorded_on"] = data["recorded_on"] or date.today()
+    data["recorded_on"] = data["recorded_on"] or local_today()
     m = BodyMeasurement(user_id=user.id, **data)
     db.add(m)
     db.commit()
@@ -119,7 +119,7 @@ def ai_analysis(user: User = Depends(ai_rate_limit), db: Session = Depends(get_d
     w, ws, n = facts["weight"], facts["workouts"], facts["nutrition"]
     summary = (f"You're {w['goal_progress_pct']}% of the way to your target. "
                + (f"Your 4-week trend is {w['trend_kg_per_week']:+.2f} kg/week. " if w["trend_kg_per_week"] is not None else "Log more weigh-ins for a trend. ")
-               + f"{ws['this_week']} workout(s) this week; food logged {n['days_logged']}/14 days.")
+               + f"{ws['this_week']} {'workout' if ws['this_week'] == 1 else 'workouts'} this week; food logged on {n['days_logged']} of the last 14 days.")
     steps = []
     if n["days_logged"] < 10:
         steps.append("Log food on at least 5 days this week for a clearer picture.")

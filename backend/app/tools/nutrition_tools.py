@@ -3,13 +3,14 @@ from datetime import date
 from app.models import SavedRecommendation
 from app.services import fitness_service, nutrition_service
 from app.tools.registry import tool
+from app.utils.clock import local_today
 
 
 @tool("get_daily_nutrition", "Get the user's logged food totals for a date (default today) compared with their targets.",
       {"date": {"type": "string", "description": "YYYY-MM-DD; default today"}})
 def get_daily_nutrition(db, user, date_str=None, **kw):
     d = kw.get("date") or date_str
-    day = date.fromisoformat(d) if d else date.today()
+    day = date.fromisoformat(d) if d else local_today()
     s = nutrition_service.daily_summary(db, user.id, day)
     t = fitness_service.profile_targets(user.profile)
     targets = {"calories": t["calories"]["calorie_target"], "protein_g": t["macros"]["protein_g"],

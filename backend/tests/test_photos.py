@@ -52,9 +52,11 @@ def test_rejects_bad_files_and_inputs(client, auth):
     assert _up(client, auth, pose="sideways").status_code == 422
     future = (date.today() + timedelta(days=2)).isoformat()
     assert _up(client, auth, taken_on=future).status_code == 422
-    gif = io.BytesIO(); Image.new("RGB", (300, 300)).save(gif, "GIF")
+    gif = io.BytesIO()
+    Image.new("RGB", (300, 300)).save(gif, "GIF")
     assert _up(client, auth, gif.getvalue()).status_code == 415
-    png = io.BytesIO(); Image.new("RGBA", (400, 500), (0, 0, 0, 0)).save(png, "PNG")
+    png = io.BytesIO()
+    Image.new("RGBA", (400, 500), (0, 0, 0, 0)).save(png, "PNG")
     assert _up(client, auth, png.getvalue()).status_code == 201
 
 

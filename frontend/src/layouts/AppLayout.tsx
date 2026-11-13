@@ -110,7 +110,7 @@ export default function AppLayout() {
   const first = user?.full_name.split(' ')[0] ?? ''
   const isCoach = loc.pathname === '/coach'
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-clip">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] border-r border-line-soft bg-ink-900 lg:block"><SideNav /></aside>
       {drawer && (
         <div className="fixed inset-0 z-[60] lg:hidden">
@@ -136,7 +136,7 @@ export default function AppLayout() {
               <button onClick={() => navigate('/settings')} aria-label="Profile and settings"><Avatar name={user?.full_name || 'F'} size="h-10 w-10" /></button>
             </div>
           </div>
-          {user?.is_demo && <div className="border-t border-amber/20 bg-amber/[0.06] px-4 py-1.5 text-center text-[12px] text-amber sm:hidden">Demo mode — sample data, not a real user</div>}
+          {user?.is_demo && <div className="border-t border-amber/20 bg-amber/[0.06] px-4 py-1.5 text-center text-[12px] text-amber sm:hidden">Demo mode — your changes are private and cleared after a few hours</div>}
         </header>
         <main className={clsx('mx-auto max-w-[1400px] px-4 pb-28 sm:px-6 lg:px-8 lg:pb-12', isCoach ? 'pt-4' : 'pt-6 sm:pt-8')}>
           <div key={loc.pathname} className="page-enter"><Outlet /></div>

@@ -27,6 +27,7 @@ def _capture(to_email, name, code, purpose="verify"):  # stand-in for SMTP durin
     return "console"
 
 
+email_service.real_send_verification_code = email_service.send_verification_code  # for tests of the real sender
 email_service.send_verification_code = _capture
 
 

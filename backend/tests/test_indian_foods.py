@@ -1,7 +1,7 @@
 import pytest
 
 from app.data.indian_foods import INDIAN_FOODS
-from app.services.nutrition_service import search_food, search_indian_foods
+from app.services.nutrition_service import search_indian_foods
 
 
 def test_library_is_large_and_consistent():

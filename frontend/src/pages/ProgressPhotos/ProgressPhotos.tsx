@@ -269,7 +269,7 @@ export default function ProgressPhotos() {
   const { data, setData, error, loading, reload } = useAsync(() => photoApi.list(), [])
   const [upOpen, setUpOpen] = useState(false)
   const [view, setView] = useState<ProgressPhoto | null>(null)
-  const photos = data ?? []
+  const photos = useMemo(() => data ?? [], [data])
   const groups = useMemo(() => {
     const m = new Map<string, ProgressPhoto[]>()
     for (const p of photos) m.set(p.taken_on, [...(m.get(p.taken_on) ?? []), p])

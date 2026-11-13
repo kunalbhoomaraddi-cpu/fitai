@@ -1,14 +1,14 @@
 """Two-step login: password, then a 6-digit code emailed on every login.
 The browser holds only a short-lived 'pending' token (typ=login_otp) that can't access the API."""
 import hashlib
-import logging
 import hmac
+import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from fastapi import HTTPException
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -32,10 +32,10 @@ def _send(db: Session, user: User, ch: LoginChallenge) -> str:
     try:
         channel = email_service.send_verification_code(user.email, user.full_name.split(" ")[0], code, purpose="login")
     except email_service.EmailNotConfigured as e:
-        raise HTTPException(503, str(e))
+        raise HTTPException(503, str(e)) from None
     except Exception as exc:  # show the SMTP reason in the terminal (never includes the password)
         log.error("Sending login email failed: %s: %s", type(exc).__name__, exc)
-        raise HTTPException(502, "We couldn't send your login code. Please try again in a moment.")
+        raise HTTPException(502, "We couldn't send your login code. Please try again in a moment.") from None
     now = utcnow()
     ch.code_hash = _hash(ch.id, code)
     ch.sent_at = now
@@ -47,7 +47,7 @@ def _send(db: Session, user: User, ch: LoginChallenge) -> str:
 
 def _pending_token(user_id: int, cid: int, nonce: str) -> str:
     s = get_settings()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return jwt.encode({"sub": str(user_id), "cid": cid, "n": nonce, "typ": "login_otp", "iat": now,
                        "exp": now + timedelta(minutes=PENDING_TOKEN_MINUTES)}, s.jwt_secret, algorithm=s.jwt_algorithm)
 
@@ -60,7 +60,7 @@ def _read_pending(db: Session, token: str) -> tuple[User, LoginChallenge]:
             raise ValueError
         uid, cid, nonce = int(p["sub"]), int(p["cid"]), str(p["n"])
     except (jwt.PyJWTError, KeyError, ValueError):
-        raise HTTPException(401, "Your login session expired. Please log in again.")
+        raise HTTPException(401, "Your login session expired. Please log in again.") from None
     ch = db.get(LoginChallenge, cid)
     user = db.get(User, uid)
     if ch is None or user is None or ch.user_id != uid or not hmac.compare_digest(ch.nonce, nonce):

@@ -17,3 +17,10 @@
 
 ## Motivational quotes
 All 35 daily quotes are original FitAI content.
+
+
+## Exercise demo photos
+
+`frontend/public/images/exercises/` and the step-by-step instructions in `frontend/src/data/exerciseDemos.ts` come from
+[free-exercise-db](https://github.com/yuhonas/free-exercise-db), released into the **public domain** (Unlicense).
+They were resized and converted to WebP by `scripts/build_exercise_demos.py`. Notes marked as FitAI-written (e.g. kettlebell swing and side plank steps) are original.

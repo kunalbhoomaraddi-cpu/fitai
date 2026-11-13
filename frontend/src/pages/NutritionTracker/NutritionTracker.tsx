@@ -12,6 +12,13 @@ import { MEAL_LABEL, todayISO } from '../../utils/format'
 const MEALS: [MealType, any][] = [['breakfast', Coffee], ['lunch', Sun], ['snack', Cookie], ['dinner', Moon]]
 const shift = (iso: string, d: number) => { const x = new Date(iso + 'T12:00:00'); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10) }
 
+const mainServing = (r: FoodResult) => r.servings?.length ? r.servings[Math.max(0, r.servings.findIndex(x => /medium/i.test(x.label)))] : undefined
+
+function DietDot({ diet }: { diet: string }) {
+  const nonveg = diet === 'non_vegetarian' || diet === 'eggetarian'
+  return <span title={nonveg ? (diet === 'eggetarian' ? 'Contains egg' : 'Non-vegetarian') : 'Vegetarian'} className={clsx('inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border', nonveg ? 'border-[#c0392b]' : 'border-[#2e8b57]')}><span className={clsx('h-1.5 w-1.5 rounded-full', nonveg ? 'bg-[#c0392b]' : 'bg-[#2e8b57]')} /></span>
+}
+
 function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolean; onClose: () => void; meal: MealType; date: string; onAdded: () => void; editing: FoodEntry | null }) {
   const toast = useToast()
   const [mode, setMode] = useState<'search' | 'custom'>('search')
@@ -21,6 +28,8 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
   const [searching, setSearching] = useState(false)
   const [sel, setSel] = useState<FoodResult | null>(null)
   const [grams, setGrams] = useState('100')
+  const [unit, setUnit] = useState<number | 'g'>('g')   // index into sel.servings, or grams
+  const [count, setCount] = useState(1)
   const [mealSel, setMealSel] = useState<MealType>(meal)
   const [custom, setCustom] = useState({ name: '', quantity_g: '100', calories: '', protein_g: '', carbs_g: '', fat_g: '' })
   const [saving, setSaving] = useState(false)
@@ -41,7 +50,9 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
     return () => clearTimeout(t)
   }, [q])
 
-  const k = (+grams || 0) / 100
+  const serving = sel?.servings && unit !== 'g' ? sel.servings[unit] : null
+  const qty = serving ? serving.grams * count : +grams || 0
+  const k = qty / 100
   const calc = sel && { calories: Math.round(sel.calories_100g * k), protein_g: +(sel.protein_100g * k).toFixed(1), carbs_g: +(sel.carbs_100g * k).toFixed(1), fat_g: +(sel.fat_100g * k).toFixed(1) }
 
   const submit = async () => {
@@ -50,7 +61,8 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
       if (editing) {
         await nutritionApi.update(editing.id, { meal: mealSel, name: custom.name, quantity_g: +custom.quantity_g, calories: +custom.calories, protein_g: +custom.protein_g || 0, carbs_g: +custom.carbs_g || 0, fat_g: +custom.fat_g || 0 })
       } else if (mode === 'search' && sel && calc) {
-        await nutritionApi.add({ eaten_on: date, meal: mealSel, name: (sel.brand ? `${sel.name} (${sel.brand})` : sel.name).slice(0, 200), quantity_g: +grams, ...calc, source: sel.source === 'open_food_facts' ? 'open_food_facts' : 'reference', source_id: sel.id.slice(0, 64) })
+        const label = serving ? `${sel.name} · ${count} × ${serving.label.replace(/^1 /, '')}` : sel.brand ? `${sel.name} (${sel.brand})` : sel.name
+        await nutritionApi.add({ eaten_on: date, meal: mealSel, name: label.slice(0, 200), quantity_g: Math.round(qty), ...calc, source: sel.source === 'open_food_facts' ? 'open_food_facts' : 'reference', source_id: sel.id.slice(0, 64) })
       } else {
         if (!custom.name.trim() || custom.calories === '') { toast('error', 'Name and calories are required'); setSaving(false); return }
         await nutritionApi.add({ eaten_on: date, meal: mealSel, name: custom.name.trim(), quantity_g: +custom.quantity_g || 1, calories: +custom.calories, protein_g: +custom.protein_g || 0, carbs_g: +custom.carbs_g || 0, fat_g: +custom.fat_g || 0, source: 'custom' })
@@ -67,24 +79,46 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
         <Segmented size="sm" options={MEALS.map(([m]) => [m, MEAL_LABEL[m]] as const)} value={mealSel} onChange={setMealSel} />
       </div>
       {mode === 'search' && !editing ? (<>
-        <Input autoFocus icon={<Search className="h-4 w-4" />} placeholder="Search foods, e.g. paneer, oats, Greek yogurt…" value={q} onChange={e => { setQ(e.target.value); setSel(null) }} />
+        <Input autoFocus icon={<Search className="h-4 w-4" />} placeholder="Search foods, e.g. roti, dal, idli, paneer, chai…" value={q} onChange={e => { setQ(e.target.value); setSel(null) }} />
         {warning && <div className="mt-3"><Notice tone="warn">{warning}</Notice></div>}
         {!sel && <div className="mt-3 max-h-72 space-y-1 overflow-y-auto">
           {searching && [0, 1, 2].map(i => <Skeleton key={i} className="h-12" />)}
           {!searching && q.length >= 2 && results.length === 0 && <p className="py-6 text-center text-sm text-fg-muted">No matches. Try another term or add a custom food.</p>}
           {!searching && results.map(r => (
-            <button key={r.id} onClick={() => setSel(r)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/[0.04]">
+            <button key={r.id} onClick={() => { setSel(r); setUnit(r.servings?.length ? r.servings.indexOf(mainServing(r)!) : 'g'); setCount(1); setGrams('100') }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/[0.04]">
               {r.image_url ? <img src={r.image_url} alt="" className="h-9 w-9 rounded-lg bg-white object-contain" loading="lazy" onError={e => (e.currentTarget.style.display = 'none')} /> : <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-fg-dim"><Database className="h-4 w-4" /></div>}
-              <div className="min-w-0 flex-1"><p className="truncate text-sm">{r.name}</p><p className="text-[11px] text-fg-dim">{r.brand ? `${r.brand} · ` : ''}{r.source === 'open_food_facts' ? 'Open Food Facts' : 'FitAI reference'} · per 100 g</p></div>
-              <span className="shrink-0 text-xs tabular-nums text-fg-muted">{r.calories_100g} kcal · P {r.protein_100g}</span>
+              <div className="min-w-0 flex-1"><p className="flex items-center gap-1.5 truncate text-sm">{r.diet && <DietDot diet={r.diet} />}{r.name}</p>
+                <p className="truncate text-[11px] text-fg-dim">{r.servings?.length ? `${r.category} · ${mainServing(r)!.label} ≈ ${Math.round(r.calories_100g * mainServing(r)!.grams / 100)} kcal` : `${r.brand ? `${r.brand} · ` : ''}${r.source === 'open_food_facts' ? 'Open Food Facts' : 'FitAI reference'} · per 100 g`}</p></div>
+              <span className="shrink-0 text-xs tabular-nums text-fg-muted">{r.servings?.length ? `P ${(r.protein_100g * mainServing(r)!.grams / 100).toFixed(1)} g` : `${r.calories_100g} kcal · P ${r.protein_100g}`}</span>
             </button>
           ))}
         </div>}
         {sel && calc && (
           <div className="mt-4 animate-fade-in rounded-2xl border border-line bg-ink-900 p-4">
-            <div className="flex items-start justify-between gap-3"><div><p className="font-medium">{sel.name}</p><p className="text-xs text-fg-dim">{sel.source === 'open_food_facts' ? 'Open Food Facts (community data)' : 'FitAI reference value (typical average)'}</p></div><button onClick={() => setSel(null)} className="text-xs text-lime hover:underline">Change</button></div>
+            <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-1.5 font-medium">{sel.diet && <DietDot diet={sel.diet} />}{sel.name}</p><p className="text-xs text-fg-dim">{sel.source === 'open_food_facts' ? 'Open Food Facts (community data)' : sel.source === 'indian' ? 'FitAI Indian food library · typical home-style recipe' : 'FitAI reference value (typical average)'}</p></div><button onClick={() => setSel(null)} className="text-xs text-lime hover:underline">Change</button></div>
+            {sel.servings?.length ? (
+              <div className="mt-4">
+                <Label>Portion</Label>
+                <div className="flex flex-wrap gap-2">
+                  {sel.servings.map((sv, i) => (
+                    <button key={sv.label} type="button" onClick={() => setUnit(i)} className={clsx('rounded-xl border px-3 py-1.5 text-[13px] transition', unit === i ? 'border-lime/60 bg-lime/10 text-fg' : 'border-line text-fg-muted hover:text-fg')}>
+                      {sv.label} <span className="text-fg-dim">· {sv.grams} g</span>
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => { setUnit('g'); setGrams(String(Math.round(qty) || 100)) }} className={clsx('rounded-xl border px-3 py-1.5 text-[13px] transition', unit === 'g' ? 'border-lime/60 bg-lime/10 text-fg' : 'border-line text-fg-muted hover:text-fg')}>Grams</button>
+                </div>
+              </div>
+            ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-[160px_1fr] sm:items-end">
-              <div><Label htmlFor="g">Quantity</Label><Input id="g" type="number" min={1} value={grams} onChange={e => setGrams(e.target.value)} suffix="g" /></div>
+              {serving ? (
+                <div><Label>How many?</Label>
+                  <div className="flex h-11 items-center justify-between rounded-xl border border-line bg-ink-950 px-1.5">
+                    <button type="button" aria-label="Less" onClick={() => setCount(c => Math.max(0.5, c - (c > 1 ? 1 : 0.5)))} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-fg-muted hover:bg-white/5 hover:text-fg">−</button>
+                    <span className="font-display text-base font-semibold tabular-nums">{count}</span>
+                    <button type="button" aria-label="More" onClick={() => setCount(c => Math.min(20, c < 1 ? 1 : c + 1))} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-fg-muted hover:bg-white/5 hover:text-fg">+</button>
+                  </div>
+                  <p className="mt-1 text-[11px] text-fg-dim">≈ {Math.round(qty)} g total</p></div>
+              ) : <div><Label htmlFor="g">Quantity</Label><Input id="g" type="number" min={1} value={grams} onChange={e => setGrams(e.target.value)} suffix="g" /></div>}
               <div className="grid grid-cols-4 gap-2 text-center">
                 {[['kcal', calc.calories], ['Protein', calc.protein_g], ['Carbs', calc.carbs_g], ['Fat', calc.fat_g]].map(([l, v]) => <div key={l as string} className="rounded-xl bg-white/[0.03] py-2"><p className="font-display font-bold tabular-nums">{v as number}</p><p className="text-[10px] text-fg-dim">{l}</p></div>)}
               </div>

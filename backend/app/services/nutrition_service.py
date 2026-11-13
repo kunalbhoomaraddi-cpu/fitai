@@ -2,7 +2,9 @@
 deterministic reference meal-plan engine."""
 from __future__ import annotations
 
+import difflib
 import logging
+import re
 import random
 from collections import defaultdict
 from datetime import date, timedelta
@@ -12,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.data.foods import REFERENCE_FOODS, food_allowed, nutrition_for, search_reference_foods
+from app.data.indian_foods import INDIAN_FOODS, REPLACES_REFERENCE
 from app.data.meals import MEAL_TEMPLATES
 from app.models import FoodEntry
 from app.utils.http import SlidingWindowLimiter, TTLCache, http_get_json
@@ -44,17 +47,71 @@ def _map_off_product(p: dict) -> dict | None:
     }
 
 
+def _norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9 ]+", " ", s.lower()).strip()
+
+
+_INDIAN_INDEX = [(k, _norm(f["name"]), [_norm(a) for a in f["aliases"]]) for k, f in INDIAN_FOODS.items()]
+_INDIAN_VOCAB = {term: k for k, name, aliases in _INDIAN_INDEX for term in [name, *aliases]}
+
+
+def indian_result(f: dict) -> dict:
+    return {"id": f"in:{f['key']}", "name": f["name"], "brand": None, "calories_100g": f["kcal"],
+            "protein_100g": f["protein"], "carbs_100g": f["carbs"], "fat_100g": f["fat"], "source": "indian",
+            "image_url": None, "servings": f["servings"], "diet": f["diet"], "category": f["category"]}
+
+
+def search_indian_foods(query: str, limit: int = 10) -> list[dict]:
+    """Ranked search over names + regional aliases, with typo tolerance (e.g. 'chapathi', 'biriyani')."""
+    q = _norm(query)
+    if len(q) < 2:
+        return []
+    tokens = q.split()
+    scored: dict[str, int] = {}
+    for key, name, aliases in _INDIAN_INDEX:
+        best = 0
+        for i, term in enumerate([name, *aliases]):
+            words = term.split()
+            bonus = 5 if i == 0 else 0
+            # short words (dal, tea, egg) must match whole words, so "dal" doesn't match "dalimbe"
+            pre = lambda w, t: w == t if len(t) < 4 else w.startswith(t)  # noqa: E731
+            if term == q:
+                s = 100
+            elif term.startswith(q + " ") or (len(q) >= 4 and term.startswith(q)):
+                s = 80
+            elif all(any(pre(w, t) for w in words) for t in tokens):
+                s = 60
+            elif len(q) >= 5 and q in term:
+                s = 30
+            else:
+                continue
+            best = max(best, s + bonus)
+        if best:
+            scored[key] = best
+    if not scored:  # typo tolerance
+        for term in difflib.get_close_matches(q, list(_INDIAN_VOCAB), n=limit, cutoff=0.78):
+            scored.setdefault(_INDIAN_VOCAB[term], 20)
+        if not scored and len(tokens) > 1:
+            for t in tokens:
+                for term in difflib.get_close_matches(t, list(_INDIAN_VOCAB), n=3, cutoff=0.82):
+                    scored.setdefault(_INDIAN_VOCAB[term], 10)
+    ranked = sorted(scored, key=lambda k: (-scored[k], len(INDIAN_FOODS[k]["name"])))
+    return [indian_result(INDIAN_FOODS[k]) for k in ranked[:limit]]
+
+
 def search_food(query: str, limit: int = 12) -> dict:
     """Returns {results, source, warning}. Never raises for upstream failures."""
     query = query.strip()[:80]
     if not query:
         return {"results": [], "source": "none", "warning": None}
-    reference = search_reference_foods(query, limit=6)
+    indian = search_indian_foods(query, limit=10)
+    reference = (indian + [r for r in search_reference_foods(query, limit=6)
+                           if r["id"].removeprefix("ref:") not in REPLACES_REFERENCE])[:12]
     if not settings.enable_external_apis:
         return {"results": reference, "source": "reference", "warning": "External food database disabled; showing FitAI reference foods."}
     cached = _off_cache.get(query.lower())
     if cached is not None:
-        return {"results": (reference + cached)[:limit], "source": "open_food_facts", "warning": None}
+        return {"results": (reference + cached)[:max(limit, len(reference) + 4)], "source": "open_food_facts", "warning": None}
     if not _off_limiter.allow():
         return {"results": reference, "source": "reference",
                 "warning": "Open Food Facts search limit reached (≈10/min). Showing reference foods — try again in a minute."}
@@ -67,7 +124,7 @@ def search_food(query: str, limit: int = 12) -> dict:
         )
         mapped = [m for m in (_map_off_product(p) for p in data.get("products", [])) if m][:10]
         _off_cache.set(query.lower(), mapped)
-        return {"results": (reference + mapped)[:limit], "source": "open_food_facts", "warning": None}
+        return {"results": (reference + mapped)[:max(limit, len(reference) + 4)], "source": "open_food_facts", "warning": None}
     except Exception as exc:  # network, timeout, 5xx, JSON
         log.warning("Open Food Facts unavailable: %s", type(exc).__name__)
         return {"results": reference, "source": "reference",

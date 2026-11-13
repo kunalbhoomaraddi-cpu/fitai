@@ -7,6 +7,7 @@ import { Badge, Bar, Button, Card, CardHeader, Celebration, Chip, EmptyState, Er
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
+import { ExerciseDemoModal, demoFor, demoImg } from '../../components/workout/ExerciseDemo'
 import { workoutApi } from '../../services/fitai'
 import type { Exercise, WorkoutPlan, WorkoutSession } from '../../types'
 import { cap, EQUIPMENT, GOAL_LABEL, MUSCLES, shortDate } from '../../utils/format'
@@ -22,15 +23,19 @@ const ACH: Record<string, string> = { first_workout: 'First Rep', five_workouts:
 
 function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; onSet?: () => void }) {
   const [open, setOpen] = useState(false)
-  const [wger, setWger] = useState<any>(null)
-  useEffect(() => { if (open && !wger) workoutApi.exerciseInfo(e.name).then(setWger).catch(() => setWger({ source: 'error' })) }, [open, wger, e.name])
+  const [demoOpen, setDemoOpen] = useState(false)
+  const hasDemo = !!demoFor(e.exercise_id)
   const done = e.sets_done ?? 0
   return (
     <div className={clsx('group overflow-hidden rounded-2xl border transition', e.completed ? 'border-lime/40 bg-lime/[0.03]' : 'border-line bg-ink-900/60 hover:border-line-strong')}>
       <div className="flex items-center gap-4 p-3 pr-4">
-        <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl sm:h-24 sm:w-20">
-          <Photo name={e.image} alt={`${e.muscle} illustration`} className="absolute inset-0" overlay={false} />
-        </div>
+        <button onClick={() => setDemoOpen(true)} aria-label={`Watch ${e.name} demo`} className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl sm:h-24 sm:w-20">
+          {hasDemo ? <img src={demoImg(e.exercise_id, 1)} alt="" loading="lazy" className="absolute inset-0 h-full w-full bg-white object-cover" />
+            : <Photo name={e.image} alt={`${e.muscle} illustration`} className="absolute inset-0" overlay={false} />}
+          <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-90 transition group-hover:bg-black/40">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white"><Play className="ml-0.5 h-3.5 w-3.5" /></span>
+          </span>
+        </button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2"><span className="text-[11px] tabular-nums text-fg-dim">{String(index + 1).padStart(2, '0')}</span><p className="truncate font-display text-[15px] font-semibold">{e.name}</p></div>
           <p className="mt-0.5 text-xs capitalize text-fg-muted">{e.muscle}{e.secondary.length ? ` · ${e.secondary.slice(0, 2).join(', ')}` : ''}</p>
@@ -38,6 +43,7 @@ function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; inde
             <span className="rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums">{e.sets} sets</span>
             <span className="rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums">{e.reps} reps</span>
             <span className="flex items-center gap-1 rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums"><Timer className="h-3 w-3" />{e.rest_seconds}s</span>
+            <button onClick={() => setDemoOpen(true)} className="flex items-center gap-1 rounded-md bg-lime/10 px-2 py-0.5 font-medium text-lime transition hover:bg-lime/20"><Play className="h-3 w-3" />{hasDemo ? 'Demo' : 'How to'}</button>
           </div>
         </div>
         {session ? (
@@ -50,14 +56,13 @@ function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; inde
         )}
       </div>
       {session && <div className="px-3 pb-3"><Bar value={done} max={e.sets} height="h-1" /></div>}
-      {(open || session) && (
-        <div className={clsx('border-t border-line-soft px-4 py-3 text-[13px] leading-relaxed text-fg-muted', session && 'hidden sm:block')}>
+      {open && !session && (
+        <div className="border-t border-line-soft px-4 py-3 text-[13px] leading-relaxed text-fg-muted">
           {e.instructions}
-          {!session && wger?.image_url && <img src={wger.image_url} alt={`${e.name} demonstration (wger)`} className="mt-3 h-32 rounded-lg bg-white object-contain p-2" loading="lazy" />}
-          {!session && wger && <p className="mt-2 text-[11px] text-fg-dim">{wger.source === 'wger' ? `Matched on wger.de${wger.wger_name ? `: ${wger.wger_name}` : ''} (CC-BY-SA)` : wger.warning || 'From the FitAI exercise library'}</p>}
           <p className="mt-1 text-[11px] text-fg-dim">Equipment: {e.equipment.map(cap).join(', ')}</p>
         </div>
       )}
+      <ExerciseDemoModal open={demoOpen} onClose={() => setDemoOpen(false)} exerciseId={e.exercise_id} name={e.name} tip={e.instructions} sets={e.sets} reps={e.reps} />
     </div>
   )
 }

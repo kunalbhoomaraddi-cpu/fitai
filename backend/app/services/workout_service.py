@@ -75,7 +75,7 @@ def _prescription(ex: dict, goal: str, experience: str, recovery: str) -> dict:
     if recovery == "extra_rest":
         sets = max(2, sets - 1)
         rest += 15
-    if ex["id"] in ("plank",):
+    if ex["id"] in ("plank", "side_plank"):
         reps = "30–45 sec"
     return {"sets": sets, "reps": reps, "rest_seconds": rest}
 
@@ -87,7 +87,7 @@ def _available(ex: dict, equipment: set[str]) -> bool:
 def _pick(muscle: str, equipment: set[str], used: set[str], rng: random.Random, experience: str) -> dict | None:
     cands = [e for e in EXERCISES if e["muscle"] == muscle and _available(e, equipment) and e["id"] not in used]
     if experience == "beginner":
-        cands = [e for e in cands if e["id"] not in ("deadlift", "hanging_knee_raise")] or cands
+        cands = [e for e in cands if e["id"] not in ("deadlift", "hanging_knee_raise", "chest_dip")] or cands
     if not cands:
         cands = [e for e in EXERCISES if muscle in e["secondary"] and _available(e, equipment) and e["id"] not in used]
     if not cands:

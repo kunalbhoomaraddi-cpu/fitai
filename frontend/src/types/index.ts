@@ -22,6 +22,7 @@ export interface FoodEntry {
 export interface FoodResult {
   id: string; name: string; brand: string | null; calories_100g: number; protein_100g: number
   carbs_100g: number; fat_100g: number; source: string; image_url: string | null
+  servings?: { label: string; grams: number }[]; diet?: string; category?: string
 }
 export interface Achievement {
   code: string; title: string; description: string; icon: string; unlocked: boolean; unlocked_at: string | null; seen: boolean

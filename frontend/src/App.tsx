@@ -53,7 +53,8 @@ export default function App() {
   return (
     <Suspense fallback={<Splash />}>
       <Routes>
-        <Route path="/" element={<PublicOnly><Landing /></PublicOnly>} />
+        {/* The landing page always opens first; signed-in users see "Open dashboard" on it instead of sign-up buttons. */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
         <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
         <Route path="/forgot-password" element={<PublicOnly><ForgotPassword /></PublicOnly>} />

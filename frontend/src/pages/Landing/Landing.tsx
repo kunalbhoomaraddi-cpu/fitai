@@ -70,7 +70,10 @@ function HeroVisual() {
 }
 
 export default function Landing() {
-  const { startDemo } = useAuth()
+  const { user, startDemo } = useAuth()
+  // Signed-in visitors still see the landing page, with a way back into the app instead of sign-up buttons.
+  const home = user ? (!user.email_verified ? '/verify-email' : user.onboarding_complete ? '/dashboard' : '/onboarding') : null
+  const homeLabel = user && !user.onboarding_complete ? 'Continue setup' : 'Open dashboard'
   const nav = useNavigate()
   const [menu, setMenu] = useState(false)
   const [open, setOpen] = useState<number | null>(0)
@@ -79,11 +82,11 @@ export default function Landing() {
   const demo = async () => { setDemoBusy(true); try { await startDemo(); nav('/dashboard') } finally { setDemoBusy(false) } }
 
   const Primary = ({ className = '' }: { className?: string }) => (
-    <Link to="/register" className={clsx('btn-shine inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-lime px-6 text-[15px] font-semibold text-ink-950 shadow-[0_10px_30px_-10px_rgba(198,243,107,.7)] transition hover:bg-lime-400 active:scale-[.98]', className)}>
-      Get started free <ArrowRight className="h-4 w-4" />
+    <Link to={home ?? '/register'} className={clsx('btn-shine inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-lime px-6 text-[15px] font-semibold text-ink-950 shadow-[0_10px_30px_-10px_rgba(198,243,107,.7)] transition hover:bg-lime-400 active:scale-[.98]', className)}>
+      {home ? homeLabel : 'Get started free'} <ArrowRight className="h-4 w-4" />
     </Link>
   )
-  const DemoBtn = ({ className = '' }: { className?: string }) => (
+  const DemoBtn = ({ className = '' }: { className?: string }) => home ? null : (
     <button onClick={demo} disabled={demoBusy} className={clsx('inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line bg-white/[0.03] px-6 text-[15px] font-medium text-fg transition hover:border-lime/50 hover:text-lime disabled:opacity-60', className)}>
       <PlayCircle className="h-4 w-4" />{demoBusy ? 'Opening demo…' : 'Explore the live demo'}
     </button>
@@ -99,17 +102,17 @@ export default function Landing() {
             {NAV.map(([h, l]) => <a key={h} href={h} className="transition hover:text-fg">{l}</a>)}
           </nav>
           <div className="ml-auto hidden items-center gap-3 md:flex">
-            <Link to="/login" className="px-3 py-2 text-sm font-medium text-fg-muted transition hover:text-fg">Log in</Link>
-            <Link to="/register" className="btn-shine inline-flex h-10 items-center gap-1.5 rounded-xl bg-lime px-4 text-sm font-semibold text-ink-950 transition hover:bg-lime-400">Get started <ArrowRight className="h-3.5 w-3.5" /></Link>
+            {!home && <Link to="/login" className="px-3 py-2 text-sm font-medium text-fg-muted transition hover:text-fg">Log in</Link>}
+            <Link to={home ?? '/register'} className="btn-shine inline-flex h-10 items-center gap-1.5 rounded-xl bg-lime px-4 text-sm font-semibold text-ink-950 transition hover:bg-lime-400">{home ? homeLabel : 'Get started'} <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
           <button className="ml-auto rounded-lg p-2 text-fg-muted md:hidden" onClick={() => setMenu(m => !m)} aria-label="Menu">{menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
         </div>
         {menu && (
           <div className="animate-fade-in border-t border-line-soft px-5 py-4 md:hidden">
             {NAV.map(([h, l]) => <a key={h} href={h} onClick={() => setMenu(false)} className="block py-2.5 text-fg-muted">{l}</a>)}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link to="/login" className="flex h-11 items-center justify-center rounded-xl border border-line text-sm">Log in</Link>
-              <Link to="/register" className="flex h-11 items-center justify-center rounded-xl bg-lime text-sm font-semibold text-ink-950">Get started</Link>
+            <div className={clsx('mt-3 grid gap-2', home ? 'grid-cols-1' : 'grid-cols-2')}>
+              {!home && <Link to="/login" className="flex h-11 items-center justify-center rounded-xl border border-line text-sm">Log in</Link>}
+              <Link to={home ?? '/register'} className="flex h-11 items-center justify-center rounded-xl bg-lime text-sm font-semibold text-ink-950">{home ? homeLabel : 'Get started'}</Link>
             </div>
           </div>
         )}
@@ -291,7 +294,7 @@ export default function Landing() {
       <footer className="border-t border-white/[0.06]">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-fg-dim sm:flex-row">
           <div className="flex items-center gap-3"><Logo /><span className="hidden sm:inline">·</span><span>Your Fitness. Your Goals. Your AI Coach.</span></div>
-          <div className="flex gap-6"><Link to="/login" className="hover:text-fg">Log in</Link><Link to="/register" className="hover:text-fg">Sign up</Link><a href="#faq" className="hover:text-fg">FAQ</a></div>
+          <div className="flex gap-6">{home ? <Link to={home} className="hover:text-fg">{homeLabel}</Link> : <><Link to="/login" className="hover:text-fg">Log in</Link><Link to="/register" className="hover:text-fg">Sign up</Link></>}<a href="#faq" className="hover:text-fg">FAQ</a></div>
         </div>
         <p className="pb-8 text-center text-xs text-fg-dim">FitAI provides general fitness guidance, not medical advice. © {new Date().getFullYear()} FitAI</p>
       </footer>

@@ -29,7 +29,9 @@ export default function Login() {
     return () => clearTimeout(t)
   }, [cooldown])
 
-  const go = (u: User) => nav(!u.email_verified ? '/verify-email' : u.onboarding_complete ? (loc.state?.from || '/dashboard') : '/onboarding', { replace: true })
+  // Only return to a page inside FitAI ("/settings"), never an outside address ("//evil.com", "/\\evil.com").
+  const from = typeof loc.state?.from === 'string' && /^\/(?![/\\])/.test(loc.state.from) ? loc.state.from : '/dashboard'
+  const go = (u: User) => nav(!u.email_verified ? '/verify-email' : u.onboarding_complete ? from : '/onboarding', { replace: true })
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null)

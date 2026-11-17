@@ -59,12 +59,12 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 
 | Area | What it does |
 |---|---|
-| **Accounts** | Registration with email verification, a 6-digit code on every login, forgot password, JWT sessions, account deletion |
+| **Accounts** | Registration with email verification, a 6-digit code on every login, forgot password, JWT sessions, account deletion confirmed by typing DELETE |
 | **Onboarding** | Six guided steps (metric or imperial) with a live preview of BMR, TDEE, calorie target and macros |
 | **Dashboard** | Goal-progress ring, daily AI recommendation, weight, calorie and protein charts, streaks, challenges and achievements |
 | **AI coach** | Persistent conversations, tool calling, structured answer cards (macros, weight trend, workouts, foods), suggested prompts |
 | **Diet planner** | 3–5 meal plans matched to calories, macros, diet type, restrictions and budget; swap foods, regenerate meals, mark meals eaten |
-| **Workout planner** | Push/Pull/Legs, Upper/Lower, Full Body, beginner, muscle-building, fat-loss and custom splits; start-and-finish photo demos for 62 of 63 exercises; guided sessions with set tracking and a rest timer |
+| **Workout planner** | Push/Pull/Legs, Upper/Lower, Full Body, beginner, muscle-building, fat-loss and custom splits on the weekdays you choose; today's workout or a rest-day note; start-and-finish photo demos for 62 of 63 exercises; guided sessions with set tracking and a rest timer |
 | **Nutrition tracker** | Open Food Facts search with an offline reference database, the Indian food library, custom foods, 14-day history |
 | **Progress** | Weight and body measurements, weekly averages, a 4-week regression trend, plateau detection, milestones |
 | **Progress photos** | Private front, side and back photos with a timeline and a before/after comparison slider |
@@ -161,6 +161,7 @@ fitai/
 | [Testing](docs/TESTING_GUIDE.md) | Running tests and what they cover |
 | [Deployment](docs/DEPLOYMENT_GUIDE.md) | Neon, Render, Vercel and Docker |
 | [Image credits](docs/IMAGE_CREDITS.md) | Licences for artwork and photos |
+| [Project documentation](docs/PROJECT_DOCUMENTATION.md) | The whole project start to finish: decisions, problems solved, demo script |
 | [Changelog](docs/CHANGELOG.md) | What was built, phase by phase |
 
 ## Author

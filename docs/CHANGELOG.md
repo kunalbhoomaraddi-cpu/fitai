@@ -8,6 +8,7 @@ What was built, in the order it was built. Live app: https://fitai-app-pink.verc
 - **Today in the workout planner.** The planner opens on today's workout. On a rest day it says so and shows the next workout, instead of showing Monday's.
 - **Landing page first.** The app always opens on the landing page; signed-in users see "Open dashboard".
 - **Safer account deletion.** Users type DELETE before "Delete permanently" unlocks.
+- **Engineering review.** All checks re-run on both databases and in the browser; 7 of 11 dependency warnings fixed with safe updates (the other 4 need major upgrades and don't affect the live site); after login, FitAI only returns to its own pages; test warnings removed; Dependabot and an editor config added; docs refreshed.
 
 ## Release 1.0: live in production (13 Nov 2026)
 

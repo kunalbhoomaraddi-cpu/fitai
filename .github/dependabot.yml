@@ -1,0 +1,21 @@
+# Monthly pull requests for dependency updates. Minor and patch updates are grouped into one PR per
+# ecosystem; major upgrades (e.g. Vite 8, React Router 7) arrive separately so they can be tested on their own.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch: { update-types: [minor, patch] }
+
+  - package-ecosystem: pip
+    directory: /backend
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-and-patch: { update-types: [minor, patch] }
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

@@ -1,13 +1,13 @@
 # FitAI — Complete Project Documentation
 
-**Author:** Kunal Bhoomaraddi · **As of:** 13 November 2026
+**Author:** Kunal Bhoomaraddi · **As of:** 17 November 2026
 
 | | |
 |---|---|
 | **Live app** | https://fitai-app-pink.vercel.app (click **Explore the demo**, no sign-up needed) |
 | **Source code** | https://github.com/kunalbhoomaraddi-cpu/fitai (public) |
 | **Backend API** | https://fitai-api-nmtc.onrender.com/api/health |
-| **Status** | Live in production · 95 automated tests passing on every push |
+| **Status** | Live in production · 102 automated tests passing on every push |
 
 ---
 
@@ -18,7 +18,7 @@
 3. [Phase 0: the first version](#3-phase-0-the-first-version)
 4. [Feature additions](#4-feature-additions)
 5. [Research, design review and quality audit](#5-research-design-review-and-quality-audit)
-6. [Phase 1: production readiness](#6-phase-1-production-readiness)
+6. [Phase 1: production readiness](#6-phase-1-production-readiness) (plus the 17 Nov improvements)
 7. [Going live](#7-going-live)
 8. [Security](#8-security)
 9. [Repository, CI and documentation](#9-repository-ci-and-documentation)
@@ -198,6 +198,16 @@ Commit `f418c6d`, "Phase 1 updates" (62 files).
 - Real visitor IP addresses are read behind Render's proxy, so per-IP rate limits work.
 - A friendly "FitAI is waking up" message replaces a technical error while the free server starts.
 
+### 6.5 Improvements after the first review (17 Nov 2026)
+
+| Change | What it does |
+|---|---|
+| **Choose your training days** | New plans use the weekdays the user picks (e.g. Tue, Thu, Sat). Existing plans have **Change days**, which moves the workouts without regenerating them |
+| **Today in the workout planner** | Opens on today's workout. On a rest day it says so and shows the next workout |
+| **Landing page first** | The app always opens on the landing page; signed-in users see **Open dashboard** |
+| **Safer account deletion** | **Delete permanently** stays locked until the user types DELETE |
+| **Engineering review** | All checks re-run; 7 of 11 dependency warnings fixed with safe updates; login redirect accepts only FitAI pages; test warnings removed; docs refreshed |
+
 ---
 
 ## 7. Going live
@@ -251,7 +261,7 @@ Commit `f418c6d`, "Phase 1 updates" (62 files).
 
 ```
 fitai/
-├── backend/            FastAPI app + 95 tests
+├── backend/            FastAPI app + 102 tests
 ├── frontend/           React app
 ├── docs/               guides, changelog, screenshots
 ├── scripts/            dev, test, reset and setup helpers
@@ -266,12 +276,16 @@ fitai/
 - `docs/LOCAL_SETUP.md`, `ENVIRONMENT_CONFIGURATION.md`, `PROJECT_ARCHITECTURE.md`, `API_DOCUMENTATION.md`
 - `docs/TESTING_GUIDE.md`, `DEPLOYMENT_GUIDE.md`, `IMAGE_CREDITS.md`, `CHANGELOG.md`
 
-**Automated checks (GitHub Actions):** every push runs Ruff, the 95 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. All 5 runs so far passed, in about a minute each.
+**Automated checks (GitHub Actions):** every push runs Ruff, the 102 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
 
 **Commit history (newest first)**
 
 | Commit | Change |
 |---|---|
+| `3eccc55` | Choose training days; show today and rest days in the workout planner |
+| `d156399` | Always open on the landing page |
+| `729fdcc` | Ask users to type DELETE before deleting their account |
+| `fb82e76` | Add complete project documentation |
 | `81f00d1` | Final cleanup: live link, changelog, updated docs, photos in repo |
 | `e099518` | Send email codes through the Gmail API (backup path) |
 | `e9371bd` | Trim pasted settings and hide keys in error logs |
@@ -289,11 +303,11 @@ fitai/
 
 | Check | Result |
 |---|---|
-| Backend tests on SQLite | 95 / 95 passed |
-| Backend tests on PostgreSQL 16 (same as Neon) | 95 / 95 passed |
+| Backend tests on SQLite | 102 / 102 passed, no warnings |
+| Backend tests on PostgreSQL 16 (same as Neon) | 102 / 102 passed |
 | Ruff (backend) and ESLint (frontend) | No problems |
 | TypeScript check and production build | Passed |
-| Browser tests: login code, forgot password, weekly check-in, progress photos, Indian food, exercise demos | All passed |
+| Browser tests: login code, forgot password, weekly check-in, progress photos, Indian food, exercise demos, type-DELETE confirmation, landing page, training days | All passed |
 | All 13 pages at laptop and phone size (26 screens) | No errors, nothing cut off |
 | Live site | Website, backend, database, AI coach, email codes, photos and demos working |
 
@@ -308,6 +322,7 @@ fitai/
 | `test_checkins.py` | Weekly score, targets, warnings, AI wording with fallback |
 | `test_photos.py` | Upload checks, GPS stripping, thumbnails, owner-only access |
 | `test_indian_foods.py`, `test_exercise_demos.py` | Regional names, misspellings, portions; every exercise has a demo |
+| `test_training_days.py` | Plans on chosen weekdays, moving a plan's days, dashboard follows the new days |
 | `test_timezone.py` | India just after midnight on a UTC server, saved zone, legacy names |
 | `test_demo.py` | Private demo copies, expiry, reserved email domain |
 | `test_deploy_config.py` | Production checks, trimming, hidden keys, Brevo and Gmail email |
@@ -325,7 +340,7 @@ About 10–12 minutes. Open the site a minute early so the free server is awake.
 2. **Dashboard**: goal ring, today's recommendation, charts, streaks.
 3. **AI Fitness Coach**: ask "How much protein do I need?" and point out the tool card; the number comes from a calculation, not a guess.
 4. **Diet Planner**: an Indian meal plan; swap a food, mark a meal eaten.
-5. **Workout Planner**: open a **Demo**, then **Start workout** to show set tracking and the rest timer.
+5. **Workout Planner**: point out **Today** in the week strip, then **Change days** (pick your own training days). Open a **Demo**, then **Start workout** to show set tracking and the rest timer.
 6. **Nutrition Tracker**: search "jolada rotti" and add 2 rotis.
 7. **Weekly Check-in**: run it and explain the score.
 8. **Real account**: log out, log in with your email, and show the 6-digit code arriving.
@@ -355,7 +370,7 @@ About 10–12 minutes. Open the site a minute early so the free server is awake.
 **Should do**
 5. Browser tests (Playwright) in the repo and in CI.
 6. Login tokens in secure cookies, plus a Content-Security-Policy header.
-7. Dependabot for dependency updates (npm reported 11 known vulnerabilities in dependencies).
+7. Dependency upgrades: Dependabot is set up; 4 known issues remain that need major upgrades (Vite 8, React Router 7). They affect only the local dev server, or redirect links that FitAI's own code already guards against.
 8. Stricter TypeScript types for API responses.
 9. Move progress photos to object storage.
 10. Shared rate limiting (Redis) if the backend runs on more than one server.
@@ -377,6 +392,9 @@ About 10–12 minutes. Open the site a minute early so the free server is awake.
 
 | When | Milestone |
 |---|---|
+| 17 Nov 2026 | Engineering review: all checks re-run, safe dependency updates, login redirect hardened, docs refreshed |
+| 17 Nov 2026 | Choose training days; today and rest days in the workout planner (`3eccc55`) |
+| 17 Nov 2026 | Landing page opens first (`d156399`); type DELETE to delete an account (`729fdcc`) |
 | 13 Nov 2026 | Final cleanup: live link, changelog, photos in repo (`81f00d1`) |
 | 13 Nov 2026 | Live on Vercel, Render, Neon and Brevo; key redaction and trimming; Gmail API backup |
 | 13 Nov 2026 | Repo polished and made public; GitHub Actions added |

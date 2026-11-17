@@ -77,3 +77,4 @@ def test_migration_adds_column_to_old_database(tmp_path):
     assert "email_verified" in {c["name"] for c in inspect(eng).get_columns("users")}
     with eng.connect() as c:
         assert c.execute(text("SELECT email_verified FROM users")).scalar() in (1, True)
+    eng.dispose()  # close the test database's connections

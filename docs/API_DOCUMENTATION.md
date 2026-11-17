@@ -56,9 +56,10 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 ## Workouts
 | Method | Path | Description |
 |---|---|---|
-| POST | `/workouts/generate` | `{goal?, experience?, days_per_week?, equipment?, duration_minutes?, split, target_muscles[], recovery, use_ai}` |
+| POST | `/workouts/generate` | `{goal?, experience?, training_days?, days_per_week?, equipment?, duration_minutes?, split, target_muscles[], recovery, use_ai}`. `training_days` = weekdays such as `["Tue","Thu","Sat"]` |
 | GET | `/workouts/plans`, `/workouts/plans/active`, `/workouts/plans/{id}` | Plans |
 | POST / DELETE | `/workouts/plans/{id}/save`, `/workouts/plans/{id}` | Save or delete |
+| PATCH | `/workouts/plans/{id}/days` | `{training_days}`: move the plan's workouts to these weekdays (same count as the plan) |
 | POST | `/workouts/sessions/start` | `{plan_id?, day_index}`. Starts a session; any other in-progress session is abandoned |
 | GET | `/workouts/sessions/active` | Current session |
 | PATCH | `/workouts/sessions/{id}` | `{exercises?, status?}`. `completed` computes duration and returns `new_achievements` |

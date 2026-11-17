@@ -31,6 +31,8 @@ export default function Settings() {
   const [pw, setPw] = useState({ current: '', next: '' })
   const [pwBusy, setPwBusy] = useState(false)
   const [delOpen, setDelOpen] = useState(false)
+  const [delText, setDelText] = useState('')
+  const [delBusy, setDelBusy] = useState(false)
   const units: Units = p?.unit_system ?? 'metric'
   const [disp, setDisp] = useState({ h: '', ft: '', inch: '', w: '', t: '' })
 
@@ -68,7 +70,14 @@ export default function Settings() {
     setPwBusy(true)
     try { const r = await settingsApi.password(pw.current, pw.next); tokenStore.set(r.access_token); setPw({ current: '', next: '' }); toast('success', 'Password changed', 'You stay logged in here. Other devices were signed out.') } catch (e) { toast('error', 'Could not change password', (e as Error).message) } finally { setPwBusy(false) }
   }
-  const del = async () => { try { await settingsApi.deleteAccount(); logout(); nav('/login') } catch (e) { toast('error', 'Delete failed', (e as Error).message) } }
+  // The user must type DELETE before the button unlocks, so an account can't be deleted by one stray click.
+  const delConfirmed = delText.trim().toUpperCase() === 'DELETE'
+  const closeDel = () => { setDelOpen(false); setDelText('') }
+  const del = async () => {
+    if (!delConfirmed || delBusy) return
+    setDelBusy(true)
+    try { await settingsApi.deleteAccount(); logout(); nav('/login') } catch (e) { toast('error', 'Delete failed', (e as Error).message); setDelBusy(false) }
+  }
   const toggle = (k: 'equipment' | 'food_restrictions', v: string) => upd(k, p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v])
 
   return (
@@ -138,8 +147,13 @@ export default function Settings() {
           </div>
         </Section>
       </div>
-      <Modal open={delOpen} onClose={() => setDelOpen(false)} title="Delete your account?" footer={<><Button variant="ghost" onClick={() => setDelOpen(false)}>Cancel</Button><Button variant="danger" onClick={del}>Delete permanently</Button></>}>
-        <p className="text-sm text-fg-muted">This permanently deletes your profile, logs, plans and conversations. This can't be undone.</p>
+      <Modal open={delOpen} onClose={closeDel} title="Delete your account?" footer={<><Button variant="ghost" onClick={closeDel}>Cancel</Button><Button variant="danger" onClick={del} disabled={!delConfirmed} loading={delBusy} className={delConfirmed ? '!bg-coral !text-ink-950 font-semibold hover:!bg-coral/90' : ''}>Delete permanently</Button></>}>
+        <p className="text-sm text-fg-muted">This permanently deletes your profile, meals, workouts, progress photos, check-ins and coach conversations. This can't be undone.</p>
+        <div className="mt-4">
+          <Label htmlFor="del-confirm">Type <span className="font-semibold text-fg">DELETE</span> to confirm</Label>
+          <Input id="del-confirm" value={delText} onChange={e => setDelText(e.target.value)} placeholder="DELETE" autoComplete="off" autoCapitalize="characters" spellCheck={false}
+            onKeyDown={e => { if (e.key === 'Enter') del() }} />
+        </div>
       </Modal>
     </div>
   )

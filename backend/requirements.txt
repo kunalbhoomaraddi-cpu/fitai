@@ -16,4 +16,4 @@ tzdata==2025.2
 psycopg[binary]==3.2.9
 
 # testing
-pytest==8.4.1
+pytest==9.2.0

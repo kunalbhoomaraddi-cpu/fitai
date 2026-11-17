@@ -2,6 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+Weekday = Literal["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
 
 class DietPlanIn(BaseModel):
     calorie_target: int | None = Field(default=None, ge=1200, le=5000)
@@ -35,12 +37,18 @@ class WorkoutPlanIn(BaseModel):
     goal: Literal["weight_loss", "muscle_gain", "recomposition", "general_fitness", "maintenance"] | None = None
     experience: Literal["beginner", "intermediate", "advanced"] | None = None
     days_per_week: int | None = Field(default=None, ge=1, le=6)
+    # The weekdays the user wants to train on, e.g. ["Tue", "Thu", "Sat"]. Overrides days_per_week.
+    training_days: list[Weekday] | None = Field(default=None, min_length=1, max_length=6)
     equipment: list[str] | None = None
     duration_minutes: int | None = Field(default=None, ge=15, le=120)
     split: Literal["auto", "full_body", "upper_lower", "push_pull_legs", "beginner", "muscle_building", "fat_loss", "custom"] = "auto"
     target_muscles: list[str] = Field(default_factory=list)
     recovery: Literal["standard", "extra_rest", "active_recovery"] = "standard"
     use_ai: bool = True
+
+
+class PlanDaysIn(BaseModel):
+    training_days: list[Weekday] = Field(min_length=1, max_length=6)
 
 
 class StartWorkoutIn(BaseModel):

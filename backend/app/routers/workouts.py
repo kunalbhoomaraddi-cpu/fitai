@@ -11,7 +11,7 @@ from app.ai.provider import ProviderError, get_provider
 from app.database import get_db
 from app.models import User, WorkoutPlan, WorkoutSession
 from app.models._mixins import utcnow
-from app.schemas.plans import StartWorkoutIn, UpdateSessionIn, WorkoutPlanIn
+from app.schemas.plans import PlanDaysIn, StartWorkoutIn, UpdateSessionIn, WorkoutPlanIn
 from app.services import progress_service
 from app.services import workout_service as wsvc
 from app.services.auth_service import require_profile
@@ -48,10 +48,11 @@ def generate(body: WorkoutPlanIn, user: User = Depends(ai_rate_limit), db: Sessi
         raise HTTPException(409, "Complete onboarding first")
     goal = body.goal or prof.goal
     exp = body.experience or prof.experience
-    days = body.days_per_week or min(prof.workout_days_per_week, 6)
+    training_days = sorted(set(body.training_days), key=wsvc.WEEK.index) if body.training_days else None
+    days = len(training_days) if training_days else body.days_per_week or min(prof.workout_days_per_week, 6)
     eq = body.equipment if body.equipment is not None else prof.equipment
     dur = body.duration_minutes or prof.workout_minutes
-    plan = wsvc.generate_plan(goal, exp, days, eq, dur, body.split, body.target_muscles, body.recovery)
+    plan = wsvc.generate_plan(goal, exp, days, eq, dur, body.split, body.target_muscles, body.recovery, training_days=training_days)
     note, generated_by, notice = None, "fitai_engine", None
     provider = get_provider(user.ai_provider_pref)
     if body.use_ai and provider.is_real_llm:
@@ -71,6 +72,7 @@ def generate(body: WorkoutPlanIn, user: User = Depends(ai_rate_limit), db: Sessi
             notice = "Demo mode: coach note written by the rule-based engine (no LLM configured)."
     inputs = {"goal": goal, "experience": exp, "days_per_week": days, "equipment": eq, "duration_minutes": dur,
               "split": body.split, "target_muscles": body.target_muscles, "recovery": body.recovery,
+              "training_days": [d["weekday"] for d in plan["days"]],
               "rest_days": plan["rest_days"], "recovery_note": plan["recovery_note"]}
     wp = WorkoutPlan(user_id=user.id, title=f"{plan['split_name']} · {days} days/week", split=plan["split"], inputs=inputs,
                      days=plan["days"], generated_by=generated_by, coach_note=note, is_saved=False)
@@ -96,6 +98,19 @@ def active_plan(user: User = Depends(require_profile), db: Session = Depends(get
 @router.get("/plans/{pid}")
 def get_plan(pid: int, user: User = Depends(require_profile), db: Session = Depends(get_db)):
     return _plan_out(_own_plan(db, user, pid))
+
+
+@router.patch("/plans/{pid}/days")
+def change_plan_days(pid: int, body: PlanDaysIn, user: User = Depends(require_profile), db: Session = Depends(get_db)):
+    """Move a plan's workouts to the weekdays the user trains on, without regenerating it."""
+    p = _own_plan(db, user, pid)
+    try:
+        p.days, rest = wsvc.assign_weekdays(p.days, body.training_days)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from None
+    p.inputs = {**p.inputs, "training_days": [d["weekday"] for d in p.days], "rest_days": rest}
+    db.commit()
+    return _plan_out(p)
 
 
 @router.post("/plans/{pid}/save")

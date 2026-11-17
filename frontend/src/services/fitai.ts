@@ -53,6 +53,7 @@ export const workoutApi = {
   plans: () => api.get<WorkoutPlan[]>('/workouts/plans'),
   active: () => api.get<WorkoutPlan | null>('/workouts/plans/active'),
   save: (id: number) => api.post<WorkoutPlan>(`/workouts/plans/${id}/save`),
+  setDays: (id: number, training_days: string[]) => api.patch<WorkoutPlan>(`/workouts/plans/${id}/days`, { training_days }),
   remove: (id: number) => api.del<void>(`/workouts/plans/${id}`),
   start: (plan_id: number | null, day_index: number) => api.post<WorkoutSession>('/workouts/sessions/start', { plan_id, day_index }),
   activeSession: () => api.get<WorkoutSession | null>('/workouts/sessions/active'),

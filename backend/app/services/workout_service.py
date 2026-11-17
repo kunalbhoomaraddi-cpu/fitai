@@ -40,6 +40,22 @@ WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 SCHEDULE = {1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 4, 5], 6: [0, 1, 2, 3, 4, 5]}
 
 
+def schedule_for(days: int, training_days: list[str] | None = None) -> list[int]:
+    """Weekday indexes (Mon=0) to train on: the user's own choice when given, else a balanced default."""
+    if training_days:
+        return sorted({WEEK.index(d) for d in training_days})
+    return SCHEDULE.get(days, SCHEDULE[3])
+
+
+def assign_weekdays(plan_days: list[dict], training_days: list[str]) -> tuple[list[dict], list[str]]:
+    """Move an existing plan's workouts onto new weekdays, keeping their order (Push, Pull, Legs...)."""
+    schedule = schedule_for(len(plan_days), training_days)
+    if len(schedule) != len(plan_days):
+        raise ValueError(f"Pick exactly {len(plan_days)} days for this plan")
+    moved = [{**d, "weekday": WEEK[schedule[i]]} for i, d in enumerate(plan_days)]
+    return moved, [WEEK[d] for d in range(7) if d not in schedule]
+
+
 def choose_split(goal: str, experience: str, days: int, requested: str) -> str:
     if requested not in ("auto", "muscle_building", "custom"):
         return requested
@@ -98,8 +114,10 @@ def _pick(muscle: str, equipment: set[str], used: set[str], rng: random.Random, 
 
 def generate_plan(goal: str, experience: str, days: int, equipment: list[str], duration: int,
                   split: str = "auto", target_muscles: list[str] | None = None, recovery: str = "standard",
-                  seed: int | None = None) -> dict:
+                  seed: int | None = None, training_days: list[str] | None = None) -> dict:
     rng = random.Random(seed)
+    if training_days:
+        days = len(set(training_days))
     eq = set(equipment) | {"bodyweight"}
     chosen = choose_split(goal, experience, days, split)
     n_ex = max(3, min(8, round(duration / 9)))
@@ -110,7 +128,7 @@ def generate_plan(goal: str, experience: str, days: int, equipment: list[str], d
     else:
         templates = DAY_TEMPLATES.get(chosen, DAY_TEMPLATES["full_body"])
     plan_days = []
-    schedule = SCHEDULE.get(days, SCHEDULE[3])
+    schedule = schedule_for(days, training_days)
     for i in range(days):
         name, muscles = templates[i % len(templates)]
         if target_muscles and chosen != "custom":

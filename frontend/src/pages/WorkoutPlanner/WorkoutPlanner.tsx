@@ -19,7 +19,21 @@ const SPLITS: [string, string, string][] = [
   ['fat_loss', 'Fat Loss', 'Strength + conditioning'], ['custom', 'Custom Routine', 'Choose target muscles'],
 ]
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+// Default weekdays for N training days (same as the backend), used until the user picks their own.
+const DEFAULT_DAYS: Record<number, string[]> = { 1: ['Mon'], 2: ['Mon', 'Thu'], 3: ['Mon', 'Wed', 'Fri'], 4: ['Mon', 'Tue', 'Thu', 'Fri'], 5: ['Mon', 'Tue', 'Wed', 'Fri', 'Sat'], 6: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] }
+const todayName = () => WEEK[(new Date().getDay() + 6) % 7]
+const byWeek = (a: string, b: string) => WEEK.indexOf(a) - WEEK.indexOf(b)
+const toggleDay = (list: string[], d: string) => (list.includes(d) ? list.filter(x => x !== d) : [...list, d]).sort(byWeek)
 const ACH: Record<string, string> = { first_workout: 'First Rep', five_workouts: 'Momentum', streak_7: 'Seven Strong' }
+
+function nextWorkoutIndex(plan: WorkoutPlan): number {
+  const t = WEEK.indexOf(todayName())
+  for (let k = 0; k < 7; k++) {
+    const i = plan.days.findIndex(d => d.weekday === WEEK[(t + k) % 7])
+    if (i >= 0) return i
+  }
+  return 0
+}
 
 function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; onSet?: () => void }) {
   const [open, setOpen] = useState(false)
@@ -136,7 +150,7 @@ export default function WorkoutPlanner() {
   const [summary, setSummary] = useState<WorkoutSession | null>(null)
   const [history, setHistory] = useState<{ sessions: WorkoutSession[]; stats: any; plans: WorkoutPlan[] } | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
-  const [form, setForm] = useState({ split: 'auto', goal: profile?.goal ?? 'general_fitness', experience: profile?.experience ?? 'beginner', days: Math.min(6, profile?.workout_days_per_week ?? 3), duration: profile?.workout_minutes ?? 45, equipment: profile?.equipment ?? ['bodyweight'], muscles: [] as string[], recovery: 'standard', useAi: true })
+  const [form, setForm] = useState({ split: 'auto', goal: profile?.goal ?? 'general_fitness', experience: profile?.experience ?? 'beginner', trainingDays: DEFAULT_DAYS[Math.max(1, Math.min(6, profile?.workout_days_per_week ?? 3))], duration: profile?.workout_minutes ?? 45, equipment: profile?.equipment ?? ['bodyweight'], muscles: [] as string[], recovery: 'standard', useAi: true })
 
   useEffect(() => { if (active.data !== undefined) setPlan(active.data); if (active.data === null && !active.loading) setTab('generate') }, [active.data, active.loading])
   useEffect(() => { if (sessionQ.data) setSession(sessionQ.data) }, [sessionQ.data])
@@ -144,12 +158,11 @@ export default function WorkoutPlanner() {
     const st = loc.state?.start
     if (st && !sessionQ.loading && !sessionQ.data) { navigate('.', { replace: true, state: null }); start(st.plan_id, st.day_index) }
   }, [loc.state, sessionQ.loading]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Open on today's workout; on a rest day, open on the next workout coming up.
   useEffect(() => {
     if (!plan) return
-    const today = WEEK[(new Date().getDay() + 6) % 7]
-    const i = plan.days.findIndex(d => d.weekday === today)
-    setDayIdx(i >= 0 ? i : 0)
-  }, [plan?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    setDayIdx(nextWorkoutIndex(plan))
+  }, [plan?.id, plan?.days.map(d => d.weekday).join()]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (tab !== 'history') return
     Promise.all([workoutApi.history(), workoutApi.stats(), workoutApi.plans()]).then(([sessions, stats, plans]) => setHistory({ sessions, stats, plans })).catch(e => toast('error', 'Could not load history', e.message))
@@ -158,7 +171,7 @@ export default function WorkoutPlanner() {
   const generate = async () => {
     setBusy('gen')
     try {
-      const p = await workoutApi.generate({ split: form.split, goal: form.goal, experience: form.experience, days_per_week: form.days, duration_minutes: form.duration, equipment: form.equipment, target_muscles: form.muscles, recovery: form.recovery, use_ai: form.useAi })
+      const p = await workoutApi.generate({ split: form.split, goal: form.goal, experience: form.experience, training_days: form.trainingDays, duration_minutes: form.duration, equipment: form.equipment, target_muscles: form.muscles, recovery: form.recovery, use_ai: form.useAi })
       setPlan(p); setTab('plan'); toast('success', 'Workout plan ready', p.notice || undefined)
     } catch (e) { toast('error', 'Generation failed', (e as Error).message) } finally { setBusy(null) }
   }
@@ -187,6 +200,16 @@ export default function WorkoutPlanner() {
 
   const day = plan?.days[dayIdx]
   const trainingDays = useMemo(() => new Map(plan?.days.map((d, i) => [d.weekday, i]) ?? []), [plan])
+  const today = todayName()
+  const restToday = !!plan && !trainingDays.has(today)
+  const nextIdx = plan ? nextWorkoutIndex(plan) : 0
+  const [editDays, setEditDays] = useState<string[] | null>(null)
+  const saveDays = async () => {
+    if (!plan || !editDays) return
+    setBusy('days')
+    try { const p = await workoutApi.setDays(plan.id, editDays); setPlan({ ...p, notice: plan.notice }); setEditDays(null); toast('success', 'Training days updated') }
+    catch (e) { toast('error', 'Could not change days', (e as Error).message) } finally { setBusy(null) }
+  }
 
   return (
     <div>
@@ -222,22 +245,40 @@ export default function WorkoutPlanner() {
                       <p className="mt-1 text-xs text-fg-dim">{GOAL_LABEL[plan.inputs.goal]} · {cap(plan.inputs.experience)} · {plan.inputs.duration_minutes} min sessions</p>
                     </div>
                     <div className="flex gap-2">{!plan.is_saved && <Button variant="secondary" size="sm" icon={<Bookmark className="h-3.5 w-3.5" />} loading={busy === 'save'} onClick={async () => { setBusy('save'); try { setPlan(await workoutApi.save(plan.id)); toast('success', 'Plan saved') } finally { setBusy(null) } }}>Save plan</Button>}
+                      <Button size="sm" variant="ghost" icon={<CalendarDays className="h-3.5 w-3.5" />} onClick={() => setEditDays(editDays ? null : plan.days.map(d => d.weekday))}>Change days</Button>
                       <Button size="sm" variant="ghost" onClick={() => setTab('generate')}>New plan</Button></div>
                   </div>
                   <div className="mt-5 grid grid-cols-7 gap-1.5 sm:gap-2">
-                    {WEEK.map(w => { const i = trainingDays.get(w); const isToday = WEEK[(new Date().getDay() + 6) % 7] === w; return (
-                      <button key={w} disabled={i === undefined} onClick={() => i !== undefined && setDayIdx(i)}
-                        className={clsx('flex flex-col items-center rounded-xl border px-1 py-2.5 transition sm:py-3', i === undefined ? 'border-line-soft bg-transparent text-fg-dim' : i === dayIdx ? 'border-lime bg-lime/10 text-fg' : 'border-line bg-ink-900 text-fg-muted hover:border-line-strong')}>
-                        <span className={clsx('text-[11px] font-semibold', isToday && 'text-lime')}>{w}</span>
+                    {WEEK.map(w => { const i = trainingDays.get(w); const isToday = today === w; return (
+                      <button key={w} disabled={i === undefined} onClick={() => i !== undefined && setDayIdx(i)} aria-current={isToday ? 'date' : undefined}
+                        className={clsx('flex flex-col items-center rounded-xl border px-1 py-2.5 transition sm:py-3', i === undefined ? clsx('bg-transparent text-fg-dim', isToday ? 'border-dashed border-lime/50' : 'border-line-soft') : i === dayIdx ? 'border-lime bg-lime/10 text-fg' : 'border-line bg-ink-900 text-fg-muted hover:border-line-strong')}>
+                        <span className={clsx('text-[11px] font-semibold', isToday && 'text-lime')}>{isToday ? 'Today' : w}</span>
                         <span className="mt-1 hidden text-[10px] sm:block">{i === undefined ? 'Rest' : plan.days[i].name.split(' ')[0]}</span>
                         <span className={clsx('mt-1.5 h-1.5 w-1.5 rounded-full', i === undefined ? 'bg-line' : 'bg-lime')} />
                       </button>) })}
                   </div>
+                  {editDays && (
+                    <div className="mt-4 rounded-xl border border-line bg-ink-900/70 p-4">
+                      <p className="text-sm font-medium">Which days do you train?</p>
+                      <p className="mt-0.5 text-xs text-fg-dim">Pick {plan.days.length} {plan.days.length === 1 ? 'day' : 'days'}. Your workouts keep their order ({plan.days.map(d => d.name).join(', ')}); only the days change.</p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">{WEEK.map(w => <Chip key={w} active={editDays.includes(w)} onClick={() => setEditDays(toggleDay(editDays, w))}>{w}</Chip>)}</div>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Button size="sm" onClick={saveDays} loading={busy === 'days'} disabled={editDays.length !== plan.days.length}>Save days</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditDays(null)}>Cancel</Button>
+                        {editDays.length !== plan.days.length && <span className="text-xs text-fg-dim">{editDays.length}/{plan.days.length} selected</span>}
+                      </div>
+                    </div>
+                  )}
                   {plan.coach_note && <div className="mt-5 flex gap-3 rounded-xl border border-line-soft bg-ink-900/70 p-4"><Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-lime" /><p className="text-[13.5px] leading-relaxed text-fg-muted">{plan.coach_note}</p></div>}
                 </Card>
+                {restToday && (
+                  <Notice tone="info" icon={<CalendarDays className="h-4 w-4" />}>
+                    <span className="font-medium text-fg">Today ({today}) is a rest day.</span> Next workout: {plan.days[nextIdx].weekday} · {plan.days[nextIdx].name}. Rest helps your muscles recover; a short walk or stretching is fine.
+                  </Notice>
+                )}
                 {day && (
                   <Card>
-                    <CardHeader title={`${day.weekday} · ${day.name}`} subtitle={`${day.exercises.length} exercises · ~${day.duration_minutes} min · ${day.focus.map(cap).join(', ')}`} icon={<Dumbbell className="h-4 w-4" />}
+                    <CardHeader title={`${day.weekday === today ? 'Today' : day.weekday} · ${day.name}`} subtitle={`${day.exercises.length} exercises · ~${day.duration_minutes} min · ${day.focus.map(cap).join(', ')}`} icon={<Dumbbell className="h-4 w-4" />}
                       action={<Button onClick={() => start(plan.id, dayIdx)} loading={busy === 'start'} icon={<Play className="h-4 w-4" />}>Start workout</Button>} />
                     <div className="stagger space-y-3 p-5">
                       <Notice tone="info" icon={<Info className="h-4 w-4" />}>Warm up 5–8 minutes with easy cardio and 1–2 light ramp-up sets before your first exercise.</Notice>
@@ -272,12 +313,13 @@ export default function WorkoutPlanner() {
             <div className="space-y-4 p-5">
               <div><Label htmlFor="goal">Fitness goal</Label><Select id="goal" value={form.goal} onChange={e => setForm({ ...form, goal: e.target.value as any })}>{Object.entries(GOAL_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></div>
               <div><Label>Experience</Label><Segmented size="sm" options={[['beginner', 'Beginner'], ['intermediate', 'Intermediate'], ['advanced', 'Advanced']] as const} value={form.experience as any} onChange={v => setForm({ ...form, experience: v })} /></div>
-              <div><Label>Training days / week</Label><div className="flex flex-wrap gap-1.5">{[1, 2, 3, 4, 5, 6].map(n => <Chip key={n} active={form.days === n} onClick={() => setForm({ ...form, days: n })}>{n}</Chip>)}</div></div>
+              <div><Label>Training days</Label><div className="flex flex-wrap gap-1.5">{WEEK.map(w => <Chip key={w} active={form.trainingDays.includes(w)} onClick={() => setForm({ ...form, trainingDays: toggleDay(form.trainingDays, w) })}>{w}</Chip>)}</div>
+                <p className="mt-1.5 text-[11px] text-fg-dim">{form.trainingDays.length === 0 ? 'Pick at least 1 day.' : form.trainingDays.length > 6 ? 'Pick at most 6 days; keep 1 day for rest.' : `${form.trainingDays.length} ${form.trainingDays.length === 1 ? 'day' : 'days'} a week · rest on the others`}</p></div>
               <div><Label>Workout duration</Label><div className="flex flex-wrap gap-1.5">{[30, 45, 60, 75, 90].map(n => <Chip key={n} active={form.duration === n} onClick={() => setForm({ ...form, duration: n })}>{n} min</Chip>)}</div></div>
               <div><Label>Equipment</Label><div className="flex flex-wrap gap-1.5">{EQUIPMENT.map(([v, l]) => <Chip key={v} active={form.equipment.includes(v)} onClick={() => setForm({ ...form, equipment: form.equipment.includes(v) ? form.equipment.filter(x => x !== v) : [...form.equipment, v] })}>{l}</Chip>)}</div></div>
               <div><Label>Recovery preference</Label><Segmented size="sm" options={[['standard', 'Standard'], ['extra_rest', 'Extra rest'], ['active_recovery', 'Active']] as const} value={form.recovery as any} onChange={v => setForm({ ...form, recovery: v })} /></div>
               <label className="flex cursor-pointer items-center justify-between rounded-xl border border-line bg-ink-900 px-3.5 py-3"><span className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4 text-lime" />AI coach notes</span><input type="checkbox" checked={form.useAi} onChange={e => setForm({ ...form, useAi: e.target.checked })} className="h-4 w-4 accent-[#C6F36B]" /></label>
-              <Button full size="lg" onClick={generate} loading={busy === 'gen'} icon={<Sparkles className="h-4 w-4" />}>Generate workout plan</Button>
+              <Button full size="lg" onClick={generate} loading={busy === 'gen'} disabled={form.trainingDays.length < 1 || form.trainingDays.length > 6} icon={<Sparkles className="h-4 w-4" />}>Generate workout plan</Button>
               <p className="text-[11px] text-fg-dim">Sets, reps and exercise selection come from FitAI's deterministic programming engine; the AI adds coaching guidance.</p>
             </div>
           </Card>

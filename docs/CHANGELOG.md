@@ -2,6 +2,13 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 17 Nov 2026
+
+- **Choose your training days.** New plans use the weekdays the user picks (for example Tue, Thu, Sat) instead of fixed Mon/Wed/Fri. Existing plans get a **Change days** button that moves the workouts without regenerating them.
+- **Today in the workout planner.** The planner opens on today's workout. On a rest day it says so and shows the next workout, instead of showing Monday's.
+- **Landing page first.** The app always opens on the landing page; signed-in users see "Open dashboard".
+- **Safer account deletion.** Users type DELETE before "Delete permanently" unlocks.
+
 ## Release 1.0: live in production (13 Nov 2026)
 
 **Deployment**

@@ -11,7 +11,7 @@ python-multipart==0.0.20
 # image processing for progress photos (resize, strip location/EXIF data)
 pillow==12.3.0
 # time-zone database, so user-local dates work on any host
-tzdata==2025.2
+tzdata==2026.6
 # PostgreSQL driver (used when DATABASE_URL starts with postgresql+psycopg://)
 psycopg[binary]==3.2.9
 

@@ -1,21 +1,31 @@
-# Monthly pull requests for dependency updates. Minor and patch updates are grouped into one PR per
-# ecosystem; major upgrades (e.g. Vite 8, React Router 7) arrive separately so they can be tested on their own.
+# Monthly pull requests with safe dependency updates (minor and patch versions, grouped into one PR per
+# ecosystem). Major upgrades such as React 19, Vite 8 or ESLint 10 need code changes, so they are ignored
+# here and done by hand on a separate branch.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /frontend
     schedule: { interval: monthly }
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
     groups:
       frontend-minor-and-patch: { update-types: [minor, patch] }
 
   - package-ecosystem: pip
     directory: /backend
     schedule: { interval: monthly }
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
     groups:
       backend-minor-and-patch: { update-types: [minor, patch] }
 
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]

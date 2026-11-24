@@ -4,6 +4,13 @@ export type Diet = 'vegetarian' | 'vegan' | 'eggetarian' | 'non_vegetarian' | 'c
 export type Experience = 'beginner' | 'intermediate' | 'advanced'
 export type Units = 'metric' | 'imperial'
 export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner'
+export interface MealPhotoItem {
+  name: string; seen_as: string; grams: number; portion: string | null
+  per_100g: { calories: number; protein_g: number; carbs_g: number; fat_g: number }
+  calories: number; protein_g: number; carbs_g: number; fat_g: number
+  basis: 'database' | 'ai_estimate'; source_id: string | null; servings: { label: string; grams: number }[]; confidence: number
+}
+export interface MealPhotoResult { items: MealPhotoItem[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number }; is_food: boolean; note: string | null; model: string; seconds: number }
 
 export interface User {
   id: number; email: string; full_name: string; is_demo: boolean; email_verified: boolean; onboarding_complete: boolean; ai_provider_pref: string

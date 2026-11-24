@@ -1,13 +1,13 @@
 # FitAI — Complete Project Documentation
 
-**Author:** Kunal Bhoomaraddi · **As of:** 17 November 2026
+**Author:** Kunal Bhoomaraddi · **As of:** 24 November 2026
 
 | | |
 |---|---|
 | **Live app** | https://fitai-app-pink.vercel.app (click **Explore the demo**, no sign-up needed) |
 | **Source code** | https://github.com/kunalbhoomaraddi-cpu/fitai (public) |
 | **Backend API** | https://fitai-api-nmtc.onrender.com/api/health |
-| **Status** | Live in production · 102 automated tests passing on every push |
+| **Status** | Live in production · 112 automated tests passing on every push |
 
 ---
 
@@ -208,6 +208,15 @@ Commit `f418c6d`, "Phase 1 updates" (62 files).
 | **Safer account deletion** | **Delete permanently** stays locked until the user types DELETE |
 | **Engineering review** | All checks re-run; 7 of 11 dependency warnings fixed with safe updates; login redirect accepts only FitAI pages; test warnings removed; docs refreshed |
 
+### 6.6 v2: Snap your meal (24 Nov 2026)
+
+After the 23 Nov demo, the mentor asked for a better version. The first v2 feature removes the biggest pain in food tracking: typing every meal.
+
+1. The user takes or chooses a photo on the Nutrition page; the phone shrinks it to about 1600 px before upload.
+2. The backend validates it, strips location data and sends a 1024 px copy to Gemini, which returns each food, its regional names and the grams it can see.
+3. FitAI matches every food against its own database and calculates calories and macros. Only unknown foods use the AI's estimate, labelled as such.
+4. The user reviews, adjusts grams, unticks anything wrong and adds the rest to a meal. Nothing is saved before that, and the photo is never stored.
+
 ---
 
 ## 7. Going live
@@ -261,7 +270,7 @@ Commit `f418c6d`, "Phase 1 updates" (62 files).
 
 ```
 fitai/
-├── backend/            FastAPI app + 102 tests
+├── backend/            FastAPI app + 112 tests
 ├── frontend/           React app
 ├── docs/               guides, changelog, screenshots
 ├── scripts/            dev, test, reset and setup helpers
@@ -276,7 +285,7 @@ fitai/
 - `docs/LOCAL_SETUP.md`, `ENVIRONMENT_CONFIGURATION.md`, `PROJECT_ARCHITECTURE.md`, `API_DOCUMENTATION.md`
 - `docs/TESTING_GUIDE.md`, `DEPLOYMENT_GUIDE.md`, `IMAGE_CREDITS.md`, `CHANGELOG.md`
 
-**Automated checks (GitHub Actions):** every push runs Ruff, the 102 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
+**Automated checks (GitHub Actions):** every push runs Ruff, the 112 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
 
 **Commit history (newest first)**
 
@@ -303,8 +312,8 @@ fitai/
 
 | Check | Result |
 |---|---|
-| Backend tests on SQLite | 102 / 102 passed, no warnings |
-| Backend tests on PostgreSQL 16 (same as Neon) | 102 / 102 passed |
+| Backend tests on SQLite | 112 / 112 passed, no warnings |
+| Backend tests on PostgreSQL 16 (same as Neon) | 112 / 112 passed |
 | Ruff (backend) and ESLint (frontend) | No problems |
 | TypeScript check and production build | Passed |
 | Browser tests: login code, forgot password, weekly check-in, progress photos, Indian food, exercise demos, type-DELETE confirmation, landing page, training days | All passed |
@@ -322,6 +331,7 @@ fitai/
 | `test_checkins.py` | Weekly score, targets, warnings, AI wording with fallback |
 | `test_photos.py` | Upload checks, GPS stripping, thumbnails, owner-only access |
 | `test_indian_foods.py`, `test_exercise_demos.py` | Regional names, misspellings, portions; every exercise has a demo |
+| `test_meal_photo.py` | Snap your meal: database calculations, AI estimates labelled, photo not stored, failures, daily limit |
 | `test_training_days.py` | Plans on chosen weekdays, moving a plan's days, dashboard follows the new days |
 | `test_timezone.py` | India just after midnight on a UTC server, saved zone, legacy names |
 | `test_demo.py` | Private demo copies, expiry, reserved email domain |
@@ -341,7 +351,7 @@ About 10–12 minutes. Open the site a minute early so the free server is awake.
 3. **AI Fitness Coach**: ask "How much protein do I need?" and point out the tool card; the number comes from a calculation, not a guess.
 4. **Diet Planner**: an Indian meal plan; swap a food, mark a meal eaten.
 5. **Workout Planner**: point out **Today** in the week strip, then **Change days** (pick your own training days). Open a **Demo**, then **Start workout** to show set tracking and the rest timer.
-6. **Nutrition Tracker**: search "jolada rotti" and add 2 rotis.
+6. **Nutrition Tracker**: **Snap a meal** with a photo of a plate, review the foods and add them; then search "jolada rotti" and add 2 rotis.
 7. **Weekly Check-in**: run it and explain the score.
 8. **Real account**: log out, log in with your email, and show the 6-digit code arriving.
 9. **GitHub**: the README, the green Actions runs, `docs/CHANGELOG.md`.
@@ -392,6 +402,8 @@ About 10–12 minutes. Open the site a minute early so the free server is awake.
 
 | When | Milestone |
 |---|---|
+| 24 Nov 2026 | v2 begins: Snap your meal |
+| 23 Nov 2026 | Demo to mentor; mentor asks for a better version |
 | 17 Nov 2026 | Engineering review: all checks re-run, safe dependency updates, login redirect hardened, docs refreshed |
 | 17 Nov 2026 | Choose training days; today and rest days in the workout planner (`3eccc55`) |
 | 17 Nov 2026 | Landing page opens first (`d156399`); type DELETE to delete an account (`729fdcc`) |

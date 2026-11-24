@@ -59,6 +59,7 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | POST | `/workouts/generate` | `{goal?, experience?, training_days?, days_per_week?, equipment?, duration_minutes?, split, target_muscles[], recovery, use_ai}`. `training_days` = weekdays such as `["Tue","Thu","Sat"]` |
 | GET | `/workouts/plans`, `/workouts/plans/active`, `/workouts/plans/{id}` | Plans |
 | POST / DELETE | `/workouts/plans/{id}/save`, `/workouts/plans/{id}` | Save or delete |
+| POST | `/nutrition/photo` | Multipart `file` (JPG/PNG/WebP, ≤15 MB). Returns `{items[{name, grams, portion, calories, protein_g, carbs_g, fat_g, per_100g, basis: database\|ai_estimate, source_id, confidence}], totals, note}`. Nothing is saved; add items with `POST /nutrition/entries` (`source: "meal_photo"`). Needs Gemini; 30 photos per user per day (10 in the demo) |
 | PATCH | `/workouts/plans/{id}/days` | `{training_days}`: move the plan's workouts to these weekdays (same count as the plan) |
 | POST | `/workouts/sessions/start` | `{plan_id?, day_index}`. Starts a session; any other in-progress session is abandoned |
 | GET | `/workouts/sessions/active` | Current session |

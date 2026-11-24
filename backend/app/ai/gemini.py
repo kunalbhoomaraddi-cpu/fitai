@@ -125,6 +125,18 @@ class GeminiProvider(LLMProvider):
             parts.append({"functionResponse": fr})
         state["contents"].append({"role": "user", "parts": parts})
 
+    def generate_json_with_image(self, system: str, prompt: str, image_b64: str, mime: str = "image/jpeg") -> str:
+        """One-shot vision request (e.g. a meal photo) returning JSON text."""
+        body = {"systemInstruction": {"parts": [{"text": system}]},
+                "contents": [{"role": "user", "parts": [{"inlineData": {"mimeType": mime, "data": image_b64}}, {"text": prompt}]}],
+                "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json", "maxOutputTokens": 2048}}
+        data = self._generate(body)
+        try:
+            parts = data["candidates"][0]["content"]["parts"]
+            return "".join(p.get("text", "") for p in parts if not p.get("thought"))
+        except (KeyError, IndexError):
+            raise ProviderError("Gemini couldn't read that photo") from None
+
     def generate_json(self, system: str, prompt: str) -> str:
         body = {"systemInstruction": {"parts": [{"text": system}]},
                 "contents": [{"role": "user", "parts": [{"text": prompt}]}],

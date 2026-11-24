@@ -2,6 +2,10 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 24 Nov 2026: v2 begins
+
+- **Snap your meal.** On the Nutrition page, take or choose a photo of your plate. Gemini identifies each food and estimates its portion; calories and macros come from FitAI's food database (Indian dishes and reference foods). Foods the database doesn't know use the AI's estimate and are labelled "AI estimate"; unsure items say "Not sure, please check". Users adjust grams, untick items and add the rest to a meal in one tap. Photos are shrunk on the phone before upload, processed in memory and never stored. Limits: 30 photo analyses per user per day (10 in the demo) to protect the shared free AI quota.
+
 ## 17 Nov 2026
 
 - **Choose your training days.** New plans use the weekdays the user picks (for example Tue, Thu, Sat) instead of fixed Mon/Wed/Fri. Existing plans get a **Change days** button that moves the workouts without regenerating them.

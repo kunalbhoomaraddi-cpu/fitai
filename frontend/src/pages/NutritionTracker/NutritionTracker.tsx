@@ -1,7 +1,8 @@
 import clsx from 'clsx'
-import { ChevronLeft, ChevronRight, Coffee, Cookie, Database, Moon, Pencil, Plus, Search, Sun, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Camera, ChevronLeft, ChevronRight, Coffee, Cookie, Database, Moon, Pencil, Plus, Search, Sun, Trash2, UtensilsCrossed } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { CaloriesChart, ProteinChart } from '../../components/charts/Charts'
+import { MealPhoto } from '../../components/nutrition/MealPhoto'
 import { Badge, Button, Card, CardHeader, ErrorState, Input, Label, MacroRow, Modal, Notice, PageHeader, Ring, Segmented, Skeleton } from '../../components/ui'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -144,6 +145,7 @@ export default function NutritionTracker() {
   const hist = useAsync(() => nutritionApi.history(14), [])
   const [adding, setAdding] = useState<MealType | null>(null)
   const [editing, setEditing] = useState<FoodEntry | null>(null)
+  const [snapping, setSnapping] = useState(false)
   const isToday = date === todayISO()
 
   const refresh = () => { day.reload(true); hist.reload(true) }
@@ -155,8 +157,12 @@ export default function NutritionTracker() {
 
   return (
     <div>
-      <PageHeader eyebrow="Nutrition Tracker" title="Fuel with intention" subtitle="Search Open Food Facts or FitAI's reference database, log meals and stay on top of your macros."
-        actions={<Button icon={<Plus className="h-4 w-4" />} onClick={() => setAdding('breakfast')}>Add food</Button>} />
+      <PageHeader eyebrow="Nutrition Tracker" title="Fuel with intention" subtitle="Snap a photo of your plate, or search Open Food Facts and FitAI's food database. Log meals and stay on top of your macros."
+        actions={<div className="flex flex-wrap gap-2">
+          <Button icon={<Camera className="h-4 w-4" />} onClick={() => setSnapping(true)}>Snap a meal</Button>
+          <Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setAdding('breakfast')}>Add food</Button>
+        </div>} />
+      <MealPhoto open={snapping} onClose={() => setSnapping(false)} date={date} onAdded={refresh} />
       <div className="mb-5 flex items-center gap-2">
         <button onClick={() => setDate(shift(date, -1))} aria-label="Previous day" className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-ink-850 text-fg-muted hover:text-fg"><ChevronLeft className="h-4 w-4" /></button>
         <div className="min-w-[180px] rounded-xl border border-line bg-ink-850 px-4 py-2 text-center text-sm font-medium">{label}</div>

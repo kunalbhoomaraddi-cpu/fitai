@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = 45.0
     ai_max_retries: int = 2
     ai_requests_per_minute: int = 20  # per-user limit on AI endpoints
+    meal_photo_daily_limit: int = 30  # meal photo analyses per user per day (shared free AI quota)
     auth_requests_per_minute: int = 20  # per-IP limit on login/register/code checks
 
     # Email verification (free: Gmail SMTP with an App Password, or any SMTP provider)

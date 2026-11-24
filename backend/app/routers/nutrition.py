@@ -1,14 +1,16 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import FoodEntry, User
 from app.schemas.tracking import FoodEntryIn, FoodEntryOut, FoodEntryUpdate
-from app.services import fitness_service, nutrition_service
+from app.services import fitness_service, meal_photo_service, nutrition_service, photo_service
 from app.services.auth_service import get_current_user, require_profile
 from app.utils.clock import local_today
+from app.utils.ratelimit import ai_rate_limit
 
 router = APIRouter(prefix="/nutrition", tags=["nutrition"])
 
@@ -35,6 +37,13 @@ def day(d: date | None = Query(default=None, alias="date"), user: User = Depends
             "entries": [FoodEntryOut.model_validate(e).model_dump(mode="json") for e in entries],
             "targets": {"calories": t["calories"]["calorie_target"], "protein_g": t["macros"]["protein_g"],
                         "carbs_g": t["macros"]["carbs_g"], "fat_g": t["macros"]["fat_g"]}}
+
+
+@router.post("/photo")
+async def analyze_meal_photo(file: UploadFile = File(...), user: User = Depends(ai_rate_limit)):
+    """Snap your meal: identify foods and portions in a photo. Nothing is saved; the user reviews and adds."""
+    raw = await file.read(photo_service.MAX_UPLOAD_BYTES + 1)
+    return await run_in_threadpool(meal_photo_service.analyze, raw, user.id, user.ai_provider_pref, user.is_demo)
 
 
 @router.post("/entries", response_model=FoodEntryOut, status_code=201)

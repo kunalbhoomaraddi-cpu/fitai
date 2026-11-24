@@ -4,6 +4,10 @@ What was built, in the order it was built. Live app: https://fitai-app-pink.verc
 
 ## 24 Nov 2026: v2 begins
 
+- **Lift progress charts.** Workouts, then *Lifts & history*, shows each lift over time: the estimated 1-rep max from your best set each session (Epley formula, worked out in code), your best, the change over the last 8 weeks and how many personal records you've set. Bodyweight moves track most reps; planks track the longest hold. Finishing a workout now lists any new personal records. New endpoint `GET /api/workouts/lifts`.
+- **Kilograms or pounds for lifts.** The set table, *Last time* column, lift charts, personal records and the workout total now follow the unit chosen in Settings. Weights are still stored in kg, so switching units never changes the data; 135 lb typed shows as 135 lb again.
+- **Fixed: decimals in the set table.** Typing 42.5 used to lose the dot as soon as it was typed; each box now keeps exactly what you type.
+- **Fixed: old achievements popping up again.** Finishing a workout listed every achievement the user hadn't opened yet, so several pop-ups could stack up and cover the summary. It now lists only the ones that workout earned, and several at once appear as one message.
 - **Log every set, like a gym notebook** (learned from Hevy). During a workout each exercise has a set table: *Last time* shows what you lifted in your previous session, then kg and reps for today. One tap ticks a set, fills in last time's numbers if you left the boxes empty, and starts the rest timer. The rest timer stays pinned at the top while you scroll. Bodyweight exercises hide the kg column; timed ones (planks) log seconds. The finish screen shows total kg lifted. Stored inside the session's existing data, so no database change. Demo accounts get realistic past sets.
 - **One-tap re-logging** (learned from MacroFactor). Opening *Add food* shows your recent foods; one tap adds the same portion to the chosen meal. New endpoint `GET /api/nutrition/recent`.
 - **Dashboard puts today first** (learned from WHOOP's home screen). The check-in reminder moved below today's plan and numbers.

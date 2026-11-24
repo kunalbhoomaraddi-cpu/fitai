@@ -43,3 +43,10 @@ export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace
 
 /** Plan titles from the server join parts with " · "; show them as plain text. */
 export const planTitle = (t: string) => t.replace(/\s*·\s*/g, ', ')
+
+/** Lift weights are stored in kg. Shown in the user's units, rounded to 0.1 and without a trailing ".0". */
+export const liftShow = (kg: number, units: Units) => +(units === 'imperial' ? kgToLb(kg) : kg).toFixed(1)
+/** A number the user typed in their units, back to kg (3 decimals so 135 lb shows as 135 again). */
+export const liftToKg = (v: number, units: Units) => +(units === 'imperial' ? lbToKg(v) : v).toFixed(3)
+export const fmtLiftSet = (kg: number | null | undefined, reps: number | null | undefined, units: Units, timed = false) =>
+  timed ? `${reps ?? '?'} s` : `${kg != null ? `${liftShow(kg, units)} ${weightUnit(units)}` : 'BW'} × ${reps ?? '?'}`

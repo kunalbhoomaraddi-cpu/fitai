@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { MealPhotoResult, AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Profile, User, WorkoutPlan, WorkoutSession, RecentFood } from '../types'
+import type { MealPhotoResult, AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Profile, User, WorkoutPlan, WorkoutSession, RecentFood, Lift } from '../types'
 
 export type Verification = { delivery: 'email' | 'console' | 'failed' | 'none'; error?: string; expires_in_minutes?: number; resend_in_seconds?: number }
 type Token = { access_token: string; user: User; verification?: Verification | null }
@@ -59,6 +59,7 @@ export const workoutApi = {
   activeSession: () => api.get<WorkoutSession | null>('/workouts/sessions/active'),
   updateSession: (id: number, b: any) => api.patch<WorkoutSession>(`/workouts/sessions/${id}`, b),
   history: () => api.get<WorkoutSession[]>('/workouts/sessions'),
+  lifts: () => api.get<Lift[]>('/workouts/lifts'),
   stats: () => api.get<any>('/workouts/stats'),
   exerciseInfo: (name: string) => api.get<any>(`/workouts/exercise-info?name=${encodeURIComponent(name)}`),
 }

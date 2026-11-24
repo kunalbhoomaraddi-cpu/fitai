@@ -15,7 +15,7 @@ backend tests run twice, once on SQLite and once on PostgreSQL 16.
 cd backend && source .venv/bin/activate
 pip install -r requirements-dev.txt     # once: adds ruff
 ruff check .                            # lint
-python -m pytest -q                     # 117 tests
+python -m pytest -q                     # 122 tests
 ```
 
 The tests use a throwaway SQLite file, no external APIs and no LLM keys, so they are deterministic and need no network.
@@ -38,6 +38,7 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 | `test_exercise_demos.py` | Every generated exercise has a demo and steps |
 | `test_timezone.py` | "Today" follows the user's clock (India just after midnight on a UTC server), saved time zone, legacy zone names |
 | `test_meal_photo.py` | Snap your meal: database calculates (not the AI), AI estimates labelled, photo not stored, messy AI answers, AI failures, no-food photos, daily limit, login required, strict dish matching ("dal curry" never becomes "egg curry") |
+| `test_lifts.py` | Lift progress: Epley estimated max (capped at 12 reps), best set per session, personal records, unticked sets ignored, bodyweight (reps) and timed (seconds) moves, login required |
 | `test_training_days.py` | Plans on the user's chosen weekdays, moving an existing plan's days, dashboard follows the new days |
 | `test_demo.py` | Each demo visitor gets a private copy, copies expire, the demo email domain is reserved |
 | `test_deploy_config.py` | Production safety checks, Neon URL normalising, trimming pasted settings, keys hidden in logs, Brevo and Gmail API email |

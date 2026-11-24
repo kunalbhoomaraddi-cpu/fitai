@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Bookmark, BookmarkCheck, CalendarDays, Check, ChevronDown, Clock, Dumbbell, Flag, History, Info, Pause, Play, Plus, RotateCcw, Sparkles, Timer, Trash2, Trophy, X } from 'lucide-react'
+import { Bookmark, BookmarkCheck, CalendarDays, Check, ChevronDown, Clock, Dumbbell, Flag, History, Info, Pause, Play, Plus, Sparkles, Timer, Trash2, TrendingUp, Trophy, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ActivityChart } from '../../components/charts/Charts'
@@ -8,9 +8,10 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { ExerciseDemoModal, demoFor, demoImg } from '../../components/workout/ExerciseDemo'
+import { LiftProgress } from '../../components/workout/LiftProgress'
 import { workoutApi } from '../../services/fitai'
-import type { Exercise, SetEntry, WorkoutPlan, WorkoutSession } from '../../types'
-import { cap, EQUIPMENT, GOAL_LABEL, MUSCLES, shortDate, planTitle } from '../../utils/format'
+import type { Exercise, SetEntry, Units, WorkoutPlan, WorkoutSession } from '../../types'
+import { cap, EQUIPMENT, fmtLiftSet, GOAL_LABEL, liftShow, liftToKg, MUSCLES, planTitle, shortDate, weightUnit } from '../../utils/format'
 
 const SPLITS: [string, string, string][] = [
   ['auto', 'Smart pick', 'FitAI chooses the best split'], ['push_pull_legs', 'Push / Pull / Legs', 'Classic hypertrophy split'],
@@ -35,7 +36,7 @@ function nextWorkoutIndex(plan: WorkoutPlan): number {
   return 0
 }
 
-function ExerciseRow({ e, index, session, onToggle, prev, onLog }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; prev?: SetEntry[]; onLog?: (log: SetEntry[], tickedNow: boolean) => void }) {
+function ExerciseRow({ e, index, session, onToggle, prev, onLog, units = 'metric' }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; prev?: SetEntry[]; onLog?: (log: SetEntry[], tickedNow: boolean) => void; units?: Units }) {
   const [open, setOpen] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const hasDemo = !!demoFor(e.exercise_id)
@@ -65,7 +66,7 @@ function ExerciseRow({ e, index, session, onToggle, prev, onLog }: { e: Exercise
           <button onClick={() => setOpen(o => !o)} aria-label="Instructions" className="shrink-0 rounded-lg p-2 text-fg-dim hover:bg-white/5 hover:text-fg"><ChevronDown className={clsx('h-4 w-4 transition', open && 'rotate-180')} /></button>
         )}
       </div>
-      {session && onLog && <div className="border-t border-line-soft px-3 pb-2 pt-3 sm:px-4"><SetTable e={e} prev={prev} onChange={onLog} /></div>}
+      {session && onLog && <div className="border-t border-line-soft px-3 pb-2 pt-3 sm:px-4"><SetTable e={e} prev={prev} units={units} onChange={onLog} /></div>}
       {open && !session && (
         <div className="border-t border-line-soft px-4 py-3 text-[13px] leading-relaxed text-fg-muted">
           {e.instructions}
@@ -78,11 +79,23 @@ function ExerciseRow({ e, index, session, onToggle, prev, onLog }: { e: Exercise
 }
 
 const num = (v: string) => { const n = parseFloat(v.replace(',', '.')); return Number.isFinite(n) && n >= 0 ? n : null }
-const fmtSet = (s: SetEntry | undefined, timed: boolean) => (s && (s.kg != null || s.reps != null) ? (timed ? `${s.reps ?? '?'} s` : `${s.kg != null ? `${s.kg} kg` : 'BW'} × ${s.reps ?? '?'}`) : '')
+
+/** A number box that keeps exactly what is typed ("42." stays "42." while you type 42.5) and reports the parsed value. */
+function NumCell({ value, onValue, label, placeholder, decimal }: { value: number | null; onValue: (v: number | null) => void; label: string; placeholder: string; decimal?: boolean }) {
+  const [text, setText] = useState(value == null ? '' : String(value))
+  const [focused, setFocused] = useState(false)
+  useEffect(() => { if (!focused) setText(value == null ? '' : String(value)) }, [value, focused])
+  return (
+    <input inputMode={decimal ? 'decimal' : 'numeric'} aria-label={label} value={text} placeholder={placeholder}
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+      onChange={ev => { const t = ev.target.value; if (!/^\d*([.,]\d*)?$/.test(t)) return; setText(t); onValue(num(t)) }}
+      className="h-9 w-full rounded-lg border border-line bg-ink-900 px-2 text-center tabular-nums text-fg placeholder:text-fg-dim focus:border-lime/60 focus:outline-none" />
+  )
+}
 const firstReps = (r: string) => { const m = r.match(/\d+/); return m ? Number(m[0]) : null }
 
 /** Hevy-style set table: last time's numbers on the left, today's kg and reps, one tap to tick a set. */
-function SetTable({ e, prev, onChange }: { e: Exercise; prev?: SetEntry[]; onChange: (log: SetEntry[], tickedNow: boolean) => void }) {
+function SetTable({ e, prev, units, onChange }: { e: Exercise; prev?: SetEntry[]; units: Units; onChange: (log: SetEntry[], tickedNow: boolean) => void }) {
   const timed = /sec/i.test(e.reps)
   const bodyweight = e.equipment.length > 0 && e.equipment.every(q => q === 'bodyweight')
   const log: SetEntry[] = Array.from({ length: e.sets }, (_, i) => e.set_log?.[i] ?? { kg: null, reps: null, done: false })
@@ -96,18 +109,18 @@ function SetTable({ e, prev, onChange }: { e: Exercise; prev?: SetEntry[]; onCha
   }
   return (
     <table className="w-full max-w-2xl text-[14px]">
-      <thead><tr className="text-left text-[12px] text-fg-dim"><th className="w-10 pb-1.5 font-medium">Set</th><th className="pb-1.5 font-medium">Last time</th>{!bodyweight && <th className="w-[26%] pb-1.5 font-medium sm:w-28">kg</th>}<th className="w-[22%] pb-1.5 font-medium sm:w-24">{timed ? 'Sec' : 'Reps'}</th><th className="w-11 pb-1.5" /></tr></thead>
+      <thead><tr className="text-left text-[12px] text-fg-dim"><th className="w-10 pb-1.5 font-medium">Set</th><th className="pb-1.5 font-medium">Last time</th>{!bodyweight && <th className="w-[26%] pb-1.5 font-medium sm:w-28">{weightUnit(units)}</th>}<th className="w-[22%] pb-1.5 font-medium sm:w-24">{timed ? 'Sec' : 'Reps'}</th><th className="w-11 pb-1.5" /></tr></thead>
       <tbody>
         {log.map((s, i) => {
           const p = prev?.[i]
           return (
             <tr key={i} className={clsx('transition-colors', s.done && 'bg-lime/[0.06]')}>
               <td className="py-1 pl-1 tabular-nums text-fg-muted">{i + 1}</td>
-              <td className="py-1 tabular-nums text-fg-dim">{fmtSet(p, timed) || '–'}</td>
-              {!bodyweight && <td className="py-1 pr-2"><input inputMode="decimal" aria-label={`Set ${i + 1} weight in kg`} value={s.kg ?? ''} placeholder={p?.kg != null ? String(p.kg) : ''}
-                onChange={ev => set(i, { kg: num(ev.target.value) })} className="h-9 w-full rounded-lg border border-line bg-ink-900 px-2 text-center tabular-nums text-fg placeholder:text-fg-dim focus:border-lime/60 focus:outline-none" /></td>}
-              <td className="py-1 pr-2"><input inputMode="numeric" aria-label={`Set ${i + 1} ${timed ? 'seconds' : 'reps'}`} value={s.reps ?? ''} placeholder={p?.reps != null ? String(p.reps) : String(firstReps(e.reps) ?? '')}
-                onChange={ev => set(i, { reps: num(ev.target.value) })} className="h-9 w-full rounded-lg border border-line bg-ink-900 px-2 text-center tabular-nums text-fg placeholder:text-fg-dim focus:border-lime/60 focus:outline-none" /></td>
+              <td className="py-1 tabular-nums text-fg-dim">{p && (p.kg != null || p.reps != null) ? fmtLiftSet(p.kg, p.reps, units, timed) : '–'}</td>
+              {!bodyweight && <td className="py-1 pr-2"><NumCell decimal label={`Set ${i + 1} weight in ${weightUnit(units)}`} value={s.kg == null ? null : liftShow(s.kg, units)}
+                placeholder={p?.kg != null ? String(liftShow(p.kg, units)) : ''} onValue={v => set(i, { kg: v == null ? null : liftToKg(v, units) })} /></td>}
+              <td className="py-1 pr-2"><NumCell label={`Set ${i + 1} ${timed ? 'seconds' : 'reps'}`} value={s.reps} placeholder={p?.reps != null ? String(p.reps) : String(firstReps(e.reps) ?? '')}
+                onValue={v => set(i, { reps: v == null ? null : Math.round(v) })} /></td>
               <td className="py-1 text-right"><button onClick={() => tick(i)} aria-pressed={s.done} aria-label={s.done ? `Untick set ${i + 1}` : `Tick set ${i + 1}`}
                 className={clsx('inline-flex h-9 w-9 items-center justify-center rounded-lg border transition', s.done ? 'border-lime bg-lime text-ink-950' : 'border-line text-fg-dim hover:border-lime/60 hover:text-lime')}><Check className="h-4 w-4" /></button></td>
             </tr>
@@ -138,7 +151,7 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
   )
 }
 
-function ActiveSession({ s, onChange, onFinish, onAbandon }: { s: WorkoutSession; onChange: (ex: Exercise[]) => void; onFinish: () => void; onAbandon: () => void }) {
+function ActiveSession({ s, onChange, onFinish, onAbandon, units }: { s: WorkoutSession; onChange: (ex: Exercise[]) => void; onFinish: () => void; onAbandon: () => void; units: Units }) {
   const [now, setNow] = useState(Date.now())
   const [rest, setRest] = useState<number | null>(null)
   const [prev, setPrev] = useState<Record<string, SetEntry[]>>({})
@@ -169,7 +182,7 @@ function ActiveSession({ s, onChange, onFinish, onAbandon }: { s: WorkoutSession
         <Bar value={done} max={s.exercises.length} height="h-2" />
         {rest !== null && <RestTimer seconds={rest} onDone={() => setRest(null)} />}
         {s.exercises.map((e, i) => (
-          <ExerciseRow key={i} e={e} index={i} session
+          <ExerciseRow key={i} e={e} index={i} session units={units}
             prev={prev[e.exercise_id]}
             onToggle={() => {
               const all = !e.completed
@@ -193,7 +206,7 @@ function ActiveSession({ s, onChange, onFinish, onAbandon }: { s: WorkoutSession
 }
 
 export default function WorkoutPlanner() {
-  const { profile } = useAuth()
+  const { profile, units } = useAuth()
   const toast = useToast()
   const loc = useLocation() as { state?: { start?: { plan_id: number; day_index: number } } }
   const navigate = useNavigate()
@@ -206,6 +219,7 @@ export default function WorkoutPlanner() {
   const [busy, setBusy] = useState<string | null>(null)
   const [confetti, setConfetti] = useState(0)
   const [summary, setSummary] = useState<WorkoutSession | null>(null)
+  const [newPRs, setNewPRs] = useState<{ name: string; label: string }[]>([])
   const [history, setHistory] = useState<{ sessions: WorkoutSession[]; stats: any; plans: WorkoutPlan[] } | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
   const [form, setForm] = useState({ split: 'auto', goal: profile?.goal ?? 'general_fitness', experience: profile?.experience ?? 'beginner', trainingDays: DEFAULT_DAYS[Math.max(1, Math.min(6, profile?.workout_days_per_week ?? 3))], duration: profile?.workout_minutes ?? 45, equipment: profile?.equipment ?? ['bodyweight'], muscles: [] as string[], recovery: 'standard', useAi: true })
@@ -250,8 +264,13 @@ export default function WorkoutPlanner() {
     setBusy('finish')
     try {
       const r = await workoutApi.updateSession(session.id, { exercises: session.exercises, status: 'completed' })
-      setSession(null); setSummary(r); setConfetti(Date.now())
-      ;(r.new_achievements || []).forEach(c => toast('achievement', `Achievement unlocked: ${ACH[c] ?? cap(c)}`))
+      setSession(null); setSummary(r); setConfetti(Date.now()); setNewPRs([])
+      // Records set in this workout: lifts whose newest point is today's and beats every earlier one.
+      const done = new Set(r.exercises.filter(x => (x.set_log ?? []).some(st => st.done)).map(x => x.exercise_id))
+      workoutApi.lifts().then(ls => setNewPRs(ls.filter(l => done.has(l.exercise_id) && l.latest.pr).map(l => ({ name: l.name, label: fmtLiftSet(l.latest.kg, l.latest.reps, units, l.kind === 'timed') })))).catch(() => undefined)
+      ;const earned = (r.new_achievements || []).map(c => ACH[c] ?? cap(c.replace(/_/g, ' ')))
+      if (earned.length === 1) toast('achievement', `Achievement unlocked: ${earned[0]}`)
+      else if (earned.length > 1) toast('achievement', `${earned.length} achievements unlocked`, earned.join(', '))
     } catch (e) { toast('error', 'Could not finish', (e as Error).message) } finally { setBusy(null) }
   }
   const abandon = async () => { if (!session) return; await workoutApi.updateSession(session.id, { status: 'abandoned' }).catch(() => undefined); setSession(null); toast('info', 'Workout discarded') }
@@ -277,12 +296,12 @@ export default function WorkoutPlanner() {
         {(['plan', 'generate', 'history'] as const).map(t => (
           <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx('-mb-px flex items-center gap-2 border-b-2 pb-3 pt-1 text-[15px] font-medium transition-colors', tab === t ? 'border-lime text-fg' : 'border-transparent text-fg-muted hover:text-fg')}>
             {t === 'plan' ? <CalendarDays className="h-4 w-4" /> : t === 'generate' ? <Sparkles className="h-4 w-4" /> : <History className="h-4 w-4" />}
-            {t === 'plan' ? 'My plan' : t === 'generate' ? 'New plan' : 'History'}
+            {t === 'plan' ? 'My plan' : t === 'generate' ? 'New plan' : 'Lifts & history'}
           </button>
         ))}
       </div>
 
-      {session && <div className="mb-6"><ActiveSession s={session} onChange={changeSession} onFinish={finish} onAbandon={abandon} /></div>}
+      {session && <div className="mb-6"><ActiveSession s={session} onChange={changeSession} onFinish={finish} onAbandon={abandon} units={units} /></div>}
 
       {tab === 'plan' && !session && (
         active.loading ? <div className="space-y-4"><Skeleton className="h-28" /><Skeleton className="h-96" /></div> :
@@ -381,7 +400,8 @@ export default function WorkoutPlanner() {
 
       {tab === 'history' && (
         !history ? <div className="space-y-4"><Skeleton className="h-64" /><Skeleton className="h-64" /></div> : (
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3 [&>*]:min-w-0">
+            <div className="min-w-0 lg:col-span-3"><LiftProgress /></div>
             <Card className="lg:col-span-2"><CardHeader title="Workouts per week" subtitle={`${history.stats.total_completed} total, ${history.stats.avg_duration_min} min on average, ${history.stats.streak} in a row`} icon={<CalendarDays className="h-4 w-4" />} />
               <div className="px-2 pb-3 pt-2"><ActivityChart data={history.stats.weekly_counts} xKey="week_start" height={240} /></div></Card>
             <Card><CardHeader title="Saved & recent plans" icon={<Bookmark className="h-4 w-4" />} />
@@ -413,9 +433,15 @@ export default function WorkoutPlanner() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-lime text-ink-950"><Trophy className="h-8 w-8" /></div>
             <h3 className="mt-4 font-display text-[40px] font-extrabold uppercase leading-none">Workout done</h3>
             <p className="mt-1 text-sm text-fg-muted">{summary.name}: {summary.duration_minutes} min, {summary.exercises.filter(e => e.completed).length} of {summary.exercises.length} exercises</p>
-            {(() => { const vol = summary.exercises.reduce((t, e) => t + (e.set_log ?? []).filter(x => x.done).reduce((u, x) => u + (x.kg ?? 0) * (x.reps ?? 0), 0), 0); return vol > 0 ? <p className="mt-4"><span className="score text-[44px] text-lime">{Math.round(vol).toLocaleString()}</span><span className="ml-2 text-sm text-fg-muted">kg lifted in total</span></p> : null })()}
+            {(() => { const vol = summary.exercises.reduce((t, e) => t + (e.set_log ?? []).filter(x => x.done).reduce((u, x) => u + (x.kg ?? 0) * (x.reps ?? 0), 0), 0); return vol > 0 ? <p className="mt-4"><span className="score text-[44px] text-lime">{Math.round(liftShow(vol, units)).toLocaleString()}</span><span className="ml-2 text-sm text-fg-muted">{weightUnit(units)} lifted in total</span></p> : null })()}
+            {newPRs.length > 0 && (
+              <div className="mx-auto mt-5 max-w-sm rounded-xl border border-lime/40 bg-lime/[0.06] p-4 text-left">
+                <p className="flex items-center gap-2 text-sm font-semibold text-lime"><Trophy className="h-4 w-4" />{newPRs.length === 1 ? 'New personal record' : `${newPRs.length} new personal records`}</p>
+                <ul className="mt-2 space-y-1 text-sm">{newPRs.map(p => <li key={p.name} className="flex justify-between gap-3"><span className="text-fg">{p.name}</span><span className="tabular-nums text-fg-muted">{p.label}</span></li>)}</ul>
+              </div>
+            )}
             <p className="mt-4 text-xs text-fg-dim">Refuel with protein and carbs within a few hours, and get good sleep tonight.</p>
-            <div className="mt-5 flex justify-center gap-2"><Button variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={() => { setSummary(null); setTab('history') }}>View history</Button><Button onClick={() => setSummary(null)}>Done</Button></div>
+            <div className="mt-5 flex justify-center gap-2"><Button variant="secondary" icon={<TrendingUp className="h-4 w-4" />} onClick={() => { setSummary(null); setTab('history') }}>See your lifts</Button><Button onClick={() => setSummary(null)}>Done</Button></div>
           </div>
         )}
       </Modal>

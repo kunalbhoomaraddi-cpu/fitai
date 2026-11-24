@@ -12,7 +12,7 @@ from app.database import get_db
 from app.models import User, WorkoutPlan, WorkoutSession
 from app.models._mixins import utcnow
 from app.schemas.plans import PlanDaysIn, StartWorkoutIn, UpdateSessionIn, WorkoutPlanIn
-from app.services import progress_service
+from app.services import lift_service, progress_service
 from app.services import workout_service as wsvc
 from app.services.auth_service import require_profile
 from app.utils.ratelimit import ai_rate_limit
@@ -167,15 +167,19 @@ def update_session(sid: int, body: UpdateSessionIn, user: User = Depends(require
     if body.exercises is not None:
         s.exercises = body.exercises
     newly_unlocked = []
+    finishing = body.status == "completed" and s.status != "completed"
+    # Record what was already unlocked, so the reply lists only achievements this workout earned
+    # (not older ones the user simply hasn't opened yet).
+    unlocked_before = {a["code"] for a in progress_service.evaluate_achievements(db, user) if a["unlocked"]} if finishing else set()
     if body.status and body.status != s.status:
         s.status = body.status
         if body.status == "completed":
             s.completed_at = utcnow()
             s.duration_minutes = max(1, round((s.completed_at - s.started_at).total_seconds() / 60))
     db.commit()
-    if body.status == "completed":
-        before = {a["code"] for a in progress_service.evaluate_achievements(db, user) if a["unlocked"] and not a["seen"]}
-        newly_unlocked = sorted(before)
+    if finishing:
+        after = {a["code"] for a in progress_service.evaluate_achievements(db, user) if a["unlocked"]}
+        newly_unlocked = sorted(after - unlocked_before)
     return {**_session_out(s), "new_achievements": newly_unlocked}
 
 
@@ -189,6 +193,12 @@ def history(limit: int = Query(30, le=200), user: User = Depends(require_profile
 @router.get("/stats")
 def stats(user: User = Depends(require_profile), db: Session = Depends(get_db)):
     return progress_service.workout_stats(db, user.id)
+
+
+@router.get("/lifts")
+def lifts(user: User = Depends(require_profile), db: Session = Depends(get_db)):
+    """Per-lift progress from logged sets: estimated 1-rep max, best set, personal records."""
+    return lift_service.lift_progress(db, user.id)
 
 
 @router.get("/library")

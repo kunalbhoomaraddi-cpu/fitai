@@ -140,3 +140,36 @@ export function MeasureChart({ data, keys, height = 220 }: { data: any[]; keys: 
     </ResponsiveContainer>
   )
 }
+
+/** One lift over time. Personal records get a filled lime dot; the tooltip shows the set behind each point. */
+export function LiftChart({ data, unit, weighted, height = 240 }: { data: { date: string; value: number; label: string; pr: boolean }[]; unit: string; weighted: boolean; height?: number }) {
+  const vals = data.map(d => d.value)
+  const pad = Math.max(1, (Math.max(...vals) - Math.min(...vals)) * 0.15)
+  const { ticks, domain } = niceTicks(Math.max(0, Math.min(...vals) - pad), Math.max(...vals) + pad)
+  const dot = (p: any) => {
+    const pr = p.payload?.pr
+    return <circle key={p.payload?.date} cx={p.cx} cy={p.cy} r={pr ? 5 : 3} fill={pr ? '#C6F36B' : '#0B0D0C'} stroke="#C6F36B" strokeWidth={pr ? 0 : 1.5} />
+  }
+  const tip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null
+    const d = payload[0].payload
+    return (
+      <div className="rounded-xl border border-line bg-ink-850/95 px-3 py-2 text-xs shadow-pop">
+        <p className="text-fg-dim">{shortDate(d.date)}{d.pr && <span className="ml-1.5 font-semibold text-lime">Personal record</span>}</p>
+        <p className="mt-0.5 font-medium text-fg">{d.label}</p>
+        {weighted && <p className="text-fg-muted">Est. 1-rep max <span className="tabular-nums text-fg">{d.value} {unit}</span></p>}
+      </div>
+    )
+  }
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={data} margin={{ top: 12, right: 12, left: -14, bottom: 0 }}>
+        {GRID}
+        <XAxis dataKey="date" {...AXIS} tickFormatter={shortDate} minTickGap={28} />
+        <YAxis {...AXIS} domain={domain} ticks={ticks} width={44} />
+        <Tooltip content={tip} cursor={{ stroke: '#C6F36B', strokeOpacity: 0.3 }} />
+        <Line type="monotone" dataKey="value" stroke="#C6F36B" strokeWidth={2.2} dot={dot} activeDot={{ r: 6, fill: '#C6F36B', stroke: '#0B0D0C', strokeWidth: 2 }} animationDuration={700} />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}

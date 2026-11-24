@@ -117,6 +117,16 @@ def test_workout_plan_and_session(client, auth):
     assert client.get("/api/workouts/stats", headers=auth).json()["total_completed"] == 1
 
 
+def test_finishing_lists_only_newly_earned_achievements(client, auth):
+    plan = client.post("/api/workouts/generate", json={"days_per_week": 3}, headers=auth).json()
+    first = []
+    for _ in range(2):
+        s = client.post("/api/workouts/sessions/start", json={"plan_id": plan["id"], "day_index": 0}, headers=auth).json()
+        first.append(client.patch(f"/api/workouts/sessions/{s['id']}", json={"status": "completed"}, headers=auth).json()["new_achievements"])
+    assert "first_workout" in first[0]
+    assert "first_workout" not in first[1]  # already earned, even though the user never opened it
+
+
 def test_session_keeps_logged_sets(client, auth):
     """Weights and reps typed during a workout are saved and come back in history ("Last time")."""
     plan = client.post("/api/workouts/generate", json={"days_per_week": 3}, headers=auth).json()

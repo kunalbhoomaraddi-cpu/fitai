@@ -73,3 +73,10 @@ export interface SetEntry { kg: number | null; reps: number | null; done: boolea
 
 /** A food the user logged recently, offered for one-tap re-logging. */
 export interface RecentFood { name: string; quantity_g: number; calories: number; protein_g: number; carbs_g: number; fat_g: number; source: string; source_id: string | null; meal: string }
+
+/** One session's best effort on a lift (from /workouts/lifts). */
+export interface LiftPoint { date: string; value: number; label: string; kg: number | null; reps: number; volume: number; pr: boolean }
+export interface Lift {
+  exercise_id: string; name: string; kind: 'weighted' | 'bodyweight' | 'timed'; unit: string; metric: string
+  sessions: number; last_date: string; latest: LiftPoint; best: LiftPoint; change_8w: number | null; prs: number; points: LiftPoint[]
+}

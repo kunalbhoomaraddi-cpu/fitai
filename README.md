@@ -12,7 +12,7 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-112%20passing-C6F36B)
+![Tests](https://img.shields.io/badge/tests-114%20passing-C6F36B)
 
 ![FitAI dashboard](docs/screenshots/dashboard.webp)
 
@@ -37,7 +37,7 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 - **Snap your meal.** Photograph a plate and Gemini spots each food and its portion; FitAI's own food database then calculates the calories, so the AI identifies and the code calculates. The photo is never stored.
 - **Built for Indian users.** About 200 home-style dishes (jolada rotti, girmit, dosa, dal, biryani…) searchable by regional names and common misspellings, logged by household portion: 1 roti, 1 katori, 1 dosa. Dates follow the user's own time zone.
 - **Security taken seriously.** Email verification and a one-time code on every login, codes hashed with HMAC and limited to 5 attempts, password changes sign out every other device, per-IP rate limits, API keys hidden from every logged error, and progress photos stripped of GPS and camera data and visible only to their owner.
-- **Production-minded.** 112 tests run on SQLite and PostgreSQL in GitHub Actions, linted with Ruff and ESLint. Production mode refuses to start with unsafe settings. Each demo visitor gets a private sandbox that deletes itself.
+- **Production-minded.** 114 tests run on SQLite and PostgreSQL in GitHub Actions, linted with Ruff and ESLint. Production mode refuses to start with unsafe settings. Each demo visitor gets a private sandbox that deletes itself.
 
 ## Screenshots
 
@@ -121,7 +121,7 @@ Full instructions: [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) · every setting: 
 ./scripts/test-all.sh
 ```
 
-This runs the same checks as CI: Ruff and 112 pytest tests for the backend, and ESLint, strict TypeScript and a production build for the frontend. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for what each test file covers.
+This runs the same checks as CI: Ruff and 114 pytest tests for the backend, and ESLint, strict TypeScript and a production build for the frontend. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for what each test file covers.
 
 ## Project structure
 
@@ -137,7 +137,7 @@ fitai/
 │   │   ├── schemas/     Pydantic request and response models
 │   │   ├── data/        foods, Indian dishes, meal templates, exercise library, quotes
 │   │   └── utils/       time zones, rate limiting, HTTP helpers
-│   ├── tests/           112 pytest tests
+│   ├── tests/           114 pytest tests
 │   └── requirements.txt · requirements-dev.txt · ruff.toml
 ├── frontend/
 │   ├── src/             pages, components, layouts, hooks, services, context

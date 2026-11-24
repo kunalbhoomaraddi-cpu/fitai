@@ -62,8 +62,11 @@ def indian_result(f: dict) -> dict:
             "image_url": None, "servings": f["servings"], "diet": f["diet"], "category": f["category"]}
 
 
-def search_indian_foods(query: str, limit: int = 10) -> list[dict]:
-    """Ranked search over names + regional aliases, with typo tolerance (e.g. 'chapathi', 'biriyani')."""
+def search_indian_foods(query: str, limit: int = 10, word_guess: bool = True) -> list[dict]:
+    """Ranked search over names + regional aliases, with typo tolerance (e.g. 'chapathi', 'biriyani').
+
+    word_guess=False skips the last-resort single-word guess, which is fine for a search box
+    but too loose for automatic matching ("dal curry" must not become "Egg Curry")."""
     q = _norm(query)
     if len(q) < 2:
         return []
@@ -91,8 +94,13 @@ def search_indian_foods(query: str, limit: int = 10) -> list[dict]:
             scored[key] = best
     if not scored:  # typo tolerance
         for term in difflib.get_close_matches(q, list(_INDIAN_VOCAB), n=limit, cutoff=0.78):
+            # strict mode: every word must resemble a word of the match ("dal curry" is not "egg curry")
+            if not word_guess and not all(
+                any(difflib.SequenceMatcher(None, t, w).ratio() >= 0.7 for w in term.split()) for t in tokens
+            ):
+                continue
             scored.setdefault(_INDIAN_VOCAB[term], 20)
-        if not scored and len(tokens) > 1:
+        if not scored and len(tokens) > 1 and word_guess:
             for t in tokens:
                 for term in difflib.get_close_matches(t, list(_INDIAN_VOCAB), n=3, cutoff=0.82):
                     scored.setdefault(_INDIAN_VOCAB[term], 10)

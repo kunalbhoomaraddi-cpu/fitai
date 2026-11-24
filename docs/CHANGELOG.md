@@ -5,6 +5,7 @@ What was built, in the order it was built. Live app: https://fitai-app-pink.verc
 ## 24 Nov 2026: v2 begins
 
 - **Snap your meal.** On the Nutrition page, take or choose a photo of your plate. Gemini identifies each food and estimates its portion; calories and macros come from FitAI's food database (Indian dishes and reference foods). Foods the database doesn't know use the AI's estimate and are labelled "AI estimate"; unsure items say "Not sure, please check". Users adjust grams, untick items and add the rest to a meal in one tap. Photos are shrunk on the phone before upload, processed in memory and never stored. Limits: 30 photo analyses per user per day (10 in the demo) to protect the shared free AI quota.
+- **Stricter dish matching.** Found in the first live photo test: Gemini saw "dal curry" and the database lookup matched it to "Egg Curry" because both contain "curry". Photo matching now ignores a single shared word, drops generic words like "curry" or "sabzi" before trying again ("dal curry" becomes Dal Tadka), and falls back to a labelled AI estimate if nothing truly matches. The food search box keeps its forgiving typo matching.
 
 ## 17 Nov 2026
 

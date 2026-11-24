@@ -98,13 +98,32 @@ def _num(v, lo: float = 0, hi: float = 5000) -> float | None:
     return x if lo <= x <= hi else None
 
 
-def match_food(name: str, aliases: list[str]) -> dict | None:
-    """Best database match for a dish name the AI gave (Indian library first, then reference foods)."""
+# Generic words a dish name can lose and still mean the same food ("dal curry" -> "dal").
+_GENERIC = {"curry", "sabzi", "sabji", "gravy", "dish", "bowl", "plate", "side", "serving", "portion"}
+
+
+def _candidates(name: str, aliases: list[str]) -> list[str]:
+    out = [name, *aliases]
     for q in [name, *aliases]:
-        q = (q or "").strip()
-        if len(q) < 2:
-            continue
-        hits = search_indian_foods(q, limit=1) or search_reference_foods(q, limit=1)
+        words = [w for w in (q or "").split() if w.lower() not in _GENERIC]
+        if words and len(words) < len((q or "").split()):
+            out.append(" ".join(words))
+    seen, uniq = set(), []
+    for q in out:
+        k = (q or "").strip().lower()
+        if len(k) >= 2 and k not in seen:
+            seen.add(k)
+            uniq.append(q.strip())
+    return uniq
+
+
+def match_food(name: str, aliases: list[str]) -> dict | None:
+    """Best database match for a dish name the AI gave (Indian library first, then reference foods).
+
+    Matching is strict: a shared word like "curry" alone is never enough, so an unknown dish
+    falls back to the AI's own estimate (clearly labelled) instead of a wrong database food."""
+    for q in _candidates(name, aliases):
+        hits = search_indian_foods(q, limit=1, word_guess=False) or search_reference_foods(q, limit=1)
         if hits:
             return hits[0]
     return None

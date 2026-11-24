@@ -7,7 +7,7 @@
 | **Live app** | https://fitai-app-pink.vercel.app (click **Explore the demo**, no sign-up needed) |
 | **Source code** | https://github.com/kunalbhoomaraddi-cpu/fitai (public) |
 | **Backend API** | https://fitai-api-nmtc.onrender.com/api/health |
-| **Status** | Live in production · 112 automated tests passing on every push |
+| **Status** | Live in production · 114 automated tests passing on every push |
 
 ---
 
@@ -270,7 +270,7 @@ After the 23 Nov demo, the mentor asked for a better version. The first v2 featu
 
 ```
 fitai/
-├── backend/            FastAPI app + 112 tests
+├── backend/            FastAPI app + 114 tests
 ├── frontend/           React app
 ├── docs/               guides, changelog, screenshots
 ├── scripts/            dev, test, reset and setup helpers
@@ -285,7 +285,7 @@ fitai/
 - `docs/LOCAL_SETUP.md`, `ENVIRONMENT_CONFIGURATION.md`, `PROJECT_ARCHITECTURE.md`, `API_DOCUMENTATION.md`
 - `docs/TESTING_GUIDE.md`, `DEPLOYMENT_GUIDE.md`, `IMAGE_CREDITS.md`, `CHANGELOG.md`
 
-**Automated checks (GitHub Actions):** every push runs Ruff, the 112 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
+**Automated checks (GitHub Actions):** every push runs Ruff, the 114 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
 
 **Commit history (newest first)**
 
@@ -312,8 +312,8 @@ fitai/
 
 | Check | Result |
 |---|---|
-| Backend tests on SQLite | 112 / 112 passed, no warnings |
-| Backend tests on PostgreSQL 16 (same as Neon) | 112 / 112 passed |
+| Backend tests on SQLite | 114 / 114 passed, no warnings |
+| Backend tests on PostgreSQL 16 (same as Neon) | 114 / 114 passed |
 | Ruff (backend) and ESLint (frontend) | No problems |
 | TypeScript check and production build | Passed |
 | Browser tests: login code, forgot password, weekly check-in, progress photos, Indian food, exercise demos, type-DELETE confirmation, landing page, training days | All passed |

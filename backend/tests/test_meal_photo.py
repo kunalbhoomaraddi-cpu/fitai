@@ -134,3 +134,20 @@ def test_daily_limit(client, auth, gemini, monkeypatch):
 
 def test_requires_login(client):
     assert client.post("/api/nutrition/photo", files={"file": ("m.jpg", _jpeg(), "image/jpeg")}).status_code == 401
+
+
+def test_shared_word_is_not_a_match():
+    """A dish the database doesn't list by that name must not borrow another dish's numbers."""
+    from app.services.meal_photo_service import match_food
+
+    assert match_food("Dal curry", [])["name"].startswith("Dal")  # 'curry' dropped -> dal
+    assert match_food("Chicken curry", [])["name"] == "Chicken Curry"
+    assert match_food("Malabar parotta", [])["name"] == "Kerala Parotta"
+    assert match_food("Chapathi", [])["name"].startswith("Roti")  # typo still understood
+    assert match_food("Xyzzy curry", []) is None  # unknown -> AI estimate, never "Egg Curry"
+
+
+def test_search_box_keeps_loose_matching():
+    from app.services.nutrition_service import search_indian_foods
+
+    assert search_indian_foods("chapathi", 1)[0]["name"].startswith("Roti")

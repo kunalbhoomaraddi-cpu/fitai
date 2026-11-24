@@ -8,9 +8,10 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { ExerciseDemoModal, demoFor, demoImg } from '../../components/workout/ExerciseDemo'
+import { CalendarRow } from '../../components/workout/CalendarReminders'
 import { LiftProgress } from '../../components/workout/LiftProgress'
 import { workoutApi } from '../../services/fitai'
-import type { Exercise, SetEntry, Units, WorkoutPlan, WorkoutSession } from '../../types'
+import type { Exercise, SetEntry, SetTarget, Units, WorkoutPlan, WorkoutSession } from '../../types'
 import { cap, EQUIPMENT, fmtLiftSet, GOAL_LABEL, liftShow, liftToKg, MUSCLES, planTitle, shortDate, weightUnit } from '../../utils/format'
 
 const SPLITS: [string, string, string][] = [
@@ -66,7 +67,15 @@ function ExerciseRow({ e, index, session, onToggle, prev, onLog, units = 'metric
           <button onClick={() => setOpen(o => !o)} aria-label="Instructions" className="shrink-0 rounded-lg p-2 text-fg-dim hover:bg-white/5 hover:text-fg"><ChevronDown className={clsx('h-4 w-4 transition', open && 'rotate-180')} /></button>
         )}
       </div>
-      {session && onLog && <div className="border-t border-line-soft px-3 pb-2 pt-3 sm:px-4"><SetTable e={e} prev={prev} units={units} onChange={onLog} /></div>}
+      {session && onLog && (
+        <div className="border-t border-line-soft px-3 pb-2 pt-3 sm:px-4">
+          {e.target && (() => { const tt = targetText(e.target, units); return (
+            <p className="mb-3 flex items-start gap-2 text-[13px] leading-snug"><TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-lime" aria-hidden />
+              <span><span className="font-semibold text-lime">{tt.head}</span> <span className="text-fg-muted">{tt.why}</span></span></p>
+          ) })()}
+          <SetTable e={e} prev={prev} units={units} onChange={onLog} />
+        </div>
+      )}
       {open && !session && (
         <div className="border-t border-line-soft px-4 py-3 text-[13px] leading-relaxed text-fg-muted">
           {e.instructions}
@@ -94,6 +103,18 @@ function NumCell({ value, onValue, label, placeholder, decimal }: { value: numbe
 }
 const firstReps = (r: string) => { const m = r.match(/\d+/); return m ? Number(m[0]) : null }
 
+/** The progression tip shown above the set table, in the user's units. */
+function targetText(t: SetTarget, units: Units) {
+  const w = (kg: number | null) => (kg == null ? '' : `${liftShow(kg, units)} ${weightUnit(units)}`)
+  switch (t.action) {
+    case 'add_weight': return { head: `Try ${w(t.kg)} × ${t.reps}`, why: `You did ${t.last_reps}+ reps on every set at ${w(t.last_kg)} last time.` }
+    case 'add_reps': return { head: t.kg != null ? `${w(t.kg)}, aim for ${t.reps} reps` : `Aim for ${t.reps} reps`, why: `One more rep than your weakest set last time (${t.last_reps}).` }
+    case 'hold': return { head: `Stay at ${w(t.kg)}`, why: `Build up to ${t.reps} reps on every set before adding weight (last time: ${t.last_reps}).` }
+    case 'add_time': return { head: `Hold for ${t.reps} s`, why: `5 seconds longer than your best last time (${t.last_reps} s).` }
+    case 'harder': return { head: `Aim for ${t.reps} reps, or a harder version`, why: `You hit the top of the range on every set. Slow the lowering to 3 seconds, or try a harder variation.` }
+  }
+}
+
 /** Hevy-style set table: last time's numbers on the left, today's kg and reps, one tap to tick a set. */
 function SetTable({ e, prev, units, onChange }: { e: Exercise; prev?: SetEntry[]; units: Units; onChange: (log: SetEntry[], tickedNow: boolean) => void }) {
   const timed = /sec/i.test(e.reps)
@@ -105,7 +126,9 @@ function SetTable({ e, prev, units, onChange }: { e: Exercise; prev?: SetEntry[]
     if (s.done) return set(i, { done: false })
     // Ticking an empty set uses the placeholder values, like a paper log: last time's numbers, else the planned reps.
     const p = prev?.[i] ?? prev?.[prev.length - 1]
-    set(i, { done: true, kg: s.kg ?? p?.kg ?? (i > 0 ? log[i - 1].kg : null), reps: s.reps ?? p?.reps ?? (i > 0 ? log[i - 1].reps : null) ?? firstReps(e.reps) }, true)
+    const t = e.target
+    // Empty boxes take today's target first, then last time's numbers, then the previous set.
+    set(i, { done: true, kg: s.kg ?? (bodyweight ? null : t?.kg ?? p?.kg ?? (i > 0 ? log[i - 1].kg : null)), reps: s.reps ?? t?.reps ?? p?.reps ?? (i > 0 ? log[i - 1].reps : null) ?? firstReps(e.reps) }, true)
   }
   return (
     <table className="w-full max-w-2xl text-[14px]">
@@ -118,8 +141,8 @@ function SetTable({ e, prev, units, onChange }: { e: Exercise; prev?: SetEntry[]
               <td className="py-1 pl-1 tabular-nums text-fg-muted">{i + 1}</td>
               <td className="py-1 tabular-nums text-fg-dim">{p && (p.kg != null || p.reps != null) ? fmtLiftSet(p.kg, p.reps, units, timed) : '–'}</td>
               {!bodyweight && <td className="py-1 pr-2"><NumCell decimal label={`Set ${i + 1} weight in ${weightUnit(units)}`} value={s.kg == null ? null : liftShow(s.kg, units)}
-                placeholder={p?.kg != null ? String(liftShow(p.kg, units)) : ''} onValue={v => set(i, { kg: v == null ? null : liftToKg(v, units) })} /></td>}
-              <td className="py-1 pr-2"><NumCell label={`Set ${i + 1} ${timed ? 'seconds' : 'reps'}`} value={s.reps} placeholder={p?.reps != null ? String(p.reps) : String(firstReps(e.reps) ?? '')}
+                placeholder={e.target?.kg != null ? String(liftShow(e.target.kg, units)) : p?.kg != null ? String(liftShow(p.kg, units)) : ''} onValue={v => set(i, { kg: v == null ? null : liftToKg(v, units) })} /></td>}
+              <td className="py-1 pr-2"><NumCell label={`Set ${i + 1} ${timed ? 'seconds' : 'reps'}`} value={s.reps} placeholder={String(e.target?.reps ?? p?.reps ?? firstReps(e.reps) ?? '')}
                 onValue={v => set(i, { reps: v == null ? null : Math.round(v) })} /></td>
               <td className="py-1 text-right"><button onClick={() => tick(i)} aria-pressed={s.done} aria-label={s.done ? `Untick set ${i + 1}` : `Tick set ${i + 1}`}
                 className={clsx('inline-flex h-9 w-9 items-center justify-center rounded-lg border transition', s.done ? 'border-lime bg-lime text-ink-950' : 'border-line text-fg-dim hover:border-lime/60 hover:text-lime')}><Check className="h-4 w-4" /></button></td>
@@ -156,6 +179,16 @@ function ActiveSession({ s, onChange, onFinish, onAbandon, units }: { s: Workout
   const [rest, setRest] = useState<number | null>(null)
   const [prev, setPrev] = useState<Record<string, SetEntry[]>>({})
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
+  // Keep the phone screen on while training, so it doesn't lock between sets. Re-acquired after switching apps.
+  useEffect(() => {
+    type Lock = { release: () => Promise<void> }
+    const wl = (navigator as unknown as { wakeLock?: { request: (t: 'screen') => Promise<Lock> } }).wakeLock
+    if (!wl) return
+    let lock: Lock | null = null
+    const get = () => { if (document.visibilityState === 'visible') wl.request('screen').then(l => { lock = l }).catch(() => undefined) }
+    get(); document.addEventListener('visibilitychange', get)
+    return () => { document.removeEventListener('visibilitychange', get); lock?.release().catch(() => undefined) }
+  }, [])
   // "Last time" column: the most recent finished workout that logged each exercise.
   useEffect(() => {
     workoutApi.history().then(list => {
@@ -359,6 +392,7 @@ export default function WorkoutPlanner() {
                   </Card>
                 )}
                 {plan.recovery_note && <p className="text-center text-xs text-fg-dim">{plan.rest_days.length ? `Rest days: ${plan.rest_days.join(', ')}. ` : ''}{plan.recovery_note}</p>}
+                <Card className="p-5"><CalendarRow plan={plan} /></Card>
               </div>
             ))}
 

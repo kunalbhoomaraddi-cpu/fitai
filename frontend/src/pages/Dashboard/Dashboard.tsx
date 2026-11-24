@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ActivityChart, CaloriesChart, ProteinChart, WeightChart } from '../../components/charts/Charts'
 import { Badge, Bar, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, MacroRow, PageSkeleton, Photo, Ring } from '../../components/ui'
+import { InstallBanner } from '../../components/InstallApp'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -100,6 +101,8 @@ export default function Dashboard() {
           <Badge tone="amber">Demo</Badge><span>You're viewing <b className="text-fg">sample data</b> for a fictional user. Logging works too, so try adding a meal or a weigh-in.</span>
         </div>
       )}
+
+      <InstallBanner />
 
       {/* TODAY */}
       <section className="grid gap-8 rounded-2xl border border-line bg-ink-850 p-6 sm:p-8 lg:grid-cols-[1.4fr_1fr] lg:gap-12">

@@ -1,8 +1,10 @@
 import { tokenStore } from '../../services/api'
-import { Bot, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, User } from 'lucide-react'
+import { Bot, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, Chip, Input, Label, Modal, Notice, PageHeader, Segmented, Select, Skeleton } from '../../components/ui'
+import { InstallRow } from '../../components/InstallApp'
+import { CalendarRow } from '../../components/workout/CalendarReminders'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { profileApi, settingsApi } from '../../services/fitai'
@@ -113,6 +115,9 @@ export default function Settings() {
         </Section>
         <Section id="units" icon={<Ruler className="h-4 w-4" />} title="Measurement units" desc="Data is stored in metric; display converts automatically.">
           <Segmented options={[['metric', 'Metric (kg, cm)'], ['imperial', 'Imperial (lb, ft/in)']] as const} value={units} onChange={setUnits} />
+        </Section>
+        <Section id="app" icon={<Smartphone className="h-4 w-4" />} title="App and reminders" desc="Use FitAI like a phone app and get reminded on training days.">
+          <div className="space-y-5"><InstallRow /><CalendarRow /></div>
         </Section>
         <Section id="ai" icon={<Bot className="h-4 w-4" />} title="AI provider" desc="Keys are kept on the server, never in your browser.">
           {!ai ? <Skeleton className="h-24" /> : (

@@ -1,13 +1,14 @@
 import clsx from 'clsx'
-import { Camera, ChevronLeft, ChevronRight, Coffee, Cookie, Database, Loader2, Moon, Pencil, Plus, Search, Sun, Trash2, UtensilsCrossed } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bookmark, Camera, ChevronLeft, ChevronRight, Coffee, Cookie, Copy, Database, Loader2, Moon, Pencil, Plus, ScanBarcode, Search, Sun, Trash2, UtensilsCrossed } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { CaloriesChart, ProteinChart } from '../../components/charts/Charts'
+import { BarcodeScanner } from '../../components/nutrition/BarcodeScanner'
 import { MealPhoto } from '../../components/nutrition/MealPhoto'
 import { Badge, Button, Card, CardHeader, ErrorState, Input, Label, MacroRow, Meta, Modal, Notice, PageHeader, Ring, Segmented, Skeleton } from '../../components/ui'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { nutritionApi } from '../../services/fitai'
-import type { FoodEntry, FoodResult, MealType, RecentFood } from '../../types'
+import type { FoodEntry, FoodResult, MealType, RecentFood, SavedMeal } from '../../types'
 import { MEAL_LABEL, todayISO } from '../../utils/format'
 
 const MEALS: [MealType, any][] = [['breakfast', Coffee], ['lunch', Sun], ['snack', Cookie], ['dinner', Moon]]
@@ -35,12 +36,14 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
   const [custom, setCustom] = useState({ name: '', quantity_g: '100', calories: '', protein_g: '', carbs_g: '', fat_g: '' })
   const [saving, setSaving] = useState(false)
   const [recent, setRecent] = useState<RecentFood[]>([])
+  const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([])
+  const [scanning, setScanning] = useState(false)
   const [quick, setQuick] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
     setMealSel(editing?.meal ?? meal); setSel(null); setQ(''); setResults([]); setWarning(null)
-    if (!editing) nutritionApi.recent().then(setRecent).catch(() => setRecent([]))
+    if (!editing) { nutritionApi.recent().then(setRecent).catch(() => setRecent([])); nutritionApi.savedMeals().then(setSavedMeals).catch(() => setSavedMeals([])) }
     if (editing) { setMode('custom'); setCustom({ name: editing.name, quantity_g: String(editing.quantity_g), calories: String(editing.calories), protein_g: String(editing.protein_g), carbs_g: String(editing.carbs_g), fat_g: String(editing.fat_g) }) }
     else { setMode('search'); setCustom({ name: '', quantity_g: '100', calories: '', protein_g: '', carbs_g: '', fat_g: '' }) }
   }, [open, meal, editing])
@@ -58,6 +61,28 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
   const qty = serving ? serving.grams * count : +grams || 0
   const k = qty / 100
   const calc = sel && { calories: Math.round(sel.calories_100g * k), protein_g: +(sel.protein_100g * k).toFixed(1), carbs_g: +(sel.carbs_100g * k).toFixed(1), fat_g: +(sel.fat_100g * k).toFixed(1) }
+
+  const choose = (r: FoodResult) => { setSel(r); setUnit(r.servings?.length ? r.servings.indexOf(mainServing(r)!) : 'g'); setCount(1); setGrams('100') }
+  const onBarcode = useCallback(async (code: string) => {
+    setScanning(false)
+    try {
+      const r = await nutritionApi.barcode(code)
+      if (r.found && r.result) { setResults([r.result]); choose(r.result); toast('success', 'Found it', r.result.brand ? `${r.result.name} (${r.result.brand})` : r.result.name) }
+      else toast('info', r.warning ? 'Barcode lookup unavailable' : 'Not in the database yet', r.warning ?? `Barcode ${code} isn't in Open Food Facts. Search by name, or add it as a custom food.`)
+    } catch (e) { toast('error', 'Could not look up the barcode', (e as Error).message) }
+  }, [toast])
+
+  const logSaved = async (sm: SavedMeal) => {
+    setQuick(`saved-${sm.id}`)
+    try {
+      const r = await nutritionApi.logSavedMeal(sm.id, date, mealSel)
+      toast('success', `Added ${sm.name}`, `${r.logged} foods, ${sm.totals.calories} kcal to ${MEAL_LABEL[mealSel].toLowerCase()}`); onAdded(); onClose()
+    } catch (e) { toast('error', 'Could not add', (e as Error).message) } finally { setQuick(null) }
+  }
+  const forget = async (sm: SavedMeal) => {
+    try { await nutritionApi.deleteSavedMeal(sm.id); setSavedMeals(list => list.filter(x => x.id !== sm.id)); toast('success', `Deleted "${sm.name}"`) }
+    catch (e) { toast('error', 'Could not delete', (e as Error).message) }
+  }
 
   const quickAdd = async (r: RecentFood) => {
     setQuick(r.name)
@@ -92,11 +117,29 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
         <Segmented size="sm" options={MEALS.map(([m]) => [m, MEAL_LABEL[m]] as const)} value={mealSel} onChange={setMealSel} />
       </div>
       {mode === 'search' && !editing ? (<>
-        <Input autoFocus icon={<Search className="h-4 w-4" />} placeholder="Search foods, e.g. roti, dal, idli, paneer, chai…" value={q} onChange={e => { setQ(e.target.value); setSel(null) }} />
+        <div className="flex gap-2">
+          <Input autoFocus icon={<Search className="h-4 w-4" />} placeholder="Search foods, e.g. roti, dal, idli, paneer, chai…" value={q} onChange={e => { setQ(e.target.value); setSel(null) }} />
+          <Button variant="secondary" onClick={() => setScanning(true)} icon={<ScanBarcode className="h-4 w-4" />} aria-label="Scan a barcode" className="shrink-0"><span className="hidden sm:inline">Scan</span></Button>
+        </div>
+        <BarcodeScanner open={scanning} onClose={() => setScanning(false)} onCode={onBarcode} />
         {warning && <div className="mt-3"><Notice tone="warn">{warning}</Notice></div>}
         {!sel && <div className="mt-3 max-h-72 space-y-1 overflow-y-auto">
           {searching && [0, 1, 2].map(i => <Skeleton key={i} className="h-12" />)}
           {!searching && q.length >= 2 && results.length === 0 && <p className="py-6 text-center text-sm text-fg-muted">No matches. Try another term or add a custom food.</p>}
+          {q.trim().length < 2 && savedMeals.length > 0 && (<>
+            <p className="px-1 pb-1 pt-1 text-[13px] font-semibold text-fg-muted">Saved meals</p>
+            {savedMeals.map(sm => (
+              <div key={sm.id} className="flex items-center gap-1 rounded-xl transition hover:bg-white/[0.04]">
+                <button disabled={!!quick} onClick={() => logSaved(sm)} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left disabled:opacity-60">
+                  <Bookmark className="h-4 w-4 shrink-0 text-lime" aria-hidden />
+                  <div className="min-w-0 flex-1"><p className="truncate text-[14px] text-fg">{sm.name}</p><p className="truncate text-[11.5px] text-fg-dim">{sm.items.map(i => i.name).join(', ')}</p></div>
+                  <span className="shrink-0 text-[13px] tabular-nums text-fg-muted">{sm.totals.calories} kcal</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line text-fg-muted">{quick === `saved-${sm.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}</span>
+                </button>
+                <button onClick={() => forget(sm)} aria-label={`Delete saved meal ${sm.name}`} className="mr-1 rounded-lg p-1.5 text-fg-dim hover:text-coral"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+            ))}
+          </>)}
           {q.trim().length < 2 && recent.length > 0 && (<>
             <p className="px-1 pb-1 pt-1 text-[13px] font-semibold text-fg-muted">Recent: tap to add to {MEAL_LABEL[mealSel].toLowerCase()}</p>
             {recent.map(r => (
@@ -107,7 +150,7 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
             ))}
           </>)}
           {!searching && results.map(r => (
-            <button key={r.id} onClick={() => { setSel(r); setUnit(r.servings?.length ? r.servings.indexOf(mainServing(r)!) : 'g'); setCount(1); setGrams('100') }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/[0.04]">
+            <button key={r.id} onClick={() => choose(r)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/[0.04]">
               {r.image_url ? <img src={r.image_url} alt="" className="h-9 w-9 rounded-lg bg-white object-contain" loading="lazy" onError={e => (e.currentTarget.style.display = 'none')} /> : <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-fg-dim"><Database className="h-4 w-4" /></div>}
               <div className="min-w-0 flex-1"><p className="flex items-center gap-1.5 truncate text-sm">{r.diet && <DietDot diet={r.diet} />}{r.name}</p>
                 <p className="truncate text-[11px] text-fg-dim">{r.servings?.length ? `${r.category}, ${mainServing(r)!.label} ≈ ${Math.round(r.calories_100g * mainServing(r)!.grams / 100)} kcal` : `${r.brand ? `${r.brand}, ` : ''}${r.source === 'open_food_facts' ? 'Open Food Facts' : 'FitAI food database'}, per 100 g`}</p></div>
@@ -163,13 +206,27 @@ export default function NutritionTracker() {
   const toast = useToast()
   const [date, setDate] = useState(todayISO())
   const day = useAsync(() => nutritionApi.day(date), [date])
+  const prevDay = useAsync(() => nutritionApi.day(shift(date, -1)), [date])
   const hist = useAsync(() => nutritionApi.history(14), [])
   const [adding, setAdding] = useState<MealType | null>(null)
   const [editing, setEditing] = useState<FoodEntry | null>(null)
   const [snapping, setSnapping] = useState(false)
   const isToday = date === todayISO()
+  const [busy, setBusy] = useState<string | null>(null)
+  const [saving, setSaving] = useState<MealType | null>(null)
+  const [mealName, setMealName] = useState('')
 
   const refresh = () => { day.reload(true); hist.reload(true) }
+  const copyFromPrev = async (m: MealType) => {
+    setBusy(m)
+    try { const r = await nutritionApi.copy(shift(date, -1), date, m); toast('success', `Copied ${r.copied} ${r.copied === 1 ? 'food' : 'foods'}`, `Same ${MEAL_LABEL[m].toLowerCase()} as the day before`); refresh() }
+    catch (err) { toast('error', 'Could not copy', (err as Error).message) } finally { setBusy(null) }
+  }
+  const saveMeal = async () => {
+    if (!saving || !mealName.trim()) return
+    try { await nutritionApi.saveMeal(mealName.trim(), date, saving); toast('success', 'Meal saved', `Find "${mealName.trim()}" at the top of Add food.`); setSaving(null) }
+    catch (err) { toast('error', 'Could not save', (err as Error).message) }
+  }
   const remove = async (e: FoodEntry) => {
     try { await nutritionApi.remove(e.id); toast('success', 'Entry deleted'); refresh() } catch (err) { toast('error', 'Delete failed', (err as Error).message) }
   }
@@ -184,6 +241,13 @@ export default function NutritionTracker() {
           <Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setAdding('breakfast')}>Add food</Button>
         </div>} />
       <MealPhoto open={snapping} onClose={() => setSnapping(false)} date={date} onAdded={refresh} />
+      <Modal open={!!saving} onClose={() => setSaving(null)} title="Save this meal">
+        <p className="mb-3 text-sm text-fg-muted">Saves the {saving ? MEAL_LABEL[saving].toLowerCase() : ''} foods you logged so you can add them all again in one tap.</p>
+        <form onSubmit={e => { e.preventDefault(); saveMeal() }}>
+          <Label>Name</Label><Input autoFocus maxLength={80} value={mealName} onChange={e => setMealName(e.target.value)} />
+          <div className="mt-5 flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setSaving(null)}>Cancel</Button><Button type="submit" disabled={!mealName.trim()} icon={<Bookmark className="h-4 w-4" />}>Save meal</Button></div>
+        </form>
+      </Modal>
       <div className="mb-5 flex items-center gap-2">
         <button onClick={() => setDate(shift(date, -1))} aria-label="Previous day" className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-ink-850 text-fg-muted hover:text-fg"><ChevronLeft className="h-4 w-4" /></button>
         <div className="min-w-[180px] rounded-xl border border-line bg-ink-850 px-4 py-2 text-center text-sm font-medium">{label}</div>
@@ -222,13 +286,28 @@ export default function NutritionTracker() {
                     <div className="flex items-center justify-between gap-3 px-5 py-4">
                       <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-lime"><I className="h-4 w-4" /></div>
                         <div><p className="font-semibold">{MEAL_LABEL[m]}</p><Meta className="text-xs text-fg-dim" items={[`${bm.calories} kcal`, `P ${bm.protein_g}`, `C ${bm.carbs_g}`, `F ${bm.fat_g}`]} /></div></div>
-                      <Button size="sm" variant="secondary" onClick={() => { setEditing(null); setAdding(m) }} icon={<Plus className="h-3.5 w-3.5" />}>Add</Button>
+                      <div className="flex shrink-0 gap-1.5">
+                        {entries.length > 0 && <Button size="sm" variant="ghost" aria-label={`Save ${MEAL_LABEL[m].toLowerCase()} as a meal`} title="Save as a meal" onClick={() => { setMealName(`My usual ${MEAL_LABEL[m].toLowerCase()}`); setSaving(m) }} icon={<Bookmark className="h-3.5 w-3.5" />}><span className="hidden sm:inline">Save</span></Button>}
+                        <Button size="sm" variant="secondary" onClick={() => { setEditing(null); setAdding(m) }} icon={<Plus className="h-3.5 w-3.5" />}>Add</Button>
+                      </div>
                     </div>
-                    {entries.length === 0 && (
+                    {entries.length === 0 && (() => {
+                      const prevCount = (prevDay.data?.entries ?? []).filter((e: FoodEntry) => e.meal === m).length
+                      return (
+                        <div className="flex items-stretch border-t border-dashed border-line-soft">
+                          <div className="min-w-0 flex-1 [&>button]:border-0">
                       <button onClick={() => { setEditing(null); setAdding(m) }} className="flex w-full items-center gap-2 border-t border-dashed border-line-soft px-5 py-3 text-left text-[13px] text-fg-dim transition hover:bg-white/[0.02] hover:text-lime">
                         <Plus className="h-3.5 w-3.5" />Nothing logged for {MEAL_LABEL[m].toLowerCase()} yet. Add food
                       </button>
-                    )}
+                          </div>
+                          {prevCount > 0 && (
+                            <button onClick={() => copyFromPrev(m)} disabled={busy === m} className="flex shrink-0 items-center gap-1.5 border-l border-line-soft px-4 text-[13px] font-medium text-lime transition hover:bg-lime/[0.05] disabled:opacity-60">
+                              {busy === m ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}{isToday ? 'Same as yesterday' : 'Same as day before'}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })()}
                     {entries.length > 0 && (
                       <div className="divide-y divide-line-soft border-t border-line-soft">
                         {entries.map(e => (

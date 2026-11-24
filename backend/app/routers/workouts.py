@@ -142,9 +142,16 @@ def start(body: StartWorkoutIn, user: User = Depends(require_profile), db: Sessi
         prof = user.profile
         day = wsvc.generate_plan(prof.goal, prof.experience, 1, prof.equipment, prof.workout_minutes)["days"][0]
         name, exercises = f"Quick {day['name']}", day["exercises"]
+    last = lift_service.last_logged_sets(db, user.id)
     for e in exercises:
         e["completed"] = False
         e["sets_done"] = 0
+        e.pop("set_log", None)
+        target = lift_service.suggest(e, last.get(str(e.get("exercise_id") or ""), []))
+        if target:
+            e["target"] = target  # today's suggested weight/reps, from the last time it was logged
+        else:
+            e.pop("target", None)
     s = WorkoutSession(user_id=user.id, plan_id=body.plan_id, name=name, started_at=utcnow(), exercises=exercises,
                        status="in_progress")
     db.add(s)

@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { MealPhotoResult, AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Profile, User, WorkoutPlan, WorkoutSession, RecentFood, Lift } from '../types'
+import type { AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
 
 export type Verification = { delivery: 'email' | 'console' | 'failed' | 'none'; error?: string; expires_in_minutes?: number; resend_in_seconds?: number }
 type Token = { access_token: string; user: User; verification?: Verification | null }
@@ -71,6 +71,12 @@ export const nutritionApi = {
   remove: (id: number) => api.del<void>(`/nutrition/entries/${id}`),
   history: (days = 14) => api.get<any[]>(`/nutrition/history?days=${days}`),
   recent: () => api.get<RecentFood[]>('/nutrition/recent'),
+  copy: (from_date: string, to_date: string, meal: MealType) => api.post<{ copied: number }>('/nutrition/copy', { from_date, to_date, meal }),
+  savedMeals: () => api.get<SavedMeal[]>('/nutrition/saved-meals'),
+  saveMeal: (name: string, eaten_on: string, meal: MealType) => api.post<SavedMeal>('/nutrition/saved-meals', { name, eaten_on, meal }),
+  logSavedMeal: (id: number, eaten_on: string, meal: MealType) => api.post<SavedMeal & { logged: number }>(`/nutrition/saved-meals/${id}/log`, { eaten_on, meal }),
+  deleteSavedMeal: (id: number) => api.del(`/nutrition/saved-meals/${id}`),
+  barcode: (code: string) => api.get<{ found: boolean; result: FoodResult | null; warning: string | null }>(`/nutrition/barcode/${code}`),
   analyzePhoto: (file: Blob) => { const f = new FormData(); f.append('file', file, 'meal.jpg'); return api.upload<MealPhotoResult>('/nutrition/photo', f) },
 }
 export const progressApi = {

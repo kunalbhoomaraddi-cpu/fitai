@@ -55,7 +55,7 @@ export interface DietPlan {
 }
 export interface Exercise {
   exercise_id: string; name: string; muscle: string; secondary: string[]; equipment: string[]; instructions: string
-  image: string; sets: number; reps: string; rest_seconds: number; completed: boolean; sets_done?: number; set_log?: SetEntry[]
+  image: string; sets: number; reps: string; rest_seconds: number; completed: boolean; sets_done?: number; set_log?: SetEntry[]; target?: SetTarget
 }
 export interface WorkoutDay { index: number; weekday: string; name: string; focus: string[]; duration_minutes: number; exercises: Exercise[] }
 export interface WorkoutPlan {
@@ -80,3 +80,9 @@ export interface Lift {
   exercise_id: string; name: string; kind: 'weighted' | 'bodyweight' | 'timed'; unit: string; metric: string
   sessions: number; last_date: string; latest: LiftPoint; best: LiftPoint; change_8w: number | null; prs: number; points: LiftPoint[]
 }
+
+/** Today's suggested weight and reps, worked out from the last time the exercise was logged (kg). */
+export interface SetTarget { action: 'add_weight' | 'add_reps' | 'hold' | 'add_time' | 'harder'; kg: number | null; reps: number; last_kg: number | null; last_reps: number }
+
+/** A meal the user saved to log again in one tap. */
+export interface SavedMeal { id: number; name: string; meal: MealType; items: RecentFood[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number } }

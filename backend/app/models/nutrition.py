@@ -26,6 +26,17 @@ class FoodEntry(TimestampMixin, Base):
     source_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
+class SavedMeal(TimestampMixin, Base):
+    """A meal the user logs often ("My usual breakfast"), saved as a list of foods to re-log in one tap."""
+    __tablename__ = "saved_meals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    meal: Mapped[str] = mapped_column(String(20))  # the meal it was saved from; logging can pick another
+    items: Mapped[list] = mapped_column(JSON)  # [{name, quantity_g, calories, protein_g, carbs_g, fat_g, source, source_id}]
+
+
 class DietPlan(TimestampMixin, Base):
     __tablename__ = "diet_plans"
 

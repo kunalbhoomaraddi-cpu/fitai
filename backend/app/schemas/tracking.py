@@ -19,6 +19,26 @@ class FoodEntryIn(BaseModel):
     source_id: str | None = Field(default=None, max_length=64)
 
 
+class CopyMealIn(BaseModel):
+    """Copy everything logged for one meal on one day to another day (and optionally another meal)."""
+    from_date: date
+    to_date: date
+    meal: MealType
+    to_meal: MealType | None = None
+
+
+class SavedMealIn(BaseModel):
+    """Save what was logged for a meal on a day as a reusable meal."""
+    name: str = Field(min_length=1, max_length=80)
+    eaten_on: date
+    meal: MealType
+
+
+class LogSavedMealIn(BaseModel):
+    eaten_on: date | None = None
+    meal: MealType | None = None
+
+
 class FoodEntryUpdate(BaseModel):
     meal: MealType | None = None
     name: str | None = Field(default=None, min_length=1, max_length=200)

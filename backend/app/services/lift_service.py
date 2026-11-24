@@ -10,6 +10,7 @@ All numbers are worked out here in code; nothing is estimated by the AI.
 """
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 
 from sqlalchemy.orm import Session
@@ -96,3 +97,66 @@ def lift_progress(db: Session, user_id: int, weeks: int = 52) -> list[dict]:
         })
     lifts.sort(key=lambda lift: (-lift["sessions"], lift["name"]))
     return lifts
+
+
+# --------------------------------------------------------------------------- auto-progression
+LOWER_BODY = {"quads", "hamstrings", "glutes", "calves", "legs"}
+
+
+def rep_range(reps: str) -> tuple[int, int]:
+    """'8–12' -> (8, 12); '10' -> (10, 10); '30–45 sec' -> (30, 45). Defaults to 8–12."""
+    nums = [int(n) for n in re.findall(r"\d+", str(reps))]
+    if not nums:
+        return 8, 12
+    return (nums[0], nums[1]) if len(nums) > 1 and nums[1] >= nums[0] else (nums[0], nums[0])
+
+
+def increment(ex: dict) -> float:
+    """Smallest sensible jump: 2 kg for dumbbells, 5 kg for lower-body barbell or machine lifts, else 2.5 kg."""
+    equip = set(ex.get("equipment") or [])
+    if equip == {"dumbbells"}:
+        return 2.0
+    if str(ex.get("muscle", "")).lower() in LOWER_BODY and equip & {"barbell", "machines"}:
+        return 5.0
+    return 2.5
+
+
+def suggest(ex: dict, last: list[tuple[float | None, int]]) -> dict | None:
+    """Today's target from the last time this exercise was logged (double progression).
+
+    Returns {action, kg, reps, last_kg, last_reps} with kg in kilograms (the app converts to lb), or None
+    when there is nothing to go on. action: add_weight | add_reps | hold | add_time | harder."""
+    if not last:
+        return None
+    lo, hi = rep_range(ex.get("reps", ""))
+    planned = int(ex.get("sets") or len(last))
+    if "sec" in str(ex.get("reps", "")).lower():
+        best = max(r for _, r in last)
+        return {"action": "add_time", "kg": None, "reps": best + 5, "last_kg": None, "last_reps": best}
+    weighted = [(kg, r) for kg, r in last if kg]
+    if not weighted:  # bodyweight: more reps, then a harder version
+        low = min(r for _, r in last)
+        if len(last) >= planned and low >= hi:
+            return {"action": "harder", "kg": None, "reps": hi + 2, "last_kg": None, "last_reps": low}
+        return {"action": "add_reps", "kg": None, "reps": min(hi, max(lo, low + 1)), "last_kg": None, "last_reps": low}
+    top = max(kg for kg, _ in weighted)
+    at_top = [r for kg, r in weighted if kg == top]
+    low = min(at_top)
+    if len(weighted) >= planned and low >= hi:
+        return {"action": "add_weight", "kg": round(top + increment(ex), 2), "reps": lo, "last_kg": top, "last_reps": low}
+    if low < lo:
+        return {"action": "hold", "kg": top, "reps": lo, "last_kg": top, "last_reps": low}
+    return {"action": "add_reps", "kg": top, "reps": min(hi, low + 1), "last_kg": top, "last_reps": low}
+
+
+def last_logged_sets(db: Session, user_id: int) -> dict[str, list[tuple[float | None, int]]]:
+    """For each exercise, the ticked sets from the most recent finished workout that logged it."""
+    out: dict[str, list[tuple[float | None, int]]] = {}
+    for s in reversed(completed_sessions(db, user_id)):
+        for ex in s.exercises or []:
+            key = str(ex.get("exercise_id") or "")
+            if key and key not in out:
+                sets = _clean_sets(ex)
+                if sets:
+                    out[key] = sets
+    return out

@@ -61,7 +61,7 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | POST / DELETE | `/workouts/plans/{id}/save`, `/workouts/plans/{id}` | Save or delete |
 | POST | `/nutrition/photo` | Multipart `file` (JPG/PNG/WebP, ≤15 MB). Returns `{items[{name, grams, portion, calories, protein_g, carbs_g, fat_g, per_100g, basis: database\|ai_estimate, source_id, confidence}], totals, note}`. Nothing is saved; add items with `POST /nutrition/entries` (`source: "meal_photo"`). Needs Gemini; 30 photos per user per day (10 in the demo) |
 | PATCH | `/workouts/plans/{id}/days` | `{training_days}`: move the plan's workouts to these weekdays (same count as the plan) |
-| POST | `/workouts/sessions/start` | `{plan_id?, day_index}`. Starts a session; any other in-progress session is abandoned |
+| POST | `/workouts/sessions/start` | `{plan_id?, day_index}`. Starts a session; any other in-progress session is abandoned. Each exercise gets `target: {action, kg, reps, last_kg, last_reps}` from the last time it was logged (auto-progression, kg) |
 | GET | `/workouts/sessions/active` | Current session |
 | PATCH | `/workouts/sessions/{id}` | `{exercises?, status?}` (at most 40 exercises). Each exercise may carry `set_log: [{kg, reps, done}]`; past logs power the *Last time* column. `completed` computes duration and returns `new_achievements` (only those this workout earned) |
 | GET | `/workouts/lifts` | Per-lift progress from logged sets, most-trained first: `{exercise_id, name, kind: weighted\|bodyweight\|timed, unit, metric, sessions, latest, best, change_8w, prs, points[{date, value, label, kg, reps, volume, pr}]}` (kg and reps let the app show the set in kg or lb). Weighted value = estimated 1-rep max (Epley, capped at 12 reps) |
@@ -79,6 +79,12 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | PATCH / DELETE | `/nutrition/entries/{id}` | Edit or delete (owner only) |
 | GET | `/nutrition/history?days=14` | Daily totals |
 | GET | `/nutrition/recent?limit=8` | The user's most recently logged distinct foods (name, quantity_g, macros, source), newest first, for one-tap re-logging |
+| GET | `/nutrition/barcode/{code}` | Packaged food by barcode (8 to 14 digits) from Open Food Facts: `{found, result, warning}`. `result` is a food like search results, with the pack's serving size in `servings` when the label gives one. Cached for a day |
+| POST | `/nutrition/copy` | `{from_date, to_date, meal, to_meal?}`: copies one meal's foods to another day. 400 if nothing was logged |
+| GET | `/nutrition/saved-meals` | The user's saved meals: `{id, name, meal, items[], totals}` |
+| POST | `/nutrition/saved-meals` | `{name, eaten_on, meal}`: saves that day's logged meal (up to 30 saved meals, 25 foods each) |
+| POST | `/nutrition/saved-meals/{id}/log` | `{eaten_on?, meal?}`: logs every food in the saved meal |
+| DELETE | `/nutrition/saved-meals/{id}` | Deletes a saved meal |
 
 ## Progress
 | Method | Path | Description |

@@ -61,3 +61,19 @@ def auth(client):
     r = client.put("/api/profile", json=PROFILE, headers=h)
     assert r.status_code == 200, r.text
     return h
+
+
+@pytest.fixture
+def second_user(client):
+    """Another signed-in user, for checking that people can't see or change each other's data."""
+    return _make_user(client)
+
+
+def _make_user(client):
+    _counter["n"] += 1
+    email = f"user{_counter['n']}@example.com"
+    r = client.post("/api/auth/register", json={"full_name": "Other User", "email": email, "password": "secret123"})
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    verify(client, h, email)
+    client.put("/api/profile", json=PROFILE, headers=h)
+    return h

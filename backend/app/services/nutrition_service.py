@@ -26,6 +26,8 @@ settings = get_settings()
 _off_cache = TTLCache(maxsize=300, ttl=6 * 3600)
 # Open Food Facts allows ~10 search requests/minute per IP. Stay under it.
 _off_limiter = SlidingWindowLimiter(limit=8, window=60)
+_barcode_cache = TTLCache(maxsize=500, ttl=24 * 3600)
+_barcode_limiter = SlidingWindowLimiter(limit=30, window=60)  # Open Food Facts allows ~100 product reads/min
 
 MEAL_ORDER = ["breakfast", "lunch", "snack", "dinner"]
 
@@ -138,6 +140,41 @@ def search_food(query: str, limit: int = 12) -> dict:
         log.warning("Open Food Facts unavailable: %s", type(exc).__name__)
         return {"results": reference, "source": "reference",
                 "warning": "Packaged foods (Open Food Facts) can't be reached right now. Showing foods from FitAI's own database."}
+
+
+def lookup_barcode(code: str) -> dict:
+    """Packaged food by its barcode (EAN/UPC) from Open Food Facts. Returns {found, result, warning}; never raises.
+
+    Adds the pack's own serving size when the label gives one, so "1 bar (40 g)" can be logged in one tap."""
+    if not settings.enable_external_apis:
+        return {"found": False, "result": None, "warning": "The packaged-food database is turned off here. Search by name instead."}
+    cached = _barcode_cache.get(code)  # {"result": ...}, so "not in the database" is cached too
+    if cached is not None:
+        return {"found": cached["result"] is not None, "result": cached["result"], "warning": None}
+    if not _barcode_limiter.allow():
+        return {"found": False, "result": None, "warning": "Too many scans in the last minute. Try again shortly, or search by name."}
+    try:
+        data = http_get_json(
+            f"{settings.off_base_url}/api/v2/product/{code}.json",
+            params={"fields": "code,product_name,brands,nutriments,image_front_small_url,serving_size,serving_quantity"},
+            headers={"User-Agent": settings.off_user_agent},
+        )
+    except Exception as exc:  # network, timeout, 5xx, JSON
+        log.warning("Open Food Facts barcode lookup failed: %s", type(exc).__name__)
+        return {"found": False, "result": None, "warning": "The packaged-food database can't be reached right now. Search by name instead."}
+    product = data.get("product") if data.get("status") == 1 else None
+    result = _map_off_product({**product, "code": product.get("code") or code}) if product else None
+    if result:
+        qty = product.get("serving_quantity")
+        try:
+            grams = float(qty) if qty not in (None, "") else 0
+        except (TypeError, ValueError):
+            grams = 0
+        if 1 <= grams <= 2000:
+            label = (product.get("serving_size") or f"{grams:g} g").strip()[:40]
+            result["servings"] = [{"label": f"1 serving ({label})" if "serving" not in label.lower() else label, "grams": round(grams, 1)}]
+    _barcode_cache.set(code, {"result": result})
+    return {"found": result is not None, "result": result, "warning": None}
 
 
 # --------------------------------------------------------------------------- tracking

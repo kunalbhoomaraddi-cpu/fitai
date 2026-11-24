@@ -79,7 +79,7 @@ export default function Login() {
     return (
       <AuthShell>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/10 text-lime"><ShieldCheck className="h-6 w-6" /></div>
-        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Check your email</h2>
+        <h2 className="mt-5 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Check your email</h2>
         <p className="mt-2 text-sm leading-relaxed text-fg-muted">For your security, we sent a 6-digit login code to <b className="text-fg">{otp.email_masked}</b>.</p>
         {otp.delivery === 'console' && (
           <div className="mt-5"><Notice tone="demo" icon={<Terminal className="h-4 w-4" />}>
@@ -105,7 +105,7 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <h2 className="font-display text-3xl font-bold tracking-tight">Welcome back</h2>
+      <h2 className="font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Welcome back</h2>
       <p className="mt-2 text-sm text-fg-muted">Log in to continue with your coach.</p>
       <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
         <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" autoComplete="email" icon={<Mail className="h-4 w-4" />} placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} /></div>
@@ -117,7 +117,7 @@ export default function Login() {
       <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-fg-dim"><ShieldCheck className="h-3.5 w-3.5" />We'll email you a one-time code to confirm it's you.</p>
       <div className="my-6 flex items-center gap-3 text-xs text-fg-dim"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
       <Button variant="outline" size="lg" full onClick={demo} loading={busy === 'demo'} icon={<PlayCircle className="h-4 w-4" />}>Explore the demo</Button>
-      <p className="mt-2 text-center text-xs text-fg-dim">Demo uses clearly labelled sample data — no sign-up needed.</p>
+      <p className="mt-2 text-center text-xs text-fg-dim">The demo uses sample data. No sign-up needed.</p>
       <p className="mt-8 text-center text-sm text-fg-muted">New to FitAI? <Link to="/register" className="font-semibold text-lime hover:underline">Create an account</Link></p>
     </AuthShell>
   )

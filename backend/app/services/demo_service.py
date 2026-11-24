@@ -5,6 +5,7 @@ Every "Try the demo" click gets its OWN throwaway copy, so visitors never see ea
 changes and one visitor can't sign another out. Copies are deleted after DEMO_TTL_HOURS, and at
 most DEMO_MAX_ACCOUNTS live at once (oldest go first)."""
 import random
+import re
 import secrets
 from datetime import datetime, time, timedelta
 
@@ -95,7 +96,7 @@ def create_demo(db: Session) -> User:
             day = plan_data["days"][[0, 1, 3, 4].index(d.weekday())]
             started = datetime.combine(d, time(18, rng.randint(0, 40)))
             dur = rng.randint(42, 58)
-            ex = [{**e, "completed": True, "sets_done": e["sets"]} for e in day["exercises"]]
+            ex = [{**e, "completed": True, "sets_done": e["sets"], "set_log": _demo_sets(e, days_back - i, rng)} for e in day["exercises"]]
             db.add(WorkoutSession(user_id=user.id, plan_id=wp.id, name=day["name"], started_at=started,
                                   completed_at=started + timedelta(minutes=dur), duration_minutes=dur, exercises=ex, status="completed"))
     # nutrition: last 13 days + partial today
@@ -127,3 +128,15 @@ def create_demo(db: Session) -> User:
     db.refresh(user)
     progress_service.evaluate_achievements(db, user)
     return user
+
+# Starting loads for the demo's set history; bodyweight moves log reps only. Loads creep up over the weeks.
+_DEMO_KG = {"barbell": 40.0, "dumbbells": 12.0, "cables": 25.0, "machines": 35.0, "kettlebell": 12.0}
+
+
+def _demo_sets(ex: dict, week_day: int, rng) -> list[dict]:
+    equip = next((e for e in ex.get("equipment", []) if e in _DEMO_KG), None)
+    base = _DEMO_KG.get(equip) if equip else None
+    kg = None if base is None else round((base + 2.5 * (week_day // 14)) * 2) / 2
+    m = re.search(r"\d+", str(ex.get("reps", "10")))  # "8–12" (en dash) -> 8
+    lo = int(m.group()) if m else 10
+    return [{"kg": kg, "reps": lo + rng.randint(0, 2), "done": True} for _ in range(int(ex.get("sets", 3)))]

@@ -4,6 +4,18 @@ What was built, in the order it was built. Live app: https://fitai-app-pink.verc
 
 ## 24 Nov 2026: v2 begins
 
+- **Log every set, like a gym notebook** (learned from Hevy). During a workout each exercise has a set table: *Last time* shows what you lifted in your previous session, then kg and reps for today. One tap ticks a set, fills in last time's numbers if you left the boxes empty, and starts the rest timer. The rest timer stays pinned at the top while you scroll. Bodyweight exercises hide the kg column; timed ones (planks) log seconds. The finish screen shows total kg lifted. Stored inside the session's existing data, so no database change. Demo accounts get realistic past sets.
+- **One-tap re-logging** (learned from MacroFactor). Opening *Add food* shows your recent foods; one tap adds the same portion to the chosen meal. New endpoint `GET /api/nutrition/recent`.
+- **Dashboard puts today first** (learned from WHOOP's home screen). The check-in reminder moved below today's plan and numbers.
+- **New look across the whole app.** Same dark theme and lime, but no longer the generic "AI website" style:
+  - Fonts: Big Shoulders Display, a condensed scoreboard face, for headings and numbers; IBM Plex Sans for text (replacing Inter and Manrope).
+  - Removed glows, gradient text, shine effects, blurred light blobs, small all-caps labels and text joined with "·".
+  - Plain page names in the menu and titles: Coach, Meal plan, Workouts, Food log, Progress.
+  - The dashboard opens on today ("Lower strength today" or "Rest day"), with goal progress and a scoreboard of today's numbers.
+  - The landing page shows a sample training log and plainer copy.
+  - Calories are off-white everywhere, so they never clash with fat (amber).
+  - Fixed: the dashboard goal ring sat on top of the gym photo and its text was unreadable.
+  - Keyboard focus is always visible; error and fallback messages no longer mention developer settings.
 - **Snap your meal.** On the Nutrition page, take or choose a photo of your plate. Gemini identifies each food and estimates its portion; calories and macros come from FitAI's food database (Indian dishes and reference foods). Foods the database doesn't know use the AI's estimate and are labelled "AI estimate"; unsure items say "Not sure, please check". Users adjust grams, untick items and add the rest to a meal in one tap. Photos are shrunk on the phone before upload, processed in memory and never stored. Limits: 30 photo analyses per user per day (10 in the demo) to protect the shared free AI quota.
 - **Stricter dish matching.** Found in the first live photo test: Gemini saw "dal curry" and the database lookup matched it to "Egg Curry" because both contain "curry". Photo matching now ignores a single shared word, drops generic words like "curry" or "sabzi" before trying again ("dal curry" becomes Dal Tadka), and falls back to a labelled AI estimate if nothing truly matches. The food search box keeps its forgiving typo matching.
 

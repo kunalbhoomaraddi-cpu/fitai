@@ -1,70 +1,72 @@
 import clsx from 'clsx'
-import { Activity, ArrowRight, Award, Bot, Check, ChevronDown, Dumbbell, Flame, HeartPulse, LineChart, Lock, Menu, PlayCircle, Salad, ShieldCheck, Sparkles, Target, Timer, TrendingDown, UtensilsCrossed, Wrench, X } from 'lucide-react'
+import { Award, Bot, Check, ChevronDown, Dumbbell, LineChart, Lock, Menu, PlayCircle, Salad, ShieldCheck, Target, Timer, UtensilsCrossed, Wrench, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Badge, Logo, Photo, Ring } from '../../components/ui'
+import { Badge, Logo, Photo } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useReveal } from '../../hooks/useReveal'
 
 const NAV = [['#features', 'Features'], ['#coach', 'AI Coach'], ['#how', 'How it works'], ['#faq', 'FAQ']] as const
 
 const FEATURES = [
-  { icon: Bot, title: 'AI Fitness Coach', text: 'Ask anything — calories, plateaus, what to train today. Answers are grounded in your own logs, not guesses.' },
-  { icon: Salad, title: 'Smart Diet Planner', text: 'Meal plans matched to your calories, protein, diet and allergies — vegetarian, vegan, eggetarian and more.' },
-  { icon: Dumbbell, title: 'Workout Generator', text: 'Push/Pull/Legs, Upper/Lower, Full Body and more — built only from the equipment you actually have.' },
-  { icon: UtensilsCrossed, title: 'Nutrition Tracker', text: 'Search thousands of foods, log meals in seconds and watch your macros fill up in real time.' },
-  { icon: LineChart, title: 'Progress Analysis', text: 'Weekly averages, 4-week trends and plateau detection that separate real progress from water weight.' },
-  { icon: Award, title: 'Motivation that lasts', text: 'Healthy streaks, weekly challenges, badges and a fresh motivational note every day.' },
+  { icon: Bot, title: 'A coach that checks before it answers', text: 'Ask what to eat tonight or why the scale is stuck. The coach reads your weigh-ins, food log and workouts first, then explains.' },
+  { icon: Salad, title: 'Meal plans in your kitchen’s language', text: 'Dal, roti, poha, paneer, eggs or chicken, matched to your calories and protein. Vegetarian, vegan, eggetarian and allergies respected.' },
+  { icon: Dumbbell, title: 'Workouts on the days you train', text: 'Pick your days and your equipment, even just bodyweight. Push/pull/legs, upper/lower or full body, with a rest timer for every set.' },
+  { icon: UtensilsCrossed, title: 'Log food by name or by photo', text: 'Search a database that knows Indian dishes, or snap your plate and check what it found before anything is saved.' },
+  { icon: LineChart, title: 'Progress without the water-weight panic', text: 'Weekly averages and a 4-week trend show whether you are really moving, and flag a plateau when you are not.' },
+  { icon: Award, title: 'Reasons to come back tomorrow', text: 'Streaks, weekly challenges, badges and a Sunday check-in that sets next week’s targets.' },
 ]
 
 const STEPS = [
-  { n: '01', title: 'Tell us about you', text: 'Two minutes of onboarding: your goal, body stats, diet, schedule and equipment.' },
-  { n: '02', title: 'Get your plan', text: 'FitAI calculates your targets with proven formulas and builds meals and workouts around them.' },
-  { n: '03', title: 'Track & adapt', text: 'Log food, workouts and weigh-ins. Your coach reads the trend and tells you what to adjust.' },
+  { title: 'Tell it about you', text: 'Goal, height and weight, diet, the days you can train and what equipment you have. About two minutes.' },
+  { title: 'Get your numbers and plans', text: 'Calories and protein from standard formulas, then a meal plan and a workout plan built around them.' },
+  { title: 'Log, check in, adjust', text: 'Log meals, sets and weigh-ins. Each week the coach reads the trend and tells you what to change.' },
 ]
 
 const FAQ = [
-  ['Is FitAI medical advice?', 'No. FitAI is a general fitness and wellness assistant. It never diagnoses conditions, avoids extreme deficits, and suggests seeing a professional when something needs one.'],
-  ['How are my calorie and macro targets calculated?', 'With established formulas — Mifflin-St Jeor for BMR, standard activity multipliers for TDEE, and safe, capped adjustments for your goal. The AI never invents these numbers; it reads them from FitAI’s calculators.'],
-  ['Which diets are supported?', 'Vegetarian, vegan, eggetarian, non-vegetarian and custom diets, plus restrictions such as dairy, gluten, nuts, soy, eggs and seafood. Meal plans strictly respect them.'],
-  ['Do I need a gym?', 'No. Choose your equipment — even bodyweight only — and FitAI programs exercises you can actually do.'],
-  ['How is my account protected?', 'Passwords are hashed, every new account verifies its email, and each login is confirmed with a one-time code sent to your inbox.'],
-  ['Can I try it without signing up?', 'Yes — open the live demo to explore every feature with clearly labelled sample data. Your demo is private to you and cleared after a few hours.'],
+  ['Is FitAI medical advice?', 'No. FitAI is a general fitness assistant. It never diagnoses anything, avoids extreme diets, and tells you to see a professional when something needs one.'],
+  ['Where do my calorie and protein targets come from?', 'From standard formulas: Mifflin-St Jeor for your resting burn, activity multipliers for your daily total, and a capped adjustment for your goal. The AI reads these numbers from FitAI’s calculator; it never makes them up.'],
+  ['Which diets work?', 'Vegetarian, vegan, eggetarian, non-vegetarian and custom diets, plus no dairy, gluten, nuts, soy, eggs or seafood. Meal plans stick to them.'],
+  ['Do I need a gym?', 'No. Tell FitAI what you have, even nothing at all, and it only programs exercises you can do.'],
+  ['How is my account protected?', 'Passwords are hashed, every new account confirms its email, and every login asks for a one-time code sent to your inbox.'],
+  ['Can I try it without signing up?', 'Yes. The demo opens a private copy filled with sample data. Try everything; it deletes itself after a few hours.'],
 ]
+
+const LOG = [
+  ['Deadlift', '3 × 5', '100 kg', true],
+  ['Lat pulldown', '3 × 10', '55 kg', true],
+  ['Seated cable row', '3 × 10', '50 kg', false],
+  ['Hammer curl', '3 × 12', '12 kg', false],
+] as const
 
 function HeroVisual() {
   return (
-    <div className="relative mx-auto w-full max-w-[560px] lg:mx-0">
-      <div className="pointer-events-none absolute -inset-10 rounded-full bg-lime/10 blur-3xl" />
-      <div className="group relative overflow-hidden rounded-[28px] border border-line shadow-pop">
-        <Photo name="hero-training" alt="Athlete strength training" className="aspect-[4/5] sm:aspect-[5/5]" overlay="strong" position="center 35%" />
-        <div className="absolute inset-x-5 bottom-5 rounded-2xl glass p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lime text-ink-950"><Sparkles className="h-4 w-4" /></div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-lime/80">FitAI Coach</p>
-              <p className="mt-1 text-[13.5px] leading-relaxed text-fg">Your 4-week trend is <b>−0.42 kg/week</b> — right in the healthy range. Keep protein near <b>148 g</b> and you’re on track.</p>
-              <div className="mt-2 flex flex-wrap gap-1.5"><Badge><Wrench className="h-3 w-3" />Weight history</Badge><Badge>Macros</Badge></div>
-            </div>
+    <div className="relative mx-auto w-full max-w-[540px] lg:mx-0">
+      <div className="overflow-hidden rounded-2xl border border-line">
+        <Photo name="hero-training" alt="Dumbbell rack in a gym" className="aspect-[16/10]" overlay="strong" position="center 35%" />
+        <div className="border-t border-line bg-ink-900 p-5 sm:p-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="font-display text-[28px] font-extrabold uppercase leading-none tracking-wide">Pull day</p>
+            <p className="text-sm text-fg-muted">Tuesday, 2 of 4 done</p>
           </div>
+          <table className="mt-4 w-full text-[14px]">
+            <tbody>
+              {LOG.map(([name, sets, kg, done]) => (
+                <tr key={name} className="border-t border-line-soft">
+                  <td className="py-2.5 pr-3">{name}</td>
+                  <td className="py-2.5 pr-3 tabular-nums text-fg-muted">{sets}</td>
+                  <td className="py-2.5 pr-3 text-right tabular-nums">{kg}</td>
+                  <td className="w-6 py-2.5 text-right">{done ? <Check className="ml-auto h-4 w-4 text-lime" aria-label="done" /> : <span className="ml-auto block h-4 w-4 rounded-full border border-line-strong" aria-label="to do" />}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-4 border-l-2 border-lime pl-3 text-[14px] leading-relaxed text-fg/90">
+            Protein is at <b className="tabular-nums">92 of 145 g</b>. Have dal or paneer with dinner and you’ll close the gap.
+          </p>
         </div>
       </div>
-      <div className="float absolute -left-4 top-10 hidden w-44 rounded-2xl border border-line bg-ink-850/95 p-4 shadow-pop backdrop-blur sm:block lg:-left-14">
-        <div className="flex items-center gap-3">
-          <Ring value={68} max={100} size={58} stroke={6}><span className="font-display text-sm font-bold">68%</span></Ring>
-          <div><p className="text-xs text-fg-muted">Goal progress</p><p className="flex items-center gap-1 text-xs text-moss-400"><TrendingDown className="h-3 w-3" />−5.4 kg</p></div>
-        </div>
-      </div>
-      <div className="float-delayed absolute -right-3 top-24 hidden w-52 rounded-2xl border border-line bg-ink-850/95 p-4 shadow-pop backdrop-blur sm:block lg:-right-10">
-        <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold"><Flame className="h-3.5 w-3.5 text-lime" />Today’s macros</p>
-        {[['Protein', 112, 148, '#C6F36B'], ['Carbs', 180, 260, '#7CC4F2'], ['Fat', 41, 68, '#F2B85B']].map(([l, v, t, c]) => (
-          <div key={l as string} className="mb-2 last:mb-0">
-            <div className="mb-1 flex justify-between text-[11px]"><span className="text-fg-muted">{l}</span><span className="tabular-nums">{v}/{t}g</span></div>
-            <div className="h-1.5 rounded-full bg-white/[0.06]"><div className="h-full rounded-full" style={{ width: `${((v as number) / (t as number)) * 100}%`, background: c as string }} /></div>
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 text-center text-[11px] text-fg-dim lg:text-left">Illustrative preview</p>
+      <p className="mt-3 text-[12px] text-fg-dim">Sample day, not a real user</p>
     </div>
   )
 }
@@ -82,20 +84,20 @@ export default function Landing() {
   const demo = async () => { setDemoBusy(true); try { await startDemo(); nav('/dashboard') } finally { setDemoBusy(false) } }
 
   const Primary = ({ className = '' }: { className?: string }) => (
-    <Link to={home ?? '/register'} className={clsx('btn-shine inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-lime px-6 text-[15px] font-semibold text-ink-950 shadow-[0_10px_30px_-10px_rgba(198,243,107,.7)] transition hover:bg-lime-400 active:scale-[.98]', className)}>
-      {home ? homeLabel : 'Get started free'} <ArrowRight className="h-4 w-4" />
+    <Link to={home ?? '/register'} className={clsx('inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-lime px-6 text-[15px] font-semibold text-ink-950 transition hover:bg-lime-400 active:scale-[.98]', className)}>
+      {home ? homeLabel : 'Get started free'}
     </Link>
   )
   const DemoBtn = ({ className = '' }: { className?: string }) => home ? null : (
     <button onClick={demo} disabled={demoBusy} className={clsx('inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line bg-white/[0.03] px-6 text-[15px] font-medium text-fg transition hover:border-lime/50 hover:text-lime disabled:opacity-60', className)}>
-      <PlayCircle className="h-4 w-4" />{demoBusy ? 'Opening demo…' : 'Explore the live demo'}
+      <PlayCircle className="h-4 w-4" />{demoBusy ? 'Opening demo…' : 'Try the demo'}
     </button>
   )
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-ink-950">
       {/* NAV */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-ink-950/75 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-line-soft bg-ink-950/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-5">
           <Link to="/" aria-label="FitAI home"><Logo /></Link>
           <nav className="ml-6 hidden items-center gap-7 text-sm text-fg-muted md:flex">
@@ -103,7 +105,7 @@ export default function Landing() {
           </nav>
           <div className="ml-auto hidden items-center gap-3 md:flex">
             {!home && <Link to="/login" className="px-3 py-2 text-sm font-medium text-fg-muted transition hover:text-fg">Log in</Link>}
-            <Link to={home ?? '/register'} className="btn-shine inline-flex h-10 items-center gap-1.5 rounded-xl bg-lime px-4 text-sm font-semibold text-ink-950 transition hover:bg-lime-400">{home ? homeLabel : 'Get started'} <ArrowRight className="h-3.5 w-3.5" /></Link>
+            <Link to={home ?? '/register'} className="inline-flex h-10 items-center rounded-xl bg-lime px-4 text-sm font-semibold text-ink-950 transition hover:bg-lime-400">{home ? homeLabel : 'Get started'}</Link>
           </div>
           <button className="ml-auto rounded-lg p-2 text-fg-muted md:hidden" onClick={() => setMenu(m => !m)} aria-label="Menu">{menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
         </div>
@@ -119,89 +121,78 @@ export default function Landing() {
       </header>
 
       {/* HERO */}
-      <section className="relative pt-28 sm:pt-36">
-        <div className="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-lime/[0.07] blur-3xl" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 lg:grid-cols-[1.05fr_1fr] lg:pb-28">
-          <div className="text-center lg:text-left">
-            <div className="reveal inline-flex items-center gap-2 rounded-full border border-lime/25 bg-lime/[0.06] px-3.5 py-1.5 text-xs font-medium text-lime">
-              <Sparkles className="h-3.5 w-3.5" />AI-native fitness · powered by Gemini
-            </div>
-            <h1 className="reveal reveal-d1 mt-6 font-display text-[42px] font-extrabold leading-[1.02] tracking-tight sm:text-6xl lg:text-[68px]">
-              Train smarter with a coach that <span className="text-gradient">knows your numbers.</span>
+      <section className="pt-28 sm:pt-32">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 lg:grid-cols-[1.1fr_1fr] lg:pb-24">
+          <div>
+            <h1 className="reveal font-display text-[52px] font-extrabold uppercase leading-[.9] tracking-[.01em] sm:text-[76px] lg:text-[88px]">
+              Train with a coach that knows your numbers
             </h1>
-            <p className="reveal reveal-d2 mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-fg-muted lg:mx-0">
-              FitAI turns your profile, meals and workouts into personal targets, meal plans and training — with an AI coach that checks your real data before it answers.
+            <p className="reveal reveal-d1 mt-7 max-w-[34rem] text-[17px] leading-relaxed text-fg-muted">
+              FitAI works out your calories and protein, plans your meals and workouts, and answers questions after looking at what you actually ate, lifted and weighed.
             </p>
-            <div className="reveal reveal-d3 mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start"><Primary /><DemoBtn /></div>
-            <div className="reveal reveal-d3 mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-fg-dim lg:justify-start">
-              {['No credit card', 'Email-verified accounts', 'Not medical advice — safety first'].map(t => <span key={t} className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-lime" />{t}</span>)}
-            </div>
+            <div className="reveal reveal-d2 mt-8 flex flex-col gap-3 sm:flex-row"><Primary /><DemoBtn /></div>
+            <p className="reveal reveal-d3 mt-5 text-[13px] text-fg-dim">Free. Email-verified accounts. General fitness guidance, not medical advice.</p>
           </div>
-          <div className="reveal reveal-d2"><HeroVisual /></div>
+          <div className="reveal reveal-d1"><HeroVisual /></div>
         </div>
       </section>
 
-      {/* STAT STRIP */}
-      <section className="border-y border-white/[0.06] bg-ink-900/60">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-6 px-5 py-8 text-center md:grid-cols-4">
-          {[['12', 'AI coach tools'], ['7', 'Workout styles'], ['5', 'Diet types + allergies'], ['100%', 'Formula-based targets']].map(([v, l], i) => (
-            <div key={l} className={clsx('reveal', `reveal-d${i % 3}`)}><p className="font-display text-3xl font-extrabold text-fg sm:text-4xl">{v}</p><p className="mt-1 text-sm text-fg-muted">{l}</p></div>
+      {/* NUMBERS */}
+      <section className="border-y border-line-soft">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 px-5 md:grid-cols-4">
+          {[['12', 'tools the coach can use'], ['7', 'workout styles'], ['5', 'diet types, plus allergies'], ['0', 'numbers made up by the AI']].map(([v, l], i) => (
+            <div key={l} className={clsx('py-7 md:px-6', i % 2 === 1 && 'border-l border-line-soft pl-5', i > 0 && 'md:border-l md:border-line-soft md:pl-6', i > 1 && 'border-t border-line-soft md:border-t-0', i === 0 && 'md:pl-0')}>
+              <p className="score text-[56px] text-fg">{v}</p>
+              <p className="mt-2 text-sm text-fg-muted">{l}</p>
+            </div>
           ))}
         </div>
       </section>
 
       {/* FEATURES */}
       <section id="features" className="scroll-mt-20 py-24">
-        <div className="mx-auto max-w-6xl px-5">
-          <div className="reveal mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[.22em] text-lime/80">Everything in one place</p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-[44px] sm:leading-[1.1]">Your whole fitness journey, finally connected.</h2>
-            <p className="mt-4 text-fg-muted">Not a chatbot bolted onto a tracker. Every screen shares the same data, so your coach, meals and workouts always agree.</p>
+        <div className="mx-auto grid max-w-6xl gap-12 px-5 lg:grid-cols-[1fr_1.6fr]">
+          <div className="reveal lg:sticky lg:top-28 lg:self-start">
+            <h2 className="font-display text-[44px] font-extrabold uppercase leading-[.95] sm:text-[56px]">One app, one set of numbers</h2>
+            <p className="mt-5 max-w-sm text-fg-muted">Your coach, meals and workouts read the same data, so they never disagree with each other.</p>
           </div>
-          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(({ icon: I, title, text }, i) => (
-              <div key={title} className={clsx('reveal group rounded-2xl border border-line bg-ink-850 p-6 transition duration-300 hover:-translate-y-1 hover:border-lime/30 hover:shadow-glow', `reveal-d${i % 3}`)}>
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-lime/10 text-lime transition group-hover:bg-lime group-hover:text-ink-950"><I className="h-5 w-5" /></div>
-                <h3 className="mt-5 font-display text-lg font-semibold">{title}</h3>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-fg-muted">{text}</p>
-              </div>
+          <ul className="border-t border-line">
+            {FEATURES.map(({ icon: I, title, text }) => (
+              <li key={title} className="reveal grid grid-cols-[28px_1fr] gap-4 border-b border-line py-6">
+                <I className="mt-1 h-5 w-5 text-lime" aria-hidden />
+                <div><h3 className="text-[17px] font-semibold text-fg">{title}</h3><p className="mt-1.5 text-[15px] leading-relaxed text-fg-muted">{text}</p></div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
       {/* COACH SHOWCASE */}
-      <section id="coach" className="scroll-mt-20 border-y border-white/[0.06] bg-ink-900/50 py-24">
+      <section id="coach" className="scroll-mt-20 bg-ink-900 py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 lg:grid-cols-2">
           <div className="reveal">
-            <p className="text-xs font-semibold uppercase tracking-[.22em] text-lime/80">AI Fitness Coach</p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-[42px] sm:leading-[1.1]">A coach that shows its work.</h2>
-            <p className="mt-4 text-fg-muted">When you ask a question, the coach calls FitAI’s tools — your weight history, your food log, the calorie calculator — then explains the result in plain language.</p>
-            <ul className="mt-8 space-y-4">
-              {[[Wrench, 'Real numbers, never invented', 'Calculations run in code; the AI only explains them.'], [Activity, 'Knows your history', 'Reads your trend, workouts and nutrition before answering.'], [HeartPulse, 'Safety built in', 'No crash diets, no diagnoses, and a nudge to see a professional when needed.']].map(([I, t, d]: any) => (
-                <li key={t} className="flex gap-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-ink-850 text-lime"><I className="h-4 w-4" /></div><div><p className="font-semibold">{t}</p><p className="mt-0.5 text-sm text-fg-muted">{d}</p></div></li>
+            <h2 className="font-display text-[44px] font-extrabold uppercase leading-[.95] sm:text-[56px]">It shows its working</h2>
+            <p className="mt-5 max-w-md text-fg-muted">Before answering, the coach pulls your weight history, food log or calorie target from FitAI. The maths runs in code; the AI explains it in plain words.</p>
+            <dl className="mt-8 space-y-5">
+              {[['Numbers come from code', 'Targets, trends and totals are calculated, never guessed.'], ['It knows your history', 'Weigh-ins, meals and sessions are read before it replies.'], ['Safety first', 'No crash diets or diagnoses, and a nudge to see a professional when it matters.']].map(([t, d]) => (
+                <div key={t} className="border-l-2 border-line-strong pl-4"><dt className="font-semibold">{t}</dt><dd className="mt-0.5 text-sm text-fg-muted">{d}</dd></div>
               ))}
-            </ul>
+            </dl>
           </div>
           <div className="reveal reveal-d1">
-            <div className="glow-border rounded-3xl border border-line bg-ink-850 p-5 shadow-pop sm:p-6">
-              <div className="flex items-center gap-3 border-b border-line-soft pb-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-lime to-moss text-ink-950"><Sparkles className="h-4 w-4" /></div>
-                <div><p className="text-sm font-semibold">FitAI Coach</p><p className="text-[11px] text-fg-dim">Grounded in your data</p></div>
+            <div className="rounded-2xl border border-line bg-ink-850 p-5 sm:p-6">
+              <div className="flex justify-end"><div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-lime px-4 py-2.5 text-sm font-medium text-ink-950">Why has my weight stopped going down?</div></div>
+              <div className="mt-4 max-w-[92%] rounded-2xl rounded-tl-sm bg-ink-750 px-4 py-3.5 text-[14.5px] leading-relaxed text-fg/90">
+                Your weekly average hasn’t moved for <b>3 weeks</b>, but you logged food on only <b>8 of 14 days</b>. Before eating less, log everything for a week (oil and chai add up) and walk about 2,000 more steps a day.
               </div>
-              <div className="mt-5 flex justify-end"><div className="max-w-[80%] rounded-2xl rounded-tr-md bg-lime/[0.12] px-4 py-2.5 text-sm ring-1 ring-lime/20">Why has my weight stopped going down?</div></div>
-              <div className="mt-4 rounded-2xl rounded-tl-md border border-line bg-ink-900 px-4 py-3.5 text-sm leading-relaxed text-fg/90">
-                Your weekly averages haven’t moved for <b>3 weeks</b>, but you logged food on only <b>8 of 14 days</b>. Before eating less, tighten logging (oils and drinks add up) and add ~2,000 daily steps.
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {[['Trend', '−0.04 kg/wk'], ['Logged', '8 / 14 days'], ['Target', '2,150 kcal']].map(([l, v], i) => (
-                  <div key={l} className={clsx('rounded-xl px-3 py-2.5', i === 2 ? 'bg-lime/10 ring-1 ring-lime/30' : 'bg-white/[0.03]')}><p className="text-[10.5px] text-fg-dim">{l}</p><p className={clsx('mt-0.5 text-[13px] font-semibold tabular-nums', i === 2 && 'text-lime')}>{v}</p></div>
+              <div className="mt-4 grid grid-cols-3 border-y border-line-soft">
+                {[['Trend', '−0.04', 'kg/week'], ['Logged', '8/14', 'days'], ['Target', '2,150', 'kcal']].map(([l, v, u], i) => (
+                  <div key={l} className={clsx('py-3', i > 0 && 'border-l border-line-soft pl-3')}><p className="text-[12px] text-fg-dim">{l}</p><p className="score mt-1 text-[26px]">{v} <span className="font-sans text-[12px] font-normal tracking-normal text-fg-muted">{u}</span></p></div>
                 ))}
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] text-fg-dim"><Wrench className="h-3 w-3" />Tools used: <Badge>Weight history</Badge><Badge>Progress analysis</Badge><Badge>Calorie target</Badge></div>
+              <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[12px] text-fg-dim"><Wrench className="h-3 w-3" />Checked: <Badge>Weight history</Badge><Badge>Progress</Badge><Badge>Calorie target</Badge></p>
             </div>
-            <p className="mt-3 text-center text-[11px] text-fg-dim">Illustrative conversation</p>
+            <p className="mt-3 text-[12px] text-fg-dim">Sample conversation</p>
           </div>
         </div>
       </section>
@@ -209,21 +200,18 @@ export default function Landing() {
       {/* MEALS + WORKOUTS */}
       <section className="py-24">
         <div className="mx-auto max-w-6xl px-5">
-          <div className="reveal mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[.22em] text-lime/80">Plans that fit your life</p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-[44px] sm:leading-[1.1]">Meals you’ll actually eat. Workouts you can actually do.</h2>
-          </div>
-          <div className="mt-14 grid gap-5 lg:grid-cols-2">
+          <h2 className="reveal max-w-3xl font-display text-[44px] font-extrabold uppercase leading-[.95] sm:text-[56px]">Food you already eat. Training you can actually do.</h2>
+          <div className="mt-12 grid gap-5 lg:grid-cols-2">
             {[
-              { photo: 'lunch-bowl', icon: Salad, title: 'AI meal plans', text: 'Breakfast to dinner, scaled to your calories and protein. Swap any food, regenerate a meal, and log it with one tap.', chips: ['Vegetarian', 'Vegan', 'Eggetarian', 'Non-veg', 'Nut-free', 'Gluten-free'] },
-              { photo: 'cat-push_pull_legs', icon: Dumbbell, title: 'Workout plans', text: 'A weekly calendar with sets, reps and rest — then a guided session with a rest timer that tracks every set.', chips: ['Push / Pull / Legs', 'Upper / Lower', 'Full Body', 'Beginner', 'Fat Loss', 'Custom'] },
-            ].map(({ photo, icon: I, title, text, chips }, i) => (
-              <div key={title} className={clsx('reveal group overflow-hidden rounded-3xl border border-line bg-ink-850 transition duration-300 hover:border-line-strong', `reveal-d${i}`)}>
+              { photo: 'lunch-bowl', title: 'Meal plans', text: 'Breakfast to dinner, scaled to your calories and protein. Swap any food, redo a meal, and log it in one tap.', chips: ['Vegetarian', 'Vegan', 'Eggetarian', 'Non-veg', 'Nut-free', 'Gluten-free'] },
+              { photo: 'cat-push_pull_legs', title: 'Workout plans', text: 'A week of sessions on the days you choose, with sets, reps and rest, then a guided session that records every set.', chips: ['Push / Pull / Legs', 'Upper / Lower', 'Full Body', 'Beginner', 'Fat loss', 'Custom'] },
+            ].map(({ photo, title, text, chips }, i) => (
+              <div key={title} className={clsx('reveal overflow-hidden rounded-2xl border border-line bg-ink-850', `reveal-d${i}`)}>
                 <Photo name={photo} alt={title} className="h-64 sm:h-72" overlay />
                 <div className="p-6 sm:p-7">
-                  <div className="flex items-center gap-2.5"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-lime/10 text-lime"><I className="h-4 w-4" /></div><h3 className="font-display text-xl font-semibold">{title}</h3></div>
+                  <h3 className="font-display text-[30px] font-extrabold uppercase leading-none">{title}</h3>
                   <p className="mt-3 text-[15px] leading-relaxed text-fg-muted">{text}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">{chips.map(c => <span key={c} className="rounded-full border border-line px-3 py-1 text-xs text-fg-muted">{c}</span>)}</div>
+                  <div className="mt-5 flex flex-wrap gap-2">{chips.map(c => <span key={c} className="rounded-md border border-line px-2.5 py-1 text-xs text-fg-muted">{c}</span>)}</div>
                 </div>
               </div>
             ))}
@@ -232,46 +220,38 @@ export default function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="scroll-mt-20 border-y border-white/[0.06] bg-ink-900/50 py-24">
+      <section id="how" className="scroll-mt-20 border-y border-line-soft py-24">
         <div className="mx-auto max-w-6xl px-5">
-          <div className="reveal text-center">
-            <p className="text-xs font-semibold uppercase tracking-[.22em] text-lime/80">How it works</p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-[44px]">Up and running in two minutes.</h2>
-          </div>
-          <div className="relative mt-14 grid gap-5 md:grid-cols-3">
-            <div className="pointer-events-none absolute left-[16%] right-[16%] top-9 hidden h-px bg-gradient-to-r from-transparent via-lime/40 to-transparent md:block" />
+          <h2 className="reveal font-display text-[44px] font-extrabold uppercase leading-[.95] sm:text-[56px]">Set up in two minutes</h2>
+          <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
             {STEPS.map((s, i) => (
-              <div key={s.n} className={clsx('reveal relative rounded-2xl border border-line bg-ink-850 p-6 text-center', `reveal-d${i}`)}>
-                <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-lime font-display text-base font-extrabold text-ink-950 shadow-glow">{s.n}</div>
-                <h3 className="mt-5 font-display text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-fg-muted">{s.text}</p>
-              </div>
+              <li key={s.title} className={clsx('reveal border-t-2 pt-5', i === 0 ? 'border-lime' : 'border-line-strong', `reveal-d${i}`)}>
+                <p className="score text-[64px] text-fg-dim">{i + 1}</p>
+                <h3 className="mt-3 text-[17px] font-semibold">{s.title}</h3>
+                <p className="mt-1.5 text-[15px] leading-relaxed text-fg-muted">{s.text}</p>
+              </li>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TRUST */}
-      <section className="py-24">
-        <div className="mx-auto grid max-w-6xl gap-5 px-5 md:grid-cols-4">
-          {[[Target, 'Proven formulas', 'Mifflin-St Jeor BMR, standard activity multipliers.'], [ShieldCheck, 'Safe by default', 'Deficits capped at 500 kcal with calorie floors.'], [Lock, 'Secure accounts', 'Hashed passwords and a one-time code at every login.'], [Timer, 'Honest progress', 'Weekly trends, not daily water-weight noise.']].map(([I, t, d]: any, i) => (
-            <div key={t} className={clsx('reveal rounded-2xl border border-line bg-ink-850 p-5', `reveal-d${i % 3}`)}><I className="h-5 w-5 text-lime" /><p className="mt-4 font-semibold">{t}</p><p className="mt-1 text-sm text-fg-muted">{d}</p></div>
-          ))}
+          </ol>
+          <ul className="reveal mt-16 grid gap-x-8 gap-y-3 text-sm text-fg-muted sm:grid-cols-2 lg:grid-cols-4">
+            {[[Target, 'Mifflin-St Jeor formulas'], [ShieldCheck, 'Deficits capped at 500 kcal'], [Lock, 'A code at every login'], [Timer, 'Weekly trends, not daily noise']].map(([I, t]: any) => (
+              <li key={t} className="flex items-center gap-2.5"><I className="h-4 w-4 shrink-0 text-fg-dim" />{t}</li>
+            ))}
+          </ul>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="scroll-mt-20 pb-24">
-        <div className="mx-auto max-w-3xl px-5">
-          <h2 className="reveal text-center font-display text-3xl font-bold tracking-tight sm:text-[40px]">Questions, answered.</h2>
-          <div className="reveal mt-10 divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-ink-850">
+      <section id="faq" className="scroll-mt-20 py-24">
+        <div className="mx-auto grid max-w-6xl gap-12 px-5 lg:grid-cols-[1fr_1.6fr]">
+          <h2 className="reveal font-display text-[44px] font-extrabold uppercase leading-[.95] sm:text-[56px]">Questions</h2>
+          <div className="reveal border-t border-line">
             {FAQ.map(([q, a], i) => (
-              <div key={q}>
-                <button onClick={() => setOpen(open === i ? null : i)} className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded={open === i}>
-                  <span className="font-medium">{q}</span><ChevronDown className={clsx('h-4 w-4 shrink-0 text-fg-muted transition-transform', open === i && 'rotate-180 text-lime')} />
+              <div key={q} className="border-b border-line">
+                <button onClick={() => setOpen(open === i ? null : i)} className="flex w-full items-center justify-between gap-4 py-5 text-left" aria-expanded={open === i}>
+                  <span className="text-[16px] font-medium">{q}</span><ChevronDown className={clsx('h-4 w-4 shrink-0 text-fg-muted transition-transform', open === i && 'rotate-180 text-lime')} />
                 </button>
                 <div className={clsx('grid transition-all duration-300', open === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
-                  <p className="overflow-hidden px-6 text-[14.5px] leading-relaxed text-fg-muted"><span className="block pb-5">{a}</span></p>
+                  <p className="overflow-hidden text-[15px] leading-relaxed text-fg-muted"><span className="block max-w-2xl pb-5">{a}</span></p>
                 </div>
               </div>
             ))}
@@ -281,19 +261,19 @@ export default function Landing() {
 
       {/* FINAL CTA */}
       <section className="px-5 pb-20">
-        <div className="reveal group relative mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-line">
+        <div className="reveal relative mx-auto max-w-6xl overflow-hidden rounded-2xl border border-line">
           <Photo name="progress-hero" alt="Runner at sunrise" className="absolute inset-0" overlay="left" />
           <div className="relative px-6 py-16 sm:px-14 sm:py-20">
-            <h2 className="max-w-xl font-display text-3xl font-extrabold tracking-tight sm:text-5xl">Your next personal best starts today.</h2>
-            <p className="mt-4 max-w-lg text-fg-muted">Create your free account and get your personal targets, meal plan and workout plan in minutes.</p>
+            <h2 className="max-w-xl font-display text-[44px] font-extrabold uppercase leading-[.95] sm:text-[64px]">Start with today’s numbers</h2>
+            <p className="mt-4 max-w-lg text-fg-muted">Make a free account and get your targets, meal plan and workout plan in a few minutes.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Primary /><DemoBtn /></div>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/[0.06]">
+      <footer className="border-t border-line-soft">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-fg-dim sm:flex-row">
-          <div className="flex items-center gap-3"><Logo /><span className="hidden sm:inline">·</span><span>Your Fitness. Your Goals. Your AI Coach.</span></div>
+          <div className="flex items-center gap-3"><Logo /><span>Your numbers, your plan, your coach.</span></div>
           <div className="flex gap-6">{home ? <Link to={home} className="hover:text-fg">{homeLabel}</Link> : <><Link to="/login" className="hover:text-fg">Log in</Link><Link to="/register" className="hover:text-fg">Sign up</Link></>}<a href="#faq" className="hover:text-fg">FAQ</a></div>
         </div>
         <p className="pb-8 text-center text-xs text-fg-dim">FitAI provides general fitness guidance, not medical advice. © {new Date().getFullYear()} FitAI</p>

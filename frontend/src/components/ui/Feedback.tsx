@@ -18,12 +18,11 @@ export function PageSkeleton() {
   )
 }
 
-export function EmptyState({ icon, title, text, action, className, art }: { icon?: ReactNode; title: string; text?: string; action?: ReactNode; className?: string; art?: string }) {
+export function EmptyState({ icon, title, text, action, className, art: _art }: { icon?: ReactNode; title: string; text?: string; action?: ReactNode; className?: string; art?: string }) {
   return (
     <div className={clsx('relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-line px-6 py-12 text-center', className)}>
-      {art && <img src={`/images/art/${art}.svg`} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />}
       <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/10 text-lime ring-1 ring-lime/20">{icon ?? <Sparkles className="h-5 w-5" />}</div>
-      <p className="relative font-display text-base font-semibold text-fg">{title}</p>
+      <p className="relative font-sans text-base font-semibold text-fg">{title}</p>
       {text && <p className="relative mt-1 max-w-sm text-sm text-fg-muted">{text}</p>}
       {action && <div className="relative mt-5">{action}</div>}
     </div>

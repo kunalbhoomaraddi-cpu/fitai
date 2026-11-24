@@ -24,7 +24,7 @@ export default function Register() {
   }
   return (
     <AuthShell>
-      <h2 className="font-display text-3xl font-bold tracking-tight">Create your account</h2>
+      <h2 className="font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Create your account</h2>
       <p className="mt-2 text-sm text-fg-muted">Two minutes to set up. A lifetime of better training.</p>
       <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
         <div><Label htmlFor="name">Full name</Label><Input id="name" autoComplete="name" icon={<User className="h-4 w-4" />} placeholder="Your name" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></div>

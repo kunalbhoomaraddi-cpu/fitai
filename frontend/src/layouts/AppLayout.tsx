@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Bell, Bot, CalendarCheck, Camera, ChartLine, Dumbbell, LayoutDashboard, LogOut, Menu, Salad, Settings, Sparkles, Trophy, UtensilsCrossed, X } from 'lucide-react'
+import { Bell, Bot, CalendarCheck, Camera, ChartLine, Dumbbell, LayoutDashboard, LogOut, Menu, Salad, Settings, Trophy, UtensilsCrossed, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Badge, Logo } from '../components/ui'
@@ -10,20 +10,20 @@ import { greeting, longToday } from '../utils/format'
 
 export const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/coach', label: 'AI Fitness Coach', short: 'Coach', icon: Bot },
-  { to: '/diet', label: 'Diet Planner', short: 'Diet', icon: Salad },
-  { to: '/workouts', label: 'Workout Planner', short: 'Train', icon: Dumbbell },
-  { to: '/nutrition', label: 'Nutrition Tracker', short: 'Food', icon: UtensilsCrossed },
-  { to: '/progress', label: 'Progress Tracker', short: 'Progress', icon: ChartLine },
-  { to: '/photos', label: 'Progress Photos', short: 'Photos', icon: Camera },
-  { to: '/checkins', label: 'Weekly Check-in', short: 'Check-in', icon: CalendarCheck },
+  { to: '/coach', label: 'Coach', short: 'Coach', icon: Bot },
+  { to: '/diet', label: 'Meal plan', short: 'Meals', icon: Salad },
+  { to: '/workouts', label: 'Workouts', short: 'Workouts', icon: Dumbbell },
+  { to: '/nutrition', label: 'Food log', short: 'Food', icon: UtensilsCrossed },
+  { to: '/progress', label: 'Progress', short: 'Progress', icon: ChartLine },
+  { to: '/photos', label: 'Progress photos', short: 'Photos', icon: Camera },
+  { to: '/checkins', label: 'Weekly check-in', short: 'Check-in', icon: CalendarCheck },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 const MOBILE = ['/dashboard', '/coach', '/workouts', '/nutrition', '/progress']
 
 function Avatar({ name, size = 'h-9 w-9' }: { name: string; size?: string }) {
   const initials = name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase()
-  return <div className={clsx('flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-lime to-moss font-display text-sm font-bold text-ink-950', size)}>{initials}</div>
+  return <div className={clsx('flex shrink-0 items-center justify-center rounded-full bg-lime font-sans text-sm font-bold text-ink-950', size)}>{initials}</div>
 }
 
 function SideNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -41,16 +41,15 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
               {isActive && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-lime" />}
               <I className={clsx('h-[18px] w-[18px] transition', isActive ? 'text-lime' : 'text-fg-dim group-hover:text-fg-muted')} />
               {label}
-              {to === '/coach' && <Sparkles className="ml-auto h-3.5 w-3.5 text-lime/70" />}
-            </>)}
+                          </>)}
           </NavLink>
         ))}
       </nav>
-      <div className="glow-border relative m-3 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-lime/[0.07] via-ink-850 to-ink-850 p-4">
-        <p className="text-xs font-medium text-fg">Ask your coach anything</p>
-        <p className="mt-1 text-xs leading-relaxed text-fg-muted">Calories, plateaus, workouts — answers grounded in your data.</p>
+      <div className="m-3 rounded-2xl border border-line bg-ink-850 p-4">
+        <p className="text-[13px] font-semibold text-fg">Stuck on something?</p>
+        <p className="mt-1 text-xs leading-relaxed text-fg-muted">Ask about calories, a plateau or today's workout. The coach checks your logs first.</p>
         <button onClick={() => { navigate('/coach'); onNavigate?.() }} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-lime hover:underline">
-          <Bot className="h-3.5 w-3.5" /> Open AI Coach
+          <Bot className="h-3.5 w-3.5" /> Ask the coach
         </button>
       </div>
       <div className="flex items-center gap-3 border-t border-line-soft px-4 py-4">
@@ -87,7 +86,7 @@ function Notifications() {
       </button>
       {open && (
         <div className="absolute right-0 top-12 z-50 w-80 animate-pop rounded-2xl border border-line bg-ink-850 p-2 shadow-pop">
-          <p className="px-3 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-fg-dim">Achievements</p>
+          <p className="px-3 pb-2 pt-2 text-[13px] font-semibold text-fg-muted">Achievements</p>
           {unlocked.length === 0 && <p className="px-3 pb-3 text-sm text-fg-muted">Complete a workout or log a weigh-in to earn your first badge.</p>}
           {unlocked.slice(0, 6).map(a => (
             <div key={a.code} className="flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-white/[0.03]">
@@ -131,12 +130,12 @@ export default function AppLayout() {
               <p className="text-xs text-fg-dim">{longToday()}</p>
             </div>
             <div className="ml-auto flex items-center gap-2.5">
-              {user?.is_demo && <Badge tone="amber" className="hidden sm:inline-flex">Demo mode · sample data</Badge>}
+              {user?.is_demo && <Badge tone="amber" className="hidden sm:inline-flex">Demo: sample data</Badge>}
               <Notifications />
               <button onClick={() => navigate('/settings')} aria-label="Profile and settings"><Avatar name={user?.full_name || 'F'} size="h-10 w-10" /></button>
             </div>
           </div>
-          {user?.is_demo && <div className="border-t border-amber/20 bg-amber/[0.06] px-4 py-1.5 text-center text-[12px] text-amber sm:hidden">Demo mode — your changes are private and cleared after a few hours</div>}
+          {user?.is_demo && <div className="border-t border-amber/20 bg-amber/[0.06] px-4 py-1.5 text-center text-[12px] text-amber sm:hidden">Demo: your changes are deleted after a few hours</div>}
         </header>
         <main className={clsx('mx-auto max-w-[1400px] px-4 pb-28 sm:px-6 lg:px-8 lg:pb-12', isCoach ? 'pt-4' : 'pt-6 sm:pt-8')}>
           <div key={loc.pathname} className="page-enter"><Outlet /></div>

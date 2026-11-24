@@ -7,7 +7,7 @@ type Size = 'sm' | 'md' | 'lg'
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: Variant; size?: Size; loading?: boolean; icon?: ReactNode; full?: boolean }
 
 const V: Record<Variant, string> = {
-  primary: 'btn-shine bg-lime text-ink-950 hover:bg-lime-400 shadow-[0_8px_24px_-10px_rgba(198,243,107,.55)] font-semibold',
+  primary: 'bg-lime text-ink-950 hover:bg-lime-400 font-semibold',
   secondary: 'bg-ink-700 text-fg hover:bg-ink-750 border border-line hover:border-line-strong',
   outline: 'border border-line text-fg hover:border-lime/50 hover:text-lime bg-transparent',
   ghost: 'text-fg-muted hover:text-fg hover:bg-white/[0.04]',

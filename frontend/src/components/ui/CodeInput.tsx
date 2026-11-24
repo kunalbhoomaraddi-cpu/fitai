@@ -33,7 +33,7 @@ export function CodeInput({ value, onChange, onComplete, disabled, invalid, leng
         <input key={i} ref={el => { refs.current[i] = el }} value={d} inputMode="numeric" autoComplete={i === 0 ? 'one-time-code' : 'off'}
           maxLength={1} aria-label={`Digit ${i + 1}`} disabled={disabled}
           onChange={e => setAt(i, e.target.value)} onKeyDown={e => onKey(i, e)} onPaste={onPaste}
-          className={clsx('h-14 w-full min-w-0 rounded-xl border bg-ink-900 text-center font-display text-2xl font-bold tabular-nums text-fg transition focus:outline-none focus:ring-2',
+          className={clsx('h-14 w-full min-w-0 rounded-xl border bg-ink-900 text-center score text-[34px] text-fg transition focus:outline-none focus:ring-2',
             invalid ? 'border-coral/60 focus:ring-coral/20' : d ? 'border-lime/50 focus:ring-lime/20' : 'border-line focus:border-lime/60 focus:ring-lime/15')} />
       ))}
     </div>

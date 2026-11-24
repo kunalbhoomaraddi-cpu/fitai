@@ -32,7 +32,7 @@ export function Bar({ value, max, color = 'bg-lime', className, height = 'h-1.5'
   )
 }
 
-export const MACRO_COLORS = { protein: '#C6F36B', carbs: '#7CC4F2', fat: '#F2B85B', calories: '#C6F36B' }
+export const MACRO_COLORS = { protein: '#C6F36B', carbs: '#7CC4F2', fat: '#F2B85B', calories: '#E9EEE6' }
 
 export function MacroRow({ label, value, target, unit = 'g', color }: { label: string; value: number; target: number; unit?: string; color: string }) {
   const over = value > target * 1.1

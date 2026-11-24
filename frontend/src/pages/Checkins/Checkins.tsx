@@ -15,10 +15,10 @@ function Stat({ icon, label, value, sub, ok }: { icon: ReactNode; label: string;
   return (
     <div className="rounded-xl border border-line bg-white/[0.02] p-4">
       <div className="flex items-center justify-between text-fg-muted">
-        <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider">{icon}{label}</span>
+        <span className="flex items-center gap-2 text-[13px] font-medium">{icon}{label}</span>
         {ok !== undefined && (ok ? <CheckCircle2 className="h-4 w-4 text-lime" /> : <span className="h-2 w-2 rounded-full bg-amber/70" />)}
       </div>
-      <p className="mt-2 font-display text-2xl font-bold text-fg">{value}</p>
+      <p className="mt-2 score text-[34px] text-fg">{value}</p>
       {sub && <p className="mt-0.5 text-xs text-fg-dim">{sub}</p>}
     </div>
   )
@@ -33,33 +33,32 @@ function Report({ c }: { c: Checkin }) {
   return (
     <div className="space-y-5">
       <Card className="relative overflow-hidden p-6">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-lime/[0.06] blur-3xl" />
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
           <Ring value={c.score} max={100} size={132} stroke={11} color={scoreTone(c.score)}>
             <div className="text-center">
-              <p className="font-display text-3xl font-bold text-fg">{c.score}</p>
-              <p className="text-[11px] uppercase tracking-wider text-fg-muted">{scoreWord(c.score)}</p>
+              <p className="score text-[44px] text-fg">{c.score}</p>
+              <p className="text-[12px] text-fg-muted">{scoreWord(c.score)}</p>
             </div>
           </Ring>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="lime"><CalendarCheck className="h-3 w-3" />{shortDate(c.period_start)} – {shortDate(c.period_end)}</Badge>
-              {c.is_ai ? <Badge tone="sky"><Bot className="h-3 w-3" />AI coach</Badge> : <Badge>Rules engine</Badge>}
+              {c.is_ai ? <Badge tone="sky"><Bot className="h-3 w-3" />AI coach</Badge> : <Badge>FitAI rules</Badge>}
             </div>
-            <h2 className="mt-3 font-display text-xl font-bold leading-snug text-fg sm:text-2xl">{c.summary.headline}</h2>
-            <p className="mt-2 text-sm text-fg-muted">Consistency score: 40% training, 30% food logging, 30% protein. Numbers are calculated from your logs — the coach only writes the words.</p>
+            <h2 className="mt-3 text-xl font-semibold leading-snug text-fg sm:text-2xl">{c.summary.headline}</h2>
+            <p className="mt-2 text-sm text-fg-muted">Consistency score: 40% training, 30% food logging, 30% protein. The numbers come from your logs; the coach only writes the words.</p>
           </div>
         </div>
       </Card>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat icon={<Dumbbell className="h-3.5 w-3.5" />} label="Workouts" value={`${f.workouts.done}/${f.workouts.planned}`} sub={`${f.workouts.minutes} min trained`} ok={f.workouts.done >= f.workouts.planned} />
-        <Stat icon={<NotebookPen className="h-3.5 w-3.5" />} label="Days logged" value={`${f.nutrition.days_logged}/7`} sub={f.nutrition.avg_calories ? `~${n0(f.nutrition.avg_calories)} kcal/day · target ${n0(f.nutrition.calorie_target)}` : 'No food logged'} ok={f.nutrition.days_logged >= 5} />
-        <Stat icon={<Beef className="h-3.5 w-3.5" />} label="Protein days" value={`${f.nutrition.protein_days}/7`} sub={f.nutrition.avg_protein_g != null ? `avg ${f.nutrition.avg_protein_g} g · hit = 90%+ of ${f.nutrition.protein_target_g} g` : `target ${f.nutrition.protein_target_g} g`} ok={f.nutrition.protein_days >= 4} />
+        <Stat icon={<NotebookPen className="h-3.5 w-3.5" />} label="Days logged" value={`${f.nutrition.days_logged}/7`} sub={f.nutrition.avg_calories ? `About ${n0(f.nutrition.avg_calories)} kcal a day, target ${n0(f.nutrition.calorie_target)}` : 'No food logged'} ok={f.nutrition.days_logged >= 5} />
+        <Stat icon={<Beef className="h-3.5 w-3.5" />} label="Protein days" value={`${f.nutrition.protein_days}/7`} sub={f.nutrition.avg_protein_g != null ? `Average ${f.nutrition.avg_protein_g} g. A day counts at 90% of ${f.nutrition.protein_target_g} g` : `target ${f.nutrition.protein_target_g} g`} ok={f.nutrition.protein_days >= 4} />
         <Stat icon={<Scale className="h-3.5 w-3.5" />} label="Weekly avg" value={f.weight.avg_kg != null ? fmtWeight(f.weight.avg_kg, units) : '—'} sub={changeTxt} ok={f.weight.weigh_ins >= 3} />
       </div>
 
-      {f.weight.losing_too_fast && <Notice tone="warn" icon={<AlertTriangle className="h-4 w-4" />}>Your weight dropped faster than about 1% of body weight this week. That pace often costs muscle and energy — make sure you're eating enough, and talk to a professional if it continues.</Notice>}
+      {f.weight.losing_too_fast && <Notice tone="warn" icon={<AlertTriangle className="h-4 w-4" />}>Your weight dropped faster than about 1% of body weight this week. That pace often costs muscle and energy, so make sure you're eating enough, and talk to a professional if it continues.</Notice>}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="pb-5">
@@ -74,12 +73,12 @@ function Report({ c }: { c: Checkin }) {
             <ul className="mt-4 space-y-3 px-5">
               {c.summary.focus.map((w, i) => <li key={i} className="flex gap-3 text-sm leading-relaxed text-fg"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber" />{w}</li>)}
             </ul>
-          ) : <p className="mt-4 px-5 text-sm text-fg-muted">Nothing to fix — keep doing exactly this.</p>}
+          ) : <p className="mt-4 px-5 text-sm text-fg-muted">Nothing to fix. Keep doing exactly this.</p>}
         </Card>
       </div>
 
       <Card className="pb-5">
-        <CardHeader icon={<Target className="h-4 w-4" />} title="Targets for next week" subtitle="Small, measurable — tick them off on the dashboard challenges" />
+        <CardHeader icon={<Target className="h-4 w-4" />} title="Targets for next week" subtitle="Small and measurable. They show up as challenges on your dashboard" />
         <div className="mt-4 grid gap-2 px-5 sm:grid-cols-2">
           {c.summary.next_week.map((t, i) => (
             <div key={i} className="flex items-center gap-3 rounded-xl border border-line bg-white/[0.02] px-4 py-3 text-sm text-fg">
@@ -124,8 +123,8 @@ export default function Checkins() {
   return (
     <div>
       <Celebration fire={fire} />
-      <PageHeader eyebrow="Weekly review" title="Weekly AI Check-in"
-        subtitle="Every week, your coach reviews the last 7 days — training, food logging, protein and weight trend — and sets clear targets for the next one."
+      <PageHeader title="Weekly check-in"
+        subtitle="Once a week, your coach looks back at the last 7 days of training, food, protein and weight, then sets a few clear targets for the next week."
         actions={<Button onClick={generate} loading={busy} icon={busy ? undefined : thisWeek ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}>
           {thisWeek ? 'Refresh this week' : 'Run my check-in'}</Button>} />
 
@@ -137,18 +136,18 @@ export default function Checkins() {
         <>
           {thisWeek ? <Report c={thisWeek} /> : (
             <EmptyState art="hero-training" icon={<CalendarCheck className="h-5 w-5" />} title="This week's check-in is ready to run"
-              text="It takes a few seconds. The more you've logged this week — workouts, meals, weigh-ins — the more useful it is."
+              text="It takes a few seconds. The more workouts, meals and weigh-ins you've logged this week, the more useful it is."
               action={<Button onClick={generate} loading={busy} icon={busy ? undefined : <Sparkles className="h-4 w-4" />}>Run my check-in</Button>} />
           )}
 
           {history.length > 0 && (
             <div className="mt-10">
-              <h3 className="mb-3 font-display text-lg font-semibold text-fg">Past check-ins</h3>
+              <h3 className="mb-3 font-sans text-lg font-semibold text-fg">Past check-ins</h3>
               <div className="space-y-2">
                 {history.map(c => (
                   <Card key={c.id} className="overflow-hidden">
                     <button onClick={() => setOpen(open === c.id ? null : c.id)} className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-white/[0.02]">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display text-sm font-bold text-ink-900" style={{ background: scoreTone(c.score) }}>{c.score}</span>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-sans text-sm font-bold text-ink-900" style={{ background: scoreTone(c.score) }}>{c.score}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-fg-muted">{shortDate(c.period_start)} – {shortDate(c.period_end)}</p>
                         <p className="truncate text-sm font-medium text-fg">{c.summary.headline}</p>

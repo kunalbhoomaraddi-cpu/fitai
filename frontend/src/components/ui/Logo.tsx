@@ -7,7 +7,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
         <path d="M20 32h14" stroke="#0B0D0C" strokeWidth="7" strokeLinecap="round" />
         <circle cx="45" cy="43" r="5" fill="#0B0D0C" />
       </svg>
-      {!compact && <span className="font-display text-[19px] font-extrabold tracking-tight text-fg">Fit<span className="text-lime">AI</span></span>}
+      {!compact && <span className="font-display text-[24px] font-extrabold uppercase leading-none tracking-wide text-fg">Fit<span className="text-lime">AI</span></span>}
     </div>
   )
 }

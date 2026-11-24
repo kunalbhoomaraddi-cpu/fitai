@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { Camera, Check, Database, ImageUp, Minus, Plus, RotateCcw, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Badge, Button, Modal, Notice, Segmented } from '../ui'
+import { Badge, Button, Meta, Modal, Notice, Segmented } from '../ui'
 import { useToast } from '../../context/ToastContext'
 import { nutritionApi } from '../../services/fitai'
 import type { MealPhotoItem, MealPhotoResult, MealType } from '../../types'
@@ -76,7 +76,7 @@ export function MealPhoto({ open, onClose, date, onAdded }: { open: boolean; onC
       for (const r of picked) {
         await nutritionApi.add({ eaten_on: date, meal, name: r.name.slice(0, 200), quantity_g: r.grams, calories: r.calories, protein_g: r.protein_g, carbs_g: r.carbs_g, fat_g: r.fat_g, source: 'meal_photo', source_id: r.source_id?.slice(0, 64) ?? null })
       }
-      toast('success', `Added ${picked.length} ${picked.length === 1 ? 'item' : 'items'} to ${MEAL_LABEL[meal]}`, `${Math.round(total.calories)} kcal · ${Math.round(total.protein_g)} g protein`)
+      toast('success', `Added ${picked.length} ${picked.length === 1 ? 'item' : 'items'} to ${MEAL_LABEL[meal]}`, `${Math.round(total.calories)} kcal, ${Math.round(total.protein_g)} g protein`)
       onAdded(); onClose()
     } catch (e) {
       toast('error', 'Could not add', (e as Error).message); setBusy(null)
@@ -122,7 +122,7 @@ export function MealPhoto({ open, onClose, date, onAdded }: { open: boolean; onC
             <div className="min-w-0 flex-1 pt-1">
               {busy === 'analyse' && <><p className="flex items-center gap-2 font-medium"><Sparkles className="h-4 w-4 animate-pulse text-lime" />Identifying your food…</p><p className="mt-1 text-xs text-fg-dim">Usually 5–15 seconds.</p></>}
               {result?.note && <p className="text-sm text-fg-muted">{result.note}</p>}
-              {hasRows && <p className="mt-2 font-display text-2xl font-bold tabular-nums">{Math.round(total.calories)} <span className="text-sm font-normal text-fg-muted">kcal · {Math.round(total.protein_g)} g protein</span></p>}
+              {hasRows && <p className="score mt-2 text-[40px]">{Math.round(total.calories)} <span className="font-sans text-sm font-normal tracking-normal text-fg-muted">kcal, {Math.round(total.protein_g)} g protein</span></p>}
             </div>
           </div>
 
@@ -143,7 +143,7 @@ export function MealPhoto({ open, onClose, date, onAdded }: { open: boolean; onC
                         {r.basis === 'database' ? <Badge tone="moss"><Database className="h-3 w-3" />FitAI database</Badge> : <Badge tone="amber">AI estimate</Badge>}
                         {r.confidence < 0.5 && <Badge tone="neutral">Not sure, please check</Badge>}
                       </div>
-                      <p className="mt-0.5 text-xs text-fg-dim">{r.portion ? `${r.portion} · ` : ''}{r.calories} kcal · P {r.protein_g} · C {r.carbs_g} · F {r.fat_g}</p>
+                      <p className="mt-0.5 text-xs text-fg-dim"><Meta items={[r.portion, `${r.calories} kcal`, `P ${r.protein_g}`, `C ${r.carbs_g}`, `F ${r.fat_g}`]} /></p>
                     </div>
                     <div className="ml-8 flex shrink-0 items-center gap-1 sm:ml-0">
                       <button aria-label={`Less ${r.name}`} onClick={() => setGrams(i, r.grams * 0.8)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-fg-muted hover:text-fg"><Minus className="h-3.5 w-3.5" /></button>

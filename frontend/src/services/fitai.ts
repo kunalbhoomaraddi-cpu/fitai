@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { MealPhotoResult, AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Profile, User, WorkoutPlan, WorkoutSession } from '../types'
+import type { MealPhotoResult, AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Profile, User, WorkoutPlan, WorkoutSession, RecentFood } from '../types'
 
 export type Verification = { delivery: 'email' | 'console' | 'failed' | 'none'; error?: string; expires_in_minutes?: number; resend_in_seconds?: number }
 type Token = { access_token: string; user: User; verification?: Verification | null }
@@ -69,6 +69,7 @@ export const nutritionApi = {
   update: (id: number, b: Partial<FoodEntry>) => api.patch<FoodEntry>(`/nutrition/entries/${id}`, b),
   remove: (id: number) => api.del<void>(`/nutrition/entries/${id}`),
   history: (days = 14) => api.get<any[]>(`/nutrition/history?days=${days}`),
+  recent: () => api.get<RecentFood[]>('/nutrition/recent'),
   analyzePhoto: (file: Blob) => { const f = new FormData(); f.append('file', file, 'meal.jpg'); return api.upload<MealPhotoResult>('/nutrition/photo', f) },
 }
 export const progressApi = {

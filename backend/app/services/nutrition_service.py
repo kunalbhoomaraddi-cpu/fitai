@@ -137,7 +137,7 @@ def search_food(query: str, limit: int = 12) -> dict:
     except Exception as exc:  # network, timeout, 5xx, JSON
         log.warning("Open Food Facts unavailable: %s", type(exc).__name__)
         return {"results": reference, "source": "reference",
-                "warning": "Open Food Facts is unreachable right now. Showing FitAI reference foods instead."}
+                "warning": "Packaged foods (Open Food Facts) can't be reached right now. Showing foods from FitAI's own database."}
 
 
 # --------------------------------------------------------------------------- tracking

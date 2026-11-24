@@ -74,7 +74,7 @@ export default function VerifyEmail() {
   return (
     <AuthShell>
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/10 text-lime"><MailCheck className="h-6 w-6" /></div>
-      <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Verify your email</h2>
+      <h2 className="mt-5 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Verify your email</h2>
       <p className="mt-2 text-sm leading-relaxed text-fg-muted">We sent a 6-digit code to <b className="text-fg">{user?.email}</b>. Enter it below to activate your account.</p>
 
       {delivery?.delivery === 'console' && (
@@ -89,7 +89,7 @@ export default function VerifyEmail() {
           <input key={i} ref={el => { refs.current[i] = el }} value={d} inputMode="numeric" autoComplete={i === 0 ? 'one-time-code' : 'off'}
             maxLength={1} aria-label={`Digit ${i + 1}`} disabled={busy}
             onChange={e => setAt(i, e.target.value)} onKeyDown={e => onKey(i, e)} onPaste={onPaste}
-            className={clsx('h-14 w-full min-w-0 rounded-xl border bg-ink-900 text-center font-display text-2xl font-bold tabular-nums text-fg transition focus:outline-none focus:ring-2',
+            className={clsx('h-14 w-full min-w-0 rounded-xl border bg-ink-900 text-center score text-[34px] text-fg transition focus:outline-none focus:ring-2',
               error ? 'border-coral/60 focus:ring-coral/20' : d ? 'border-lime/50 focus:ring-lime/20' : 'border-line focus:border-lime/60 focus:ring-lime/15')} />
         ))}
       </div>

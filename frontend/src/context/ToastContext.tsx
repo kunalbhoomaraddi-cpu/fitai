@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           const I = ICON[t.kind]
           return (
             <div key={t.id} role="status" className={clsx('pointer-events-auto relative flex w-full max-w-sm animate-pop items-start gap-3 overflow-hidden rounded-2xl border bg-ink-800/95 p-4 shadow-pop backdrop-blur',
-              t.kind === 'error' ? 'border-coral/40' : t.kind === 'achievement' ? 'border-lime/50 shadow-glow' : 'border-line')}>
+              t.kind === 'error' ? 'border-coral/40' : t.kind === 'achievement' ? 'border-lime/50' : 'border-line')}>
               <I className={clsx('mt-0.5 h-5 w-5 shrink-0', t.kind === 'error' ? 'text-coral' : t.kind === 'info' ? 'text-sky' : 'text-lime')} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-fg">{t.title}</p>

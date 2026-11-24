@@ -9,8 +9,8 @@ import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { ExerciseDemoModal, demoFor, demoImg } from '../../components/workout/ExerciseDemo'
 import { workoutApi } from '../../services/fitai'
-import type { Exercise, WorkoutPlan, WorkoutSession } from '../../types'
-import { cap, EQUIPMENT, GOAL_LABEL, MUSCLES, shortDate } from '../../utils/format'
+import type { Exercise, SetEntry, WorkoutPlan, WorkoutSession } from '../../types'
+import { cap, EQUIPMENT, GOAL_LABEL, MUSCLES, shortDate, planTitle } from '../../utils/format'
 
 const SPLITS: [string, string, string][] = [
   ['auto', 'Smart pick', 'FitAI chooses the best split'], ['push_pull_legs', 'Push / Pull / Legs', 'Classic hypertrophy split'],
@@ -35,11 +35,10 @@ function nextWorkoutIndex(plan: WorkoutPlan): number {
   return 0
 }
 
-function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; onSet?: () => void }) {
+function ExerciseRow({ e, index, session, onToggle, prev, onLog }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; prev?: SetEntry[]; onLog?: (log: SetEntry[], tickedNow: boolean) => void }) {
   const [open, setOpen] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const hasDemo = !!demoFor(e.exercise_id)
-  const done = e.sets_done ?? 0
   return (
     <div className={clsx('group overflow-hidden rounded-2xl border transition', e.completed ? 'border-lime/40 bg-lime/[0.03]' : 'border-line bg-ink-900/60 hover:border-line-strong')}>
       <div className="flex items-center gap-4 p-3 pr-4">
@@ -51,8 +50,8 @@ function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; inde
           </span>
         </button>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2"><span className="text-[11px] tabular-nums text-fg-dim">{String(index + 1).padStart(2, '0')}</span><p className="truncate font-display text-[15px] font-semibold">{e.name}</p></div>
-          <p className="mt-0.5 text-xs capitalize text-fg-muted">{e.muscle}{e.secondary.length ? ` · ${e.secondary.slice(0, 2).join(', ')}` : ''}</p>
+          <div className="flex items-center gap-2"><span className="text-[11px] tabular-nums text-fg-dim">{String(index + 1).padStart(2, '0')}</span><p className="line-clamp-2 text-[15px] font-semibold leading-snug">{e.name}</p></div>
+          <p className="mt-0.5 text-xs capitalize text-fg-muted">{e.muscle}{e.secondary.length ? `, ${e.secondary.slice(0, 2).join(', ')}` : ''}</p>
           <div className="mt-2 flex flex-wrap gap-1.5 text-[11.5px]">
             <span className="rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums">{e.sets} sets</span>
             <span className="rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums">{e.reps} reps</span>
@@ -61,15 +60,12 @@ function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; inde
           </div>
         </div>
         {session ? (
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <button onClick={onSet} disabled={e.completed} className="rounded-lg border border-line px-2.5 py-1 text-xs tabular-nums text-fg-muted transition hover:border-lime/50 hover:text-lime disabled:opacity-50" aria-label="Complete a set">Set {Math.min(done + 1, e.sets)}/{e.sets}</button>
-            <button onClick={onToggle} aria-label={e.completed ? 'Mark incomplete' : 'Mark complete'} className={clsx('flex h-9 w-9 items-center justify-center rounded-full border-2 transition', e.completed ? 'border-lime bg-lime text-ink-950' : 'border-line-strong text-transparent hover:border-lime hover:text-lime/50')}><Check className="h-4 w-4" /></button>
-          </div>
+          <button onClick={onToggle} aria-label={e.completed ? 'Mark exercise not done' : 'Mark every set done'} title={e.completed ? 'Mark not done' : 'Mark all sets done'} className={clsx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 transition', e.completed ? 'border-lime bg-lime text-ink-950' : 'border-line-strong text-transparent hover:border-lime/60')}><Check className="h-4 w-4" /></button>
         ) : (
           <button onClick={() => setOpen(o => !o)} aria-label="Instructions" className="shrink-0 rounded-lg p-2 text-fg-dim hover:bg-white/5 hover:text-fg"><ChevronDown className={clsx('h-4 w-4 transition', open && 'rotate-180')} /></button>
         )}
       </div>
-      {session && <div className="px-3 pb-3"><Bar value={done} max={e.sets} height="h-1" /></div>}
+      {session && onLog && <div className="border-t border-line-soft px-3 pb-2 pt-3 sm:px-4"><SetTable e={e} prev={prev} onChange={onLog} /></div>}
       {open && !session && (
         <div className="border-t border-line-soft px-4 py-3 text-[13px] leading-relaxed text-fg-muted">
           {e.instructions}
@@ -78,6 +74,47 @@ function ExerciseRow({ e, index, session, onToggle, onSet }: { e: Exercise; inde
       )}
       <ExerciseDemoModal open={demoOpen} onClose={() => setDemoOpen(false)} exerciseId={e.exercise_id} name={e.name} tip={e.instructions} sets={e.sets} reps={e.reps} />
     </div>
+  )
+}
+
+const num = (v: string) => { const n = parseFloat(v.replace(',', '.')); return Number.isFinite(n) && n >= 0 ? n : null }
+const fmtSet = (s: SetEntry | undefined, timed: boolean) => (s && (s.kg != null || s.reps != null) ? (timed ? `${s.reps ?? '?'} s` : `${s.kg != null ? `${s.kg} kg` : 'BW'} × ${s.reps ?? '?'}`) : '')
+const firstReps = (r: string) => { const m = r.match(/\d+/); return m ? Number(m[0]) : null }
+
+/** Hevy-style set table: last time's numbers on the left, today's kg and reps, one tap to tick a set. */
+function SetTable({ e, prev, onChange }: { e: Exercise; prev?: SetEntry[]; onChange: (log: SetEntry[], tickedNow: boolean) => void }) {
+  const timed = /sec/i.test(e.reps)
+  const bodyweight = e.equipment.length > 0 && e.equipment.every(q => q === 'bodyweight')
+  const log: SetEntry[] = Array.from({ length: e.sets }, (_, i) => e.set_log?.[i] ?? { kg: null, reps: null, done: false })
+  const set = (i: number, patch: Partial<SetEntry>, ticked = false) => onChange(log.map((s, j) => (j === i ? { ...s, ...patch } : s)), ticked)
+  const tick = (i: number) => {
+    const s = log[i]
+    if (s.done) return set(i, { done: false })
+    // Ticking an empty set uses the placeholder values, like a paper log: last time's numbers, else the planned reps.
+    const p = prev?.[i] ?? prev?.[prev.length - 1]
+    set(i, { done: true, kg: s.kg ?? p?.kg ?? (i > 0 ? log[i - 1].kg : null), reps: s.reps ?? p?.reps ?? (i > 0 ? log[i - 1].reps : null) ?? firstReps(e.reps) }, true)
+  }
+  return (
+    <table className="w-full max-w-2xl text-[14px]">
+      <thead><tr className="text-left text-[12px] text-fg-dim"><th className="w-10 pb-1.5 font-medium">Set</th><th className="pb-1.5 font-medium">Last time</th>{!bodyweight && <th className="w-[26%] pb-1.5 font-medium sm:w-28">kg</th>}<th className="w-[22%] pb-1.5 font-medium sm:w-24">{timed ? 'Sec' : 'Reps'}</th><th className="w-11 pb-1.5" /></tr></thead>
+      <tbody>
+        {log.map((s, i) => {
+          const p = prev?.[i]
+          return (
+            <tr key={i} className={clsx('transition-colors', s.done && 'bg-lime/[0.06]')}>
+              <td className="py-1 pl-1 tabular-nums text-fg-muted">{i + 1}</td>
+              <td className="py-1 tabular-nums text-fg-dim">{fmtSet(p, timed) || '–'}</td>
+              {!bodyweight && <td className="py-1 pr-2"><input inputMode="decimal" aria-label={`Set ${i + 1} weight in kg`} value={s.kg ?? ''} placeholder={p?.kg != null ? String(p.kg) : ''}
+                onChange={ev => set(i, { kg: num(ev.target.value) })} className="h-9 w-full rounded-lg border border-line bg-ink-900 px-2 text-center tabular-nums text-fg placeholder:text-fg-dim focus:border-lime/60 focus:outline-none" /></td>}
+              <td className="py-1 pr-2"><input inputMode="numeric" aria-label={`Set ${i + 1} ${timed ? 'seconds' : 'reps'}`} value={s.reps ?? ''} placeholder={p?.reps != null ? String(p.reps) : String(firstReps(e.reps) ?? '')}
+                onChange={ev => set(i, { reps: num(ev.target.value) })} className="h-9 w-full rounded-lg border border-line bg-ink-900 px-2 text-center tabular-nums text-fg placeholder:text-fg-dim focus:border-lime/60 focus:outline-none" /></td>
+              <td className="py-1 text-right"><button onClick={() => tick(i)} aria-pressed={s.done} aria-label={s.done ? `Untick set ${i + 1}` : `Tick set ${i + 1}`}
+                className={clsx('inline-flex h-9 w-9 items-center justify-center rounded-lg border transition', s.done ? 'border-lime bg-lime text-ink-950' : 'border-line text-fg-dim hover:border-lime/60 hover:text-lime')}><Check className="h-4 w-4" /></button></td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
   )
 }
 
@@ -91,9 +128,9 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
     const t = setTimeout(() => setLeft(l => l - 1), 1000); return () => clearTimeout(t)
   }, [left, paused, onDone])
   return (
-    <div className="flex animate-pop items-center gap-4 rounded-2xl border border-lime/40 bg-ink-850 p-4 shadow-glow">
-      <Ring value={left} max={seconds} size={72} stroke={6}><span className="font-display text-lg font-bold tabular-nums">{left}</span></Ring>
-      <div className="flex-1"><p className="font-semibold">Rest</p><p className="text-xs text-fg-muted">Breathe, sip water, set up for the next set.</p></div>
+    <div className="sticky top-[100px] z-20 flex animate-pop items-center gap-3 rounded-2xl border border-lime/40 bg-ink-850/95 p-3 backdrop-blur sm:top-[76px] sm:gap-4 sm:p-4 lg:top-20">
+      <Ring value={left} max={seconds} size={56} stroke={5}><span className="score text-[24px]">{left}</span></Ring>
+      <div className="min-w-0 flex-1"><p className="font-semibold">Rest</p><p className="hidden text-xs text-fg-muted sm:block">Breathe, sip water, set up for the next set.</p></div>
       <button onClick={() => setPaused(p => !p)} className="rounded-lg p-2 text-fg-muted hover:text-fg" aria-label={paused ? 'Resume' : 'Pause'}>{paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</button>
       <button onClick={() => setLeft(l => l + 15)} className="rounded-lg px-2 py-1 text-xs text-fg-muted hover:text-fg">+15s</button>
       <button onClick={onDone} className="rounded-lg p-2 text-fg-muted hover:text-fg" aria-label="Skip rest"><X className="h-4 w-4" /></button>
@@ -104,25 +141,46 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
 function ActiveSession({ s, onChange, onFinish, onAbandon }: { s: WorkoutSession; onChange: (ex: Exercise[]) => void; onFinish: () => void; onAbandon: () => void }) {
   const [now, setNow] = useState(Date.now())
   const [rest, setRest] = useState<number | null>(null)
+  const [prev, setPrev] = useState<Record<string, SetEntry[]>>({})
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
+  // "Last time" column: the most recent finished workout that logged each exercise.
+  useEffect(() => {
+    workoutApi.history().then(list => {
+      const m: Record<string, SetEntry[]> = {}
+      for (const w of list) for (const x of w.exercises) {
+        const logged = (x.set_log ?? []).filter(st => st.done && (st.kg != null || st.reps != null))
+        if (logged.length && !m[x.exercise_id]) m[x.exercise_id] = logged
+      }
+      setPrev(m)
+    }).catch(() => undefined)
+  }, [])
   const elapsed = Math.max(0, Math.floor((now - new Date(s.started_at).getTime()) / 1000))
   const mm = String(Math.floor(elapsed / 60)).padStart(2, '0'), ss = String(elapsed % 60).padStart(2, '0')
   const done = s.exercises.filter(e => e.completed).length
   const update = (i: number, patch: Partial<Exercise>) => onChange(s.exercises.map((e, j) => (j === i ? { ...e, ...patch } : e)))
   return (
-    <Card className="overflow-hidden border-lime/30">
-      <div className="flex flex-wrap items-center gap-4 border-b border-line-soft bg-gradient-to-r from-lime/[0.08] to-transparent p-5">
+    <Card className="border-lime/30">
+      <div className="flex flex-wrap items-center gap-4 border-b border-line-soft p-5">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime text-ink-950"><Dumbbell className="h-6 w-6" /></div>
-        <div className="flex-1"><Badge tone="lime">In progress</Badge><h2 className="mt-1 font-display text-xl font-bold">{s.name}</h2></div>
-        <div className="text-right"><p className="font-display text-3xl font-bold tabular-nums">{mm}:{ss}</p><p className="text-xs text-fg-dim">{done}/{s.exercises.length} exercises</p></div>
+        <div className="flex-1"><Badge tone="lime">In progress</Badge><h2 className="mt-2 font-display text-[30px] font-extrabold uppercase leading-none">{s.name}</h2></div>
+        <div className="text-right"><p className="score text-[48px]">{mm}:{ss}</p><p className="text-xs text-fg-dim">{done} of {s.exercises.length} exercises</p></div>
       </div>
       <div className="space-y-3 p-4 sm:p-5">
         <Bar value={done} max={s.exercises.length} height="h-2" />
         {rest !== null && <RestTimer seconds={rest} onDone={() => setRest(null)} />}
         {s.exercises.map((e, i) => (
           <ExerciseRow key={i} e={e} index={i} session
-            onToggle={() => update(i, { completed: !e.completed, sets_done: !e.completed ? e.sets : e.sets_done })}
-            onSet={() => { const n = Math.min(e.sets, (e.sets_done ?? 0) + 1); update(i, { sets_done: n, completed: n >= e.sets }); if (n < e.sets) setRest(e.rest_seconds) }} />
+            prev={prev[e.exercise_id]}
+            onToggle={() => {
+              const all = !e.completed
+              const log = Array.from({ length: e.sets }, (_, k) => ({ ...(e.set_log?.[k] ?? { kg: null, reps: null }), done: all }))
+              update(i, { completed: all, sets_done: all ? e.sets : 0, set_log: log })
+            }}
+            onLog={(log, ticked) => {
+              const n = log.filter(x => x.done).length
+              update(i, { set_log: log, sets_done: n, completed: n >= e.sets })
+              if (ticked && n < e.sets) setRest(e.rest_seconds)
+            }} />
         ))}
         <div className="flex flex-wrap justify-between gap-2 pt-2">
           <Button variant="ghost" onClick={onAbandon} icon={<X className="h-4 w-4" />}>Discard</Button>
@@ -214,19 +272,14 @@ export default function WorkoutPlanner() {
   return (
     <div>
       <Celebration fire={confetti} />
-      <div className="group relative mb-6 overflow-hidden rounded-3xl border border-line">
-        <Photo name="workout-hero" alt="Strength training" className="absolute inset-0 max-sm:hidden" overlay="left" position="center 40%" />
-        <div className="relative p-6 sm:p-8">
-          <PageHeader eyebrow="AI Workout Planner" title="Train with a plan that fits you" subtitle={`Programmed for ${GOAL_LABEL[profile?.goal ?? 'general_fitness'].toLowerCase()}, your experience and the equipment you actually have.`} />
-          <div className="flex flex-wrap gap-2">
-            {(['plan', 'generate', 'history'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} className={clsx('flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition', tab === t ? 'bg-lime text-ink-950' : 'glass text-fg-muted hover:text-fg')}>
-                {t === 'plan' ? <CalendarDays className="h-4 w-4" /> : t === 'generate' ? <Sparkles className="h-4 w-4" /> : <History className="h-4 w-4" />}
-                {t === 'plan' ? 'My plan' : t === 'generate' ? 'Generate' : 'History'}
-              </button>
-            ))}
-          </div>
-        </div>
+      <PageHeader title="Workouts" subtitle={`Planned for ${GOAL_LABEL[profile?.goal ?? 'general_fitness'].toLowerCase()}, your experience and the equipment you have.`} />
+      <div role="tablist" aria-label="Workout views" className="mb-6 flex gap-6 border-b border-line">
+        {(['plan', 'generate', 'history'] as const).map(t => (
+          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx('-mb-px flex items-center gap-2 border-b-2 pb-3 pt-1 text-[15px] font-medium transition-colors', tab === t ? 'border-lime text-fg' : 'border-transparent text-fg-muted hover:text-fg')}>
+            {t === 'plan' ? <CalendarDays className="h-4 w-4" /> : t === 'generate' ? <Sparkles className="h-4 w-4" /> : <History className="h-4 w-4" />}
+            {t === 'plan' ? 'My plan' : t === 'generate' ? 'New plan' : 'History'}
+          </button>
+        ))}
       </div>
 
       {session && <div className="mb-6"><ActiveSession s={session} onChange={changeSession} onFinish={finish} onAbandon={abandon} /></div>}
@@ -240,9 +293,9 @@ export default function WorkoutPlanner() {
                 <Card className="p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">{plan.title}</h2>{plan.is_saved && <Badge tone="lime"><BookmarkCheck className="h-3 w-3" />Saved</Badge>}
-                        <Badge tone={plan.generated_by.includes('llm') ? 'amber' : 'moss'}>{plan.generated_by.includes('llm') ? 'Engine + AI coach note' : 'FitAI programming engine'}</Badge></div>
-                      <p className="mt-1 text-xs text-fg-dim">{GOAL_LABEL[plan.inputs.goal]} · {cap(plan.inputs.experience)} · {plan.inputs.duration_minutes} min sessions</p>
+                      <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-[30px] font-extrabold uppercase leading-none">{planTitle(plan.title)}</h2>{plan.is_saved && <Badge tone="lime"><BookmarkCheck className="h-3 w-3" />Saved</Badge>}
+                        <Badge tone={plan.generated_by.includes('llm') ? 'amber' : 'moss'}>{plan.generated_by.includes('llm') ? 'Engine + AI coach note' : 'Planned by FitAI'}</Badge></div>
+                      <p className="mt-1 text-xs text-fg-dim">{GOAL_LABEL[plan.inputs.goal]}, {plan.inputs.experience}, {plan.inputs.duration_minutes}-minute sessions</p>
                     </div>
                     <div className="flex gap-2">{!plan.is_saved && <Button variant="secondary" size="sm" icon={<Bookmark className="h-3.5 w-3.5" />} loading={busy === 'save'} onClick={async () => { setBusy('save'); try { setPlan(await workoutApi.save(plan.id)); toast('success', 'Plan saved') } finally { setBusy(null) } }}>Save plan</Button>}
                       <Button size="sm" variant="ghost" icon={<CalendarDays className="h-3.5 w-3.5" />} onClick={() => setEditDays(editDays ? null : plan.days.map(d => d.weekday))}>Change days</Button>
@@ -273,12 +326,12 @@ export default function WorkoutPlanner() {
                 </Card>
                 {restToday && (
                   <Notice tone="info" icon={<CalendarDays className="h-4 w-4" />}>
-                    <span className="font-medium text-fg">Today ({today}) is a rest day.</span> Next workout: {plan.days[nextIdx].weekday} · {plan.days[nextIdx].name}. Rest helps your muscles recover; a short walk or stretching is fine.
+                    <span className="font-medium text-fg">Today ({today}) is a rest day.</span> Next workout: {plan.days[nextIdx].name} on {plan.days[nextIdx].weekday}. Rest helps your muscles recover; a short walk or stretching is fine.
                   </Notice>
                 )}
                 {day && (
                   <Card>
-                    <CardHeader title={`${day.weekday === today ? 'Today' : day.weekday} · ${day.name}`} subtitle={`${day.exercises.length} exercises · ~${day.duration_minutes} min · ${day.focus.map(cap).join(', ')}`} icon={<Dumbbell className="h-4 w-4" />}
+                    <CardHeader title={`${day.weekday === today ? 'Today' : day.weekday}: ${day.name}`} subtitle={`${day.exercises.length} exercises, about ${day.duration_minutes} min. ${day.focus.map(cap).join(', ')}`} icon={<Dumbbell className="h-4 w-4" />}
                       action={<Button onClick={() => start(plan.id, dayIdx)} loading={busy === 'start'} icon={<Play className="h-4 w-4" />}>Start workout</Button>} />
                     <div className="stagger space-y-3 p-5">
                       <Notice tone="info" icon={<Info className="h-4 w-4" />}>Warm up 5–8 minutes with easy cardio and 1–2 light ramp-up sets before your first exercise.</Notice>
@@ -286,7 +339,7 @@ export default function WorkoutPlanner() {
                     </div>
                   </Card>
                 )}
-                {plan.recovery_note && <p className="text-center text-xs text-fg-dim">Rest days: {plan.rest_days.join(', ') || '—'} · {plan.recovery_note}</p>}
+                {plan.recovery_note && <p className="text-center text-xs text-fg-dim">{plan.rest_days.length ? `Rest days: ${plan.rest_days.join(', ')}. ` : ''}{plan.recovery_note}</p>}
               </div>
             ))}
 
@@ -296,9 +349,9 @@ export default function WorkoutPlanner() {
             <p className="mb-3 text-sm font-medium text-fg-muted">Choose a training style</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {SPLITS.map(([v, t, d]) => (
-                <button key={v} onClick={() => setForm({ ...form, split: v })} className={clsx('group relative h-40 overflow-hidden rounded-2xl border text-left transition', form.split === v ? 'border-lime shadow-glow' : 'border-line hover:border-line-strong')}>
+                <button key={v} onClick={() => setForm({ ...form, split: v })} className={clsx('group relative h-40 overflow-hidden rounded-2xl border text-left transition', form.split === v ? 'border-lime ring-1 ring-lime' : 'border-line hover:border-line-strong')}>
                   <Photo name={`cat-${v === 'auto' ? 'full_body' : v}`} alt={t} className="absolute inset-0" overlay="strong" />
-                  <div className="absolute inset-x-0 bottom-0 p-3.5"><p className="font-display text-[15px] font-semibold">{t}</p><p className="text-xs text-fg-muted">{d}</p></div>
+                  <div className="absolute inset-x-0 bottom-0 p-3.5"><p className="font-sans text-[15px] font-semibold">{t}</p><p className="text-xs text-fg-muted">{d}</p></div>
                   {form.split === v && <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-lime text-ink-950"><Check className="h-3.5 w-3.5" /></div>}
                 </button>
               ))}
@@ -314,7 +367,7 @@ export default function WorkoutPlanner() {
               <div><Label htmlFor="goal">Fitness goal</Label><Select id="goal" value={form.goal} onChange={e => setForm({ ...form, goal: e.target.value as any })}>{Object.entries(GOAL_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></div>
               <div><Label>Experience</Label><Segmented size="sm" options={[['beginner', 'Beginner'], ['intermediate', 'Intermediate'], ['advanced', 'Advanced']] as const} value={form.experience as any} onChange={v => setForm({ ...form, experience: v })} /></div>
               <div><Label>Training days</Label><div className="flex flex-wrap gap-1.5">{WEEK.map(w => <Chip key={w} active={form.trainingDays.includes(w)} onClick={() => setForm({ ...form, trainingDays: toggleDay(form.trainingDays, w) })}>{w}</Chip>)}</div>
-                <p className="mt-1.5 text-[11px] text-fg-dim">{form.trainingDays.length === 0 ? 'Pick at least 1 day.' : form.trainingDays.length > 6 ? 'Pick at most 6 days; keep 1 day for rest.' : `${form.trainingDays.length} ${form.trainingDays.length === 1 ? 'day' : 'days'} a week · rest on the others`}</p></div>
+                <p className="mt-1.5 text-[11px] text-fg-dim">{form.trainingDays.length === 0 ? 'Pick at least 1 day.' : form.trainingDays.length > 6 ? 'Pick at most 6 days; keep 1 day for rest.' : `${form.trainingDays.length} ${form.trainingDays.length === 1 ? 'day' : 'days'} a week, rest on the others`}</p></div>
               <div><Label>Workout duration</Label><div className="flex flex-wrap gap-1.5">{[30, 45, 60, 75, 90].map(n => <Chip key={n} active={form.duration === n} onClick={() => setForm({ ...form, duration: n })}>{n} min</Chip>)}</div></div>
               <div><Label>Equipment</Label><div className="flex flex-wrap gap-1.5">{EQUIPMENT.map(([v, l]) => <Chip key={v} active={form.equipment.includes(v)} onClick={() => setForm({ ...form, equipment: form.equipment.includes(v) ? form.equipment.filter(x => x !== v) : [...form.equipment, v] })}>{l}</Chip>)}</div></div>
               <div><Label>Recovery preference</Label><Segmented size="sm" options={[['standard', 'Standard'], ['extra_rest', 'Extra rest'], ['active_recovery', 'Active']] as const} value={form.recovery as any} onChange={v => setForm({ ...form, recovery: v })} /></div>
@@ -329,13 +382,13 @@ export default function WorkoutPlanner() {
       {tab === 'history' && (
         !history ? <div className="space-y-4"><Skeleton className="h-64" /><Skeleton className="h-64" /></div> : (
           <div className="grid gap-5 lg:grid-cols-3">
-            <Card className="lg:col-span-2"><CardHeader title="Workouts per week" subtitle={`${history.stats.total_completed} total · avg ${history.stats.avg_duration_min} min · streak ${history.stats.streak}`} icon={<CalendarDays className="h-4 w-4" />} />
+            <Card className="lg:col-span-2"><CardHeader title="Workouts per week" subtitle={`${history.stats.total_completed} total, ${history.stats.avg_duration_min} min on average, ${history.stats.streak} in a row`} icon={<CalendarDays className="h-4 w-4" />} />
               <div className="px-2 pb-3 pt-2"><ActivityChart data={history.stats.weekly_counts} xKey="week_start" height={240} /></div></Card>
             <Card><CardHeader title="Saved & recent plans" icon={<Bookmark className="h-4 w-4" />} />
               <div className="space-y-2 p-5">
                 {history.plans.slice(0, 6).map(p => (
                   <div key={p.id} className="flex items-center gap-2 rounded-xl border border-line bg-ink-900 px-3 py-2.5">
-                    <button className="min-w-0 flex-1 text-left" onClick={() => { setPlan(p); setTab('plan') }}><p className="truncate text-sm">{p.title}</p><p className="text-[11px] text-fg-dim">{shortDate(p.created_at.slice(0, 10))}{p.is_saved ? ' · saved' : ''}</p></button>
+                    <button className="min-w-0 flex-1 text-left" onClick={() => { setPlan(p); setTab('plan') }}><p className="truncate text-sm">{planTitle(p.title)}</p><p className="text-[11px] text-fg-dim">{shortDate(p.created_at.slice(0, 10))}{p.is_saved ? ', saved' : ''}</p></button>
                     <button aria-label="Delete plan" onClick={async () => { await workoutApi.remove(p.id); setHistory(h => h && { ...h, plans: h.plans.filter(x => x.id !== p.id) }); if (plan?.id === p.id) active.reload() }} className="rounded p-1.5 text-fg-dim hover:text-coral"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 ))}
@@ -346,7 +399,7 @@ export default function WorkoutPlanner() {
                 {history.sessions.map(s => (
                   <div key={s.id} className="flex items-center gap-4 px-3 py-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime/10 text-lime"><Check className="h-4 w-4" /></div>
-                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{s.name}</p><p className="text-xs text-fg-dim">{new Date(s.started_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · {s.exercises.filter(e => e.completed).length}/{s.exercises.length} exercises</p></div>
+                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{s.name}</p><p className="text-xs text-fg-dim">{new Date(s.started_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}, {s.exercises.filter(e => e.completed).length} of {s.exercises.length} exercises</p></div>
                     <span className="flex items-center gap-1 text-sm tabular-nums text-fg-muted"><Clock className="h-3.5 w-3.5" />{s.duration_minutes} min</span>
                   </div>
                 ))}
@@ -357,9 +410,10 @@ export default function WorkoutPlanner() {
       <Modal open={!!summary} onClose={() => setSummary(null)} title="Workout complete">
         {summary && (
           <div className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-lime text-ink-950 shadow-glow"><Trophy className="h-8 w-8" /></div>
-            <h3 className="mt-4 font-display text-2xl font-bold">Great work!</h3>
-            <p className="mt-1 text-sm text-fg-muted">{summary.name} · {summary.duration_minutes} min · {summary.exercises.filter(e => e.completed).length}/{summary.exercises.length} exercises</p>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-lime text-ink-950"><Trophy className="h-8 w-8" /></div>
+            <h3 className="mt-4 font-display text-[40px] font-extrabold uppercase leading-none">Workout done</h3>
+            <p className="mt-1 text-sm text-fg-muted">{summary.name}: {summary.duration_minutes} min, {summary.exercises.filter(e => e.completed).length} of {summary.exercises.length} exercises</p>
+            {(() => { const vol = summary.exercises.reduce((t, e) => t + (e.set_log ?? []).filter(x => x.done).reduce((u, x) => u + (x.kg ?? 0) * (x.reps ?? 0), 0), 0); return vol > 0 ? <p className="mt-4"><span className="score text-[44px] text-lime">{Math.round(vol).toLocaleString()}</span><span className="ml-2 text-sm text-fg-muted">kg lifted in total</span></p> : null })()}
             <p className="mt-4 text-xs text-fg-dim">Refuel with protein and carbs within a few hours, and get good sleep tonight.</p>
             <div className="mt-5 flex justify-center gap-2"><Button variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={() => { setSummary(null); setTab('history') }}>View history</Button><Button onClick={() => setSummary(null)}>Done</Button></div>
           </div>

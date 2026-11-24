@@ -40,3 +40,6 @@ export const EQUIPMENT = [
 ] as const
 export const MUSCLES = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'calves', 'core'] as const
 export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ')
+
+/** Plan titles from the server join parts with " · "; show them as plain text. */
+export const planTitle = (t: string) => t.replace(/\s*·\s*/g, ', ')

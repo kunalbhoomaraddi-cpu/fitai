@@ -20,7 +20,7 @@ export function DemoFrames({ exerciseId, name, playing = true, className, speed 
   return (
     <div className={clsx('relative overflow-hidden bg-white', className)}>
       {([0, 1] as const).slice(0, demo.frames).map(i => (
-        <img key={i} src={demoImg(exerciseId, i)} alt={`${name} — ${i ? 'end' : 'start'} position`} draggable={false}
+        <img key={i} src={demoImg(exerciseId, i)} alt={`${name}, ${i ? 'end' : 'start'} position`} draggable={false}
           className={clsx('absolute inset-0 h-full w-full select-none object-cover transition-opacity duration-300', frame === i ? 'opacity-100' : 'opacity-0')} />
       ))}
     </div>
@@ -45,7 +45,7 @@ export function ExerciseDemoModal({ open, onClose, exerciseId, name, tip, sets, 
           <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white">Start ↔ finish position</span>
         </div>
       ) : (
-        <div className="rounded-2xl border border-line bg-white/[0.02] p-4 text-sm text-fg-muted">No photo demo for this exercise yet — follow the steps below.</div>
+        <div className="rounded-2xl border border-line bg-white/[0.02] p-4 text-sm text-fg-muted">No photo demo for this exercise yet. Follow the steps below.</div>
       )}
       {(sets || reps) && <p className="mt-4 text-sm text-fg"><b>Today:</b> {sets} sets × {reps}</p>}
       {demo?.note && <p className="mt-3 flex gap-2 rounded-xl bg-sky-500/10 px-3 py-2 text-[13px] text-sky-200"><Info className="mt-0.5 h-4 w-4 shrink-0" />{demo.note}</p>}

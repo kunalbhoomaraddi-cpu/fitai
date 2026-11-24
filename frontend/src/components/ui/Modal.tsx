@@ -16,7 +16,7 @@ export function Modal({ open, onClose, title, children, wide, footer }: { open: 
       <div className="absolute inset-0 animate-fade-in bg-black/75" onClick={onClose} />
       <div className={clsx('relative flex max-h-[92vh] w-full animate-pop flex-col rounded-t-3xl border border-line bg-ink-850 shadow-pop sm:rounded-3xl', wide ? 'sm:max-w-2xl' : 'sm:max-w-md')}>
         <div className="flex items-center justify-between border-b border-line-soft px-5 py-4">
-          <h2 className="font-display text-base font-semibold text-fg">{title}</h2>
+          <h2 className="font-sans text-base font-semibold text-fg">{title}</h2>
           <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-fg-muted hover:bg-white/5 hover:text-fg"><X className="h-4 w-4" /></button>
         </div>
         <div className="overflow-y-auto px-5 py-5">{children}</div>

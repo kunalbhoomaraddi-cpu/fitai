@@ -97,6 +97,6 @@ def ai_status(preference: str | None = None) -> dict:
         "active_provider": p.name, "model": p.model, "is_real_llm": p.is_real_llm,
         "configured": available_providers(), "server_default": s.ai_provider,
         "message": None if p.is_real_llm else
-        "No LLM API key is configured, so FitAI is running in demo mode. The coach uses a rule-based engine "
-        "with your real data and the same deterministic tools. Add GEMINI_API_KEY to backend/.env to enable the AI coach.",
+        "The AI coach isn't connected, so answers come from FitAI's built-in rules. "
+        "They still use your real numbers. (Setup: add GEMINI_API_KEY to backend/.env.)",
     }

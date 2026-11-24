@@ -121,7 +121,7 @@ export function MacroDonut({ protein, carbs, fat, size = 150, calories }: { prot
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      <div className="absolute inset-0 flex flex-col items-center justify-center"><p className="font-display text-xl font-bold tabular-nums">{Math.round(calories ?? total)}</p><p className="text-[10px] uppercase tracking-wider text-fg-dim">kcal</p></div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center"><p className="score text-[30px]">{Math.round(calories ?? total)}</p><p className="mt-1 text-[11px] text-fg-dim">kcal</p></div>
     </div>
   )
 }

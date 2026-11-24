@@ -1,10 +1,10 @@
 import clsx from 'clsx'
-import { ArrowUp, Beef, Bookmark, Bot, CalendarDays, Copy, Dumbbell, Flame, History, Info, LineChart, MessageSquarePlus, Salad, Sparkles, Trash2, Wrench, X } from 'lucide-react'
+import { ArrowUp, Beef, Bookmark, Bot, CalendarDays, Copy, Dumbbell, Flame, History, Info, LineChart, MessageSquarePlus, Salad, Trash2, Wrench, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CoachCard } from '../../components/coach/CoachCards'
-import { Badge, Button, IconButton, Notice, Photo, Skeleton } from '../../components/ui'
+import { Badge, Button, IconButton, Notice, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { coachApi } from '../../services/fitai'
@@ -28,7 +28,7 @@ function suggestionIcon(s: string) {
 }
 
 function CoachAvatar({ size = 'h-9 w-9' }: { size?: string }) {
-  return <div className={clsx('relative flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-lime to-moss text-ink-950 shadow-glow', size)}><Sparkles className="h-[18px] w-[18px]" /></div>
+  return <div className={clsx('relative flex shrink-0 items-center justify-center rounded-xl bg-lime text-ink-950', size)}><Bot className="h-[18px] w-[18px]" /></div>
 }
 
 function Typing() {
@@ -105,13 +105,13 @@ export default function AICoach() {
   }
 
   const providerBadge = status && (status.is_real_llm
-    ? <Badge tone="lime"><span className="h-1.5 w-1.5 rounded-full bg-lime" />{status.active_provider === 'gemini' ? 'Gemini' : 'Groq'} · {status.model}</Badge>
-    : <Badge tone="amber">Demo mode · rule-based</Badge>)
+    ? <Badge tone="lime"><span className="h-1.5 w-1.5 rounded-full bg-lime" />{status.active_provider === 'gemini' ? 'Gemini' : 'Groq'} {status.model}</Badge>
+    : <Badge tone="amber">Demo answers</Badge>)
 
   const History_ = (
     <div className="flex h-full flex-col">
       <div className="p-3"><Button full variant="secondary" onClick={fresh} icon={<MessageSquarePlus className="h-4 w-4" />}>New conversation</Button></div>
-      <p className="px-4 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-wider text-fg-dim">History</p>
+      <p className="px-4 pb-2 pt-1 text-[13px] font-semibold text-fg-muted">Past conversations</p>
       <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
         {convs.length === 0 && <p className="px-3 py-2 text-xs text-fg-dim">Your conversations will appear here.</p>}
         {convs.map(c => (
@@ -141,8 +141,8 @@ export default function AICoach() {
         <header className="flex items-center gap-3 border-b border-line-soft px-4 py-3 sm:px-5">
           <CoachAvatar />
           <div className="min-w-0 flex-1">
-            <p className="font-display text-[15px] font-semibold">FitAI Coach</p>
-            <p className="truncate text-xs text-fg-dim">Answers grounded in your profile, logs and deterministic calculations</p>
+            <p className="text-[15px] font-semibold">Your coach</p>
+            <p className="truncate text-xs text-fg-dim">Checks your profile and logs before it answers</p>
           </div>
           <div className="hidden sm:block">{providerBadge}</div>
           <IconButton label="Conversation history" className="lg:hidden" onClick={() => setHistoryOpen(true)}><History className="h-4 w-4" /></IconButton>
@@ -152,23 +152,20 @@ export default function AICoach() {
         <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
           <div className="mx-auto max-w-3xl space-y-5">
             {status && !status.is_real_llm && messages.length === 0 && (
-              <Notice tone="demo" icon={<Info className="h-4 w-4" />}><strong>Demo mode.</strong> {status.message}</Notice>
+              <Notice tone="demo" icon={<Info className="h-4 w-4" />}><strong>Demo mode.</strong> No AI model is connected here, so answers come from FitAI's own rules. They still use your real numbers.</Notice>
             )}
             {loadingConv && <div className="space-y-4"><Skeleton className="ml-auto h-12 w-2/3" /><Skeleton className="h-40 w-4/5" /></div>}
             {!loadingConv && messages.length === 0 && (
               <div className="animate-fade-up">
-                <div className="relative overflow-hidden rounded-3xl border border-line">
-                  <Photo name="coach-hero" alt="FitAI coach" className="absolute inset-0" overlay="left" />
-                  <div className="relative p-6 sm:p-8">
-                    <CoachAvatar size="h-12 w-12" />
-                    <h1 className="mt-4 font-display text-2xl font-bold sm:text-3xl">How can I help you train smarter today?</h1>
-                    <p className="mt-2 max-w-lg text-sm text-fg-muted">I can calculate your targets, analyse your weight trend, plan today's session and adjust your diet — using your real data, not guesses.</p>
-                  </div>
+                <div className="pt-2 sm:pt-6">
+                  <h1 className="font-display text-[40px] font-extrabold uppercase leading-[.92] tracking-[.01em] sm:text-[52px]">What do you want to work on?</h1>
+                  <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-fg-muted">Ask about your calories, a stalled weight, today's session or what to eat. I'll look at your logs first and show which numbers I used.</p>
                 </div>
-                <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                <p className="mt-8 text-[13px] font-semibold text-fg-muted">Try one of these</p>
+                <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                   {suggestions.map(s => { const I = suggestionIcon(s); return (
-                    <button key={s} onClick={() => send(s)} className="group flex items-center gap-3 rounded-2xl border border-line bg-ink-800 px-4 py-3 text-left text-[13.5px] text-fg-muted transition hover:-translate-y-0.5 hover:border-lime/40 hover:text-fg">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-fg-dim transition group-hover:bg-lime/10 group-hover:text-lime"><I className="h-4 w-4" /></span>
+                    <button key={s} onClick={() => send(s)} className="group flex items-center gap-3 rounded-xl border border-line bg-ink-850 px-4 py-3.5 text-left text-[14px] text-fg/85 transition-colors hover:border-lime/40 hover:text-fg">
+                      <I className="h-4 w-4 shrink-0 text-fg-dim transition-colors group-hover:text-lime" aria-hidden />
                       <span className="flex-1">{s}</span><ArrowUp className="h-3.5 w-3.5 shrink-0 rotate-45 text-fg-dim transition group-hover:text-lime" />
                     </button>) })}
                 </div>
@@ -187,10 +184,10 @@ export default function AICoach() {
                   </div>
                   {m.cards.length > 0 && <div className="grid gap-3">{m.cards.filter(c => c.type !== 'profile').map((c, i) => <CoachCard key={i} card={c} units={units} />)}</div>}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {m.tools_used.length > 0 && <span className="mr-1 flex items-center gap-1 text-[11px] text-fg-dim"><Wrench className="h-3 w-3" />Tools:</span>}
+                    {m.tools_used.length > 0 && <span className="mr-1 flex items-center gap-1 text-[11px] text-fg-dim"><Wrench className="h-3 w-3" />Checked:</span>}
                     {m.tools_used.map(t => <Badge key={t}>{TOOL_LABEL[t] ?? t}</Badge>)}
                     <span className="ml-auto flex items-center gap-1">
-                      {m.provider && <span className="mr-1 text-[11px] text-fg-dim">{m.provider.startsWith('mock') ? 'Demo response' : m.provider.replace(':', ' · ')}</span>}
+                      {m.provider && <span className="mr-1 text-[11px] text-fg-dim">{m.provider.startsWith('mock') ? 'Demo answer' : m.provider.split(':')[1] ?? m.provider}</span>}
                       <IconButton label="Copy" className="h-7 w-7" onClick={() => { navigator.clipboard?.writeText(m.content); toast('success', 'Copied') }}><Copy className="h-3.5 w-3.5" /></IconButton>
                       <IconButton label="Save to dashboard" className="h-7 w-7" onClick={() => saveMsg(m)}><Bookmark className="h-3.5 w-3.5" /></IconButton>
                     </span>

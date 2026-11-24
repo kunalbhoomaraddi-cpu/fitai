@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { ArrowLeftRight, Camera, ChevronLeft, ChevronRight, Columns2, ImagePlus, Lock, MoveHorizontal, Scale, ShieldCheck, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Badge, Button, Card, CardHeader, EmptyState, ErrorState, Input, Label, Modal, Notice, PageHeader, Segmented, Select, Skeleton } from '../../components/ui'
+import { Badge, Button, Card, CardHeader, EmptyState, ErrorState, Input, Label, Meta, Modal, Notice, PageHeader, Segmented, Select, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -115,7 +115,7 @@ function UploadModal({ open, onClose, onDone }: { open: boolean; onClose: () => 
         <div><Label htmlFor="pdate">Date taken</Label><Input id="pdate" type="date" max={todayISO()} value={date} onChange={e => setDate(e.target.value)} /></div>
         <div><Label htmlFor="pnote" hint="optional">Note</Label><Input id="pnote" maxLength={200} placeholder="e.g. Morning, before breakfast" value={note} onChange={e => setNote(e.target.value)} /></div>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-fg-dim">Tip: same spot, same light, same time of day (morning works best) — it makes changes much easier to see.</p>
+      <p className="mt-4 text-xs leading-relaxed text-fg-dim">Tip: use the same spot, light and time of day (mornings work best). Changes are much easier to see.</p>
       {error && <div className="mt-4"><Notice tone="warn">{error}</Notice></div>}
     </Modal>
   )
@@ -190,7 +190,7 @@ function Compare({ photos }: { photos: ProgressPhoto[] }) {
               {[['Before', before], ['After', after]].map(([l, p]) => { const ph = p as ProgressPhoto; return (
                 <figure key={l as string}>
                   <AuthImg id={ph.id} size="full" alt={l as string} className="aspect-[3/4] w-full rounded-2xl border border-line" />
-                  <figcaption className="mt-2 text-xs text-fg-muted"><b className="text-fg">{l as string}</b> · {longDate(ph.taken_on)}{ph.weight_kg ? ` · ${fmtWeight(ph.weight_kg, units)}` : ''}</figcaption>
+                  <figcaption className="mt-2 text-xs text-fg-muted"><b className="text-fg">{l as string}</b> <Meta className="mt-0.5" items={[longDate(ph.taken_on), ph.weight_kg ? fmtWeight(ph.weight_kg, units) : null]} /></figcaption>
                 </figure>) })}
             </div>
           )}
@@ -279,7 +279,7 @@ export default function ProgressPhotos() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Progress Tracker" title="Progress Photos"
+      <PageHeader title="Progress photos"
         subtitle="The scale doesn't show everything. Weekly photos reveal changes in shape that numbers miss."
         actions={!demo && <Button onClick={() => setUpOpen(true)} icon={<ImagePlus className="h-4 w-4" />}>Add photos</Button>} />
 
@@ -294,7 +294,7 @@ export default function ProgressPhotos() {
         : error ? <ErrorState message={error} onRetry={() => reload()} />
         : !photos.length ? (
           <EmptyState art="hero-training" icon={<Camera className="h-5 w-5" />} title="Take your first progress photos"
-            text="Front, side and back — in the same spot and light each time. Repeat every 1–2 weeks and compare them here."
+            text="Front, side and back, in the same spot and light each time. Repeat every 1–2 weeks and compare them here."
             action={!demo && <Button onClick={() => setUpOpen(true)} icon={<ImagePlus className="h-4 w-4" />}>Add photos</Button>} />
         ) : <>
           <Compare photos={photos} />
@@ -306,7 +306,7 @@ export default function ProgressPhotos() {
                 return (
                   <div key={d} className="px-5 py-4">
                     <div className="mb-3 flex items-center gap-2">
-                      <p className="font-display text-sm font-semibold text-fg">{longDate(d)}</p>
+                      <p className="font-sans text-sm font-semibold text-fg">{longDate(d)}</p>
                       {w != null && <span className="text-xs text-fg-muted">· {fmtWeight(w, units)}</span>}
                     </div>
                     <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-6">

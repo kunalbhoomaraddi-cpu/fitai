@@ -7,7 +7,7 @@
 | **Live app** | https://fitai-app-pink.vercel.app (click **Explore the demo**, no sign-up needed) |
 | **Source code** | https://github.com/kunalbhoomaraddi-cpu/fitai (public) |
 | **Backend API** | https://fitai-api-nmtc.onrender.com/api/health |
-| **Status** | Live in production · 114 automated tests passing on every push |
+| **Status** | Live in production · 117 automated tests passing on every push |
 
 ---
 
@@ -270,7 +270,7 @@ After the 23 Nov demo, the mentor asked for a better version. The first v2 featu
 
 ```
 fitai/
-├── backend/            FastAPI app + 114 tests
+├── backend/            FastAPI app + 117 tests
 ├── frontend/           React app
 ├── docs/               guides, changelog, screenshots
 ├── scripts/            dev, test, reset and setup helpers
@@ -285,7 +285,7 @@ fitai/
 - `docs/LOCAL_SETUP.md`, `ENVIRONMENT_CONFIGURATION.md`, `PROJECT_ARCHITECTURE.md`, `API_DOCUMENTATION.md`
 - `docs/TESTING_GUIDE.md`, `DEPLOYMENT_GUIDE.md`, `IMAGE_CREDITS.md`, `CHANGELOG.md`
 
-**Automated checks (GitHub Actions):** every push runs Ruff, the 114 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
+**Automated checks (GitHub Actions):** every push runs Ruff, the 117 backend tests on SQLite and again on PostgreSQL 16, then ESLint, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
 
 **Commit history (newest first)**
 
@@ -312,8 +312,8 @@ fitai/
 
 | Check | Result |
 |---|---|
-| Backend tests on SQLite | 114 / 114 passed, no warnings |
-| Backend tests on PostgreSQL 16 (same as Neon) | 114 / 114 passed |
+| Backend tests on SQLite | 117 / 117 passed, no warnings |
+| Backend tests on PostgreSQL 16 (same as Neon) | 117 / 117 passed |
 | Ruff (backend) and ESLint (frontend) | No problems |
 | TypeScript check and production build | Passed |
 | Browser tests: login code, forgot password, weekly check-in, progress photos, Indian food, exercise demos, type-DELETE confirmation, landing page, training days | All passed |
@@ -348,10 +348,10 @@ About 10–12 minutes. Open the site a minute early so the free server is awake.
 
 1. **Landing page** (https://fitai-app-pink.vercel.app): the idea in one line, then **Explore the demo**, which needs no sign-up.
 2. **Dashboard**: goal ring, today's recommendation, charts, streaks.
-3. **AI Fitness Coach**: ask "How much protein do I need?" and point out the tool card; the number comes from a calculation, not a guess.
-4. **Diet Planner**: an Indian meal plan; swap a food, mark a meal eaten.
-5. **Workout Planner**: point out **Today** in the week strip, then **Change days** (pick your own training days). Open a **Demo**, then **Start workout** to show set tracking and the rest timer.
-6. **Nutrition Tracker**: **Snap a meal** with a photo of a plate, review the foods and add them; then search "jolada rotti" and add 2 rotis.
+3. **Coach**: ask "How much protein do I need?" and point out the tool card; the number comes from a calculation, not a guess.
+4. **Meal plan**: an Indian meal plan; swap a food, mark a meal eaten.
+5. **Workouts**: point out **Today** in the week strip, then **Change days** (pick your own training days). Open a **Demo**, then **Start workout** to show set tracking and the rest timer.
+6. **Food log**: **Snap a meal** with a photo of a plate, review the foods and add them; then search "jolada rotti" and add 2 rotis.
 7. **Weekly Check-in**: run it and explain the score.
 8. **Real account**: log out, log in with your email, and show the 6-digit code arriving.
 9. **GitHub**: the README, the green Actions runs, `docs/CHANGELOG.md`.

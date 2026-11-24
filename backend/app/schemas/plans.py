@@ -57,5 +57,6 @@ class StartWorkoutIn(BaseModel):
 
 
 class UpdateSessionIn(BaseModel):
-    exercises: list[dict] | None = None
+    # Each exercise may carry a set_log of {kg, reps, done}; capped so a session can't grow without limit.
+    exercises: list[dict] | None = Field(default=None, max_length=40)
     status: Literal["in_progress", "completed", "abandoned"] | None = None

@@ -14,8 +14,9 @@ export default {
         sky: { DEFAULT: '#7CC4F2' },
       },
       fontFamily: {
-        sans: ['"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['"Manrope Variable"', 'Manrope', '"Inter Variable"', 'system-ui', 'sans-serif'],
+        // Body: IBM Plex Sans (calm, clear figures). Display: Big Shoulders, a condensed scoreboard face for headings and numbers.
+        sans: ['"IBM Plex Sans Variable"', '"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Big Shoulders Display Variable"', '"Big Shoulders Display"', '"IBM Plex Sans Variable"', 'system-ui', 'sans-serif'],
       },
       borderRadius: { xl: '14px', '2xl': '18px', '3xl': '24px' },
       boxShadow: {

@@ -3,7 +3,7 @@ import { AlertTriangle, Award, Camera, Bot, CheckCircle2, Info, Lock, Pencil, Pl
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MeasureChart, WeightChart } from '../../components/charts/Charts'
-import { Badge, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, Input, Label, Modal, Notice, PageHeader, Photo, Ring, Segmented, Skeleton } from '../../components/ui'
+import { Badge, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, Input, Label, Modal, Notice, PageHeader, Ring, Segmented, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -75,19 +75,16 @@ export default function ProgressTracker() {
   return (
     <div>
       <Celebration fire={confetti} />
-      <div className="group relative mb-6 overflow-hidden rounded-3xl border border-line">
-        <Photo name="progress-hero" alt="Runner at sunrise" className="absolute inset-0" overlay="left" />
-        <div className="relative p-6 sm:p-8"><PageHeader eyebrow="Progress Tracker" title="See the trend, not the noise" subtitle="Weigh-ins, measurements and milestones — analysed from your stored data with weekly averages and plateau detection."
-          actions={<Button variant="secondary" onClick={() => nav('/photos')} icon={<Camera className="h-4 w-4" />}>Progress photos</Button>} /></div>
-      </div>
+      <PageHeader title="Progress" subtitle="Daily weight jumps around with water and salt. Weekly averages show where you are really heading."
+        actions={<Button variant="secondary" onClick={() => nav('/photos')} icon={<Camera className="h-4 w-4" />}>Progress photos</Button>} />
 
       {!a ? <div className="grid gap-4 lg:grid-cols-3"><Skeleton className="h-64" /><Skeleton className="h-64 lg:col-span-2" /></div> : (
         <div className="space-y-5">
           <div className="grid gap-5 lg:grid-cols-3 [&>*]:min-w-0">
             <Card className="p-5">
-              <div className="flex items-center justify-between"><p className="font-display font-semibold">Goal progress</p><button onClick={() => { setTarget(String(+(units === 'imperial' ? kgToLb(wa.target_weight_kg) : wa.target_weight_kg).toFixed(1))); setTOpen(true) }} className="flex items-center gap-1 text-xs text-fg-muted hover:text-lime"><Pencil className="h-3 w-3" />Edit target</button></div>
+              <div className="flex items-center justify-between"><p className="font-semibold">Goal progress</p><button onClick={() => { setTarget(String(+(units === 'imperial' ? kgToLb(wa.target_weight_kg) : wa.target_weight_kg).toFixed(1))); setTOpen(true) }} className="flex items-center gap-1 text-xs text-fg-muted hover:text-lime"><Pencil className="h-3 w-3" />Edit target</button></div>
               <div className="mt-4 flex items-center gap-5">
-                <Ring value={wa.goal_progress_pct} max={100} size={130} stroke={11}><p className="font-display text-3xl font-bold">{Math.round(wa.goal_progress_pct)}%</p><p className="text-[10px] text-fg-dim">complete</p></Ring>
+                <Ring value={wa.goal_progress_pct} max={100} size={130} stroke={11}><p className="score text-[44px]">{Math.round(wa.goal_progress_pct)}%</p><p className="text-[10px] text-fg-dim">complete</p></Ring>
                 <div className="space-y-2.5 text-sm">
                   <div><p className="text-[11px] text-fg-dim">Start</p><p className="font-semibold tabular-nums">{fmtWeight(wa.start_weight_kg, units)}</p></div>
                   <div><p className="text-[11px] text-fg-dim">Current</p><p className="font-semibold tabular-nums text-lime">{fmtWeight(wa.current_weight_kg, units)}</p></div>
@@ -97,7 +94,7 @@ export default function ProgressTracker() {
               {wa.goal_progress_pct >= 100 && <div className="mt-4"><Notice tone="demo" icon={<Trophy className="h-4 w-4" />}><strong>Goal reached!</strong> Consider a maintenance phase before setting a new target.</Notice></div>}
             </Card>
             <Card className="p-5">
-              <p className="font-display font-semibold">Log weight</p>
+              <p className="font-semibold">Log weight</p>
               <p className="mt-1 text-xs text-fg-muted">Weigh in at the same time of day, ideally morning.</p>
               <div className="mt-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -115,29 +112,28 @@ export default function ProgressTracker() {
                 ['This week avg', thisW ? fmtWeight(thisW.avg_weight_kg, units) : '—', Target],
                 ['vs last week', wkDelta != null ? `${wkDelta > 0 ? '+' : ''}${fmtWeight(wkDelta, units, 2)}` : '—', wkDelta != null && wkDelta > 0 ? TrendingUp : TrendingDown],
               ].map(([l, v, I]: any) => (
-                <div key={l} className="bg-ink-800 p-5"><I className="h-4 w-4 text-lime" /><p className="mt-3 font-display text-xl font-bold tabular-nums">{v}</p><p className="text-xs text-fg-muted">{l}</p></div>
+                <div key={l} className="bg-ink-800 p-5"><I className="h-4 w-4 text-lime" /><p className="mt-3 whitespace-nowrap score text-[30px]">{v}</p><p className="mt-1.5 text-xs text-fg-muted">{l}</p></div>
               ))}
             </Card>
           </div>
 
           <Card>
-            <CardHeader title="Weight progression" subtitle={`${wa.data_points} weigh-ins in the last 90 days${wa.plateau ? ' · possible plateau' : ''}`} icon={<Scale className="h-4 w-4" />}
+            <CardHeader title="Weight progression" subtitle={`${wa.data_points} weigh-ins in the last 90 days${wa.plateau ? ', possible plateau' : ''}`} icon={<Scale className="h-4 w-4" />}
               action={<Segmented size="sm" options={[[30, '30D'], [90, '90D'], [365, '1Y']] as const} value={range} onChange={setRange} />} />
             <div className="px-2 pb-4 pt-2">{series.length >= 2 ? <WeightChart data={series} target={wa.target_weight_kg} units={units} height={300} /> : <EmptyState className="m-3" icon={<Scale className="h-5 w-5" />} title="Log at least two weigh-ins" art="progress-hero" text="Your chart and weekly averages will appear here." />}</div>
           </Card>
 
           <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr] [&>*]:min-w-0">
             <Card className="relative overflow-hidden border-lime/25">
-              <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-lime/10 blur-3xl" />
               <CardHeader title="AI progress analysis" subtitle="Grounded in your stored weigh-ins, workouts and food logs" icon={<Bot className="h-4 w-4" />}
                 action={<Button size="sm" onClick={runAi} loading={aiLoading} icon={<Sparkles className="h-3.5 w-3.5" />}>{ai ? 'Re-analyse' : 'Analyse'}</Button>} />
               <div className="relative space-y-4 p-5">
                 {ai ? (<div className="animate-fade-up space-y-4">
                   {ai.notice && <Notice tone={ai.is_real_llm ? 'info' : 'demo'} icon={<Info className="h-4 w-4" />}>{ai.notice}</Notice>}
                   <p className="text-[15px] leading-relaxed text-fg">{ai.summary}</p>
-                  {ai.highlights?.length > 0 && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-dim">Highlights</p><ul className="space-y-1.5">{ai.highlights.map((h: string) => <li key={h} className="flex gap-2 text-[13.5px] text-fg-muted"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-moss-400" />{h}</li>)}</ul></div>}
-                  {ai.next_steps?.length > 0 && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-dim">Next steps</p><ul className="space-y-1.5">{ai.next_steps.map((h: string) => <li key={h} className="flex gap-2 text-[13.5px] text-fg"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-lime" />{h}</li>)}</ul></div>}
-                  <p className="text-[11px] text-fg-dim">{ai.is_real_llm ? `Written by ${ai.provider} from computed facts.` : 'Rule-based analysis — no LLM configured.'} Short-term scale changes are not necessarily fat changes. Not medical advice.</p>
+                  {ai.highlights?.length > 0 && <div><p className="mb-2 text-[13px] font-semibold text-fg-muted">Highlights</p><ul className="space-y-1.5">{ai.highlights.map((h: string) => <li key={h} className="flex gap-2 text-[13.5px] text-fg-muted"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-moss-400" />{h}</li>)}</ul></div>}
+                  {ai.next_steps?.length > 0 && <div><p className="mb-2 text-[13px] font-semibold text-fg-muted">Next steps</p><ul className="space-y-1.5">{ai.next_steps.map((h: string) => <li key={h} className="flex gap-2 text-[13.5px] text-fg"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-lime" />{h}</li>)}</ul></div>}
+                  <p className="text-[11px] text-fg-dim">{ai.is_real_llm ? `Written by ${ai.provider} from computed facts.` : 'Written by FitAI rules, no AI model connected.'} Short-term scale changes are not necessarily fat changes. Not medical advice.</p>
                 </div>) : (
                   <div className="space-y-2.5">
                     {a.insights.map((i: any) => (
@@ -155,7 +151,7 @@ export default function ProgressTracker() {
               <div className="overflow-x-auto p-3">
                 {wk.length === 0 ? <p className="p-3 text-sm text-fg-muted">No weigh-ins yet.</p> : (
                   <table className="w-full text-sm">
-                    <thead><tr className="text-left text-[11px] uppercase tracking-wider text-fg-dim"><th className="px-3 py-2 font-medium">Week of</th><th className="px-3 py-2 font-medium">Average</th><th className="px-3 py-2 font-medium">Change</th><th className="px-3 py-2 text-right font-medium">Entries</th></tr></thead>
+                    <thead><tr className="text-left text-[12px] text-fg-dim"><th className="px-3 py-2 font-medium">Week of</th><th className="px-3 py-2 font-medium">Average</th><th className="px-3 py-2 font-medium">Change</th><th className="px-3 py-2 text-right font-medium">Entries</th></tr></thead>
                     <tbody>{[...wk].reverse().slice(0, 8).map((r: any, i: number, arr: any[]) => { const prev = arr[i + 1]; const dlt = prev ? r.avg_weight_kg - prev.avg_weight_kg : null; return (
                       <tr key={r.week_start} className="border-t border-line-soft"><td className="px-3 py-2.5 text-fg-muted">{shortDate(r.week_start)}</td><td className="px-3 py-2.5 font-medium tabular-nums">{fmtWeight(r.avg_weight_kg, units, 2)}</td>
                         <td className={clsx('px-3 py-2.5 tabular-nums', dlt == null ? 'text-fg-dim' : dlt <= 0 ? 'text-moss-400' : 'text-amber')}>{dlt == null ? '—' : `${dlt > 0 ? '+' : ''}${fmtWeight(dlt, units, 2)}`}</td><td className="px-3 py-2.5 text-right text-fg-dim">{r.entries}</td></tr>) })}</tbody>

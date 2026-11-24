@@ -75,7 +75,7 @@ export default function ForgotPassword() {
     return (
       <AuthShell>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/10 text-lime"><CheckCircle2 className="h-6 w-6" /></div>
-        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Password updated</h2>
+        <h2 className="mt-5 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Password updated</h2>
         <p className="mt-2 text-sm leading-relaxed text-fg-muted">You can now log in with your new password. For your security, every device that was logged in has been signed out.</p>
         <Button className="mt-8" size="lg" full onClick={() => nav('/login', { replace: true })} icon={<ArrowRight className="h-4 w-4" />}>Go to log in</Button>
       </AuthShell>
@@ -86,7 +86,7 @@ export default function ForgotPassword() {
     return (
       <AuthShell>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/10 text-lime"><KeyRound className="h-6 w-6" /></div>
-        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Choose a new password</h2>
+        <h2 className="mt-5 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Choose a new password</h2>
         <p className="mt-2 text-sm leading-relaxed text-fg-muted">We've sent a 6-digit code to <b className="text-fg">{email}</b>.</p>
         {ch.delivery === 'console' && (
           <div className="mt-5"><Notice tone="demo" icon={<Terminal className="h-4 w-4" />}>
@@ -120,7 +120,7 @@ export default function ForgotPassword() {
   return (
     <AuthShell>
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/10 text-lime"><KeyRound className="h-6 w-6" /></div>
-      <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Forgot your password?</h2>
+      <h2 className="mt-5 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Forgot your password?</h2>
       <p className="mt-2 text-sm text-fg-muted">Enter your account email and we'll send you a code to reset it.</p>
       <form onSubmit={start} className="mt-8 space-y-4" noValidate>
         <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" autoComplete="email" autoFocus icon={<Mail className="h-4 w-4" />} placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} /></div>

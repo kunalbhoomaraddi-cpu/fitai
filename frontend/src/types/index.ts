@@ -55,7 +55,7 @@ export interface DietPlan {
 }
 export interface Exercise {
   exercise_id: string; name: string; muscle: string; secondary: string[]; equipment: string[]; instructions: string
-  image: string; sets: number; reps: string; rest_seconds: number; completed: boolean; sets_done?: number
+  image: string; sets: number; reps: string; rest_seconds: number; completed: boolean; sets_done?: number; set_log?: SetEntry[]
 }
 export interface WorkoutDay { index: number; weekday: string; name: string; focus: string[]; duration_minutes: number; exercises: Exercise[] }
 export interface WorkoutPlan {
@@ -67,3 +67,9 @@ export interface WorkoutSession {
   duration_minutes: number | null; exercises: Exercise[]; status: string; new_achievements?: string[]
 }
 export interface AIStatus { active_provider: string; model: string; is_real_llm: boolean; configured: Record<string, boolean>; message: string | null }
+
+/** One logged set during a workout: weight in kg (null for bodyweight), reps done, and whether it is ticked. */
+export interface SetEntry { kg: number | null; reps: number | null; done: boolean }
+
+/** A food the user logged recently, offered for one-tap re-logging. */
+export interface RecentFood { name: string; quantity_g: number; calories: number; protein_g: number; carbs_g: number; fat_g: number; source: string; source_id: string | null; meal: string }

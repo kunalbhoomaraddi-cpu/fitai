@@ -114,9 +114,9 @@ export default function Onboarding() {
         <div className="mb-8 lg:hidden"><Logo /></div>
         <div className="mb-8 h-1 w-full max-w-2xl overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{ width: `${((step + 1) / 6) * 100}%` }} /></div>
         <div key={step} className="w-full max-w-2xl animate-fade-up">
-          <p className="text-xs font-semibold uppercase tracking-[.2em] text-lime/80">Step {step + 1} of 6</p>
+          <p className="text-[13px] font-medium text-fg-muted">Step {step + 1} of 6</p>
           {step === 0 && (<>
-            <h1 className="mt-2 font-display text-3xl font-bold">Let's get to know you</h1>
+            <h1 className="mt-3 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Let's get to know you</h1>
             <p className="mt-2 text-sm text-fg-muted">We use these to calculate your energy needs with the Mifflin-St Jeor equation.</p>
             <div className="mt-6 mb-6"><Segmented options={[['metric', 'Metric (kg, cm)'], ['imperial', 'Imperial (lb, ft)']] as const} value={units} onChange={setUnits} /></div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -131,22 +131,22 @@ export default function Onboarding() {
                 : <div><Label>Height</Label><div className="grid grid-cols-2 gap-2"><Input type="number" aria-label="Feet" value={f.heightFt} onChange={e => set('heightFt', e.target.value)} suffix="ft" /><Input type="number" aria-label="Inches" value={f.heightIn} onChange={e => set('heightIn', e.target.value)} suffix="in" /></div></div>}
               <div><Label htmlFor="w">Current weight</Label><Input id="w" type="number" inputMode="decimal" value={f.weight} onChange={e => set('weight', e.target.value)} suffix={wUnit} /></div>
             </div>
-            {!f.gender && <p className="mt-3 text-xs text-fg-dim">Without gender we use the midpoint of the male and female BMR constants.</p>}
+            {!f.gender && <p className="mt-3 text-xs text-fg-dim">If you skip this, we average the male and female formulas.</p>}
           </>)}
           {step === 1 && (<>
-            <h1 className="mt-2 font-display text-3xl font-bold">What's your primary goal?</h1>
+            <h1 className="mt-3 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">What's your primary goal?</h1>
             <p className="mt-2 text-sm text-fg-muted">This shapes your calorie target, macros and training style.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">{GOALS.map(([v, t, d, I]) => <OptionCard key={v} active={f.goal === v} onClick={() => set('goal', v)} title={t} desc={d} icon={<I className="h-5 w-5" />} />)}</div>
             <div className="mt-6 max-w-xs"><Label htmlFor="t">Target weight</Label><Input id="t" type="number" inputMode="decimal" value={f.target} onChange={e => set('target', e.target.value)} suffix={wUnit} /></div>
           </>)}
           {step === 2 && (<>
-            <h1 className="mt-2 font-display text-3xl font-bold">How active are you?</h1>
+            <h1 className="mt-3 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">How active are you?</h1>
             <p className="mt-2 text-sm text-fg-muted">Include work and training. When unsure, pick the lower option.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">{ACTIVITY.map(([v, t, d, I]) => <OptionCard key={v} active={f.activity === v} onClick={() => set('activity', v)} title={t} desc={d} icon={<I className="h-5 w-5" />} />)}</div>
             <div className="mt-6"><Label>Training experience</Label><Segmented options={[['beginner', 'Beginner'], ['intermediate', 'Intermediate'], ['advanced', 'Advanced']] as const} value={f.experience} onChange={v => set('experience', v)} /></div>
           </>)}
           {step === 3 && (<>
-            <h1 className="mt-2 font-display text-3xl font-bold">How do you eat?</h1>
+            <h1 className="mt-3 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">How do you eat?</h1>
             <p className="mt-2 text-sm text-fg-muted">Meal plans and coaching will strictly respect these.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">{DIETS.map(([v, t, d, I]) => <OptionCard key={v} active={f.diet === v} onClick={() => set('diet', v)} title={t} desc={d} icon={<I className="h-5 w-5" />} />)}</div>
             {f.diet === 'custom' && <div className="mt-4"><Label htmlFor="cd">Describe your diet</Label><Input id="cd" placeholder="e.g. pescatarian, Jain, keto-leaning" value={f.customDiet} onChange={e => set('customDiet', e.target.value)} /></div>}
@@ -156,7 +156,7 @@ export default function Onboarding() {
             </div>
           </>)}
           {step === 4 && (<>
-            <h1 className="mt-2 font-display text-3xl font-bold">Your training setup</h1>
+            <h1 className="mt-3 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Your training setup</h1>
             <p className="mt-2 text-sm text-fg-muted">We'll only program exercises you can actually do.</p>
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
               <div><Label>Days per week</Label><div className="flex flex-wrap gap-2">{[1, 2, 3, 4, 5, 6].map(d => <Chip key={d} active={f.days === d} onClick={() => set('days', d)}>{d}</Chip>)}</div></div>
@@ -167,25 +167,25 @@ export default function Onboarding() {
             </div>
           </>)}
           {step === 5 && (<>
-            <h1 className="mt-2 font-display text-3xl font-bold">Your starting plan</h1>
+            <h1 className="mt-3 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em]">Your starting plan</h1>
             <p className="mt-2 text-sm text-fg-muted">Calculated deterministically from your profile. Goal: <b className="text-fg">{GOAL_LABEL[f.goal]}</b>.</p>
             {!preview ? <div className="mt-6 h-40 animate-pulse rounded-2xl bg-ink-800" /> : (
               <div className="mt-6 grid gap-3 sm:grid-cols-4">
                 {[['BMR', preview.bmr.bmr, 'kcal'], ['TDEE', preview.tdee.tdee, 'kcal'], ['Daily target', preview.calories.calorie_target, 'kcal'], ['BMI', preview.bmi.bmi, preview.bmi.category]].map(([l, v, u], i) => (
                   <div key={l as string} className={clsx('rounded-2xl border p-4', i === 2 ? 'border-lime/50 bg-lime/[0.06]' : 'border-line bg-ink-800')}>
-                    <p className="text-xs text-fg-muted">{l}</p><p className={clsx('mt-1 font-display text-2xl font-bold tabular-nums', i === 2 && 'text-lime')}>{(v as number).toLocaleString()}</p><p className="text-xs text-fg-dim">{u}</p>
+                    <p className="text-xs text-fg-muted">{l}</p><p className={clsx('mt-1 score text-[34px]', i === 2 && 'text-lime')}>{(v as number).toLocaleString()}</p><p className="text-xs text-fg-dim">{u}</p>
                   </div>
                 ))}
                 <div className="rounded-2xl border border-line bg-ink-800 p-4 sm:col-span-4">
                   <p className="mb-3 text-xs text-fg-muted">Daily macros</p>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     {[['Protein', preview.macros.protein_g, '#C6F36B'], ['Carbs', preview.macros.carbs_g, '#7CC4F2'], ['Fat', preview.macros.fat_g, '#F2B85B']].map(([l, v, c]) => (
-                      <div key={l as string}><p className="font-display text-xl font-bold" style={{ color: c as string }}>{v as number} g</p><p className="text-xs text-fg-dim">{l}</p></div>
+                      <div key={l as string}><p className="score text-[30px]" style={{ color: c as string }}>{v as number} g</p><p className="text-xs text-fg-dim">{l}</p></div>
                     ))}
                   </div>
                 </div>
                 {preview.calories.warnings.map((w: string) => <div key={w} className="sm:col-span-4"><Notice tone="warn">{w}</Notice></div>)}
-                <div className="sm:col-span-4"><Notice tone="info" icon={<Sparkles className="h-4 w-4" />}>{preview.calories.rationale} These are approximate estimates — FitAI will help you adjust based on your real trend.</Notice></div>
+                <div className="sm:col-span-4"><Notice tone="info" icon={<Sparkles className="h-4 w-4" />}>{preview.calories.rationale} These are starting estimates. FitAI adjusts them as your real trend comes in.</Notice></div>
               </div>
             )}
           </>)}

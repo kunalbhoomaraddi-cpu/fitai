@@ -62,10 +62,10 @@ export function OptionCard({ active, onClick, title, desc, icon }: { active: boo
   return (
     <button type="button" onClick={onClick} aria-pressed={active}
       className={clsx('group flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition duration-200',
-        active ? 'border-lime/60 bg-lime/[0.06] shadow-glow' : 'border-line bg-ink-900 hover:border-line-strong')}>
-      {icon && <div className={clsx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition', active ? 'bg-lime text-ink-950' : 'bg-white/[0.04] text-fg-muted group-hover:text-fg')}>{icon}</div>}
+        active ? 'border-lime/70 bg-lime/[0.06]' : 'border-line bg-ink-900 hover:border-line-strong')}>
+      {icon && <div className={clsx('mt-0.5 shrink-0 transition [&>svg]:h-5 [&>svg]:w-5', active ? 'text-lime' : 'text-fg-dim group-hover:text-fg-muted')}>{icon}</div>}
       <div>
-        <p className="font-display text-[15px] font-semibold text-fg">{title}</p>
+        <p className="text-[15px] font-semibold text-fg">{title}</p>
         {desc && <p className="mt-0.5 text-[13px] leading-snug text-fg-muted">{desc}</p>}
       </div>
     </button>

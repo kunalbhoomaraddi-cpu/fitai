@@ -14,7 +14,7 @@ const RESTRICTIONS = ['dairy', 'gluten', 'nuts', 'peanuts', 'soy', 'eggs', 'seaf
 function Section({ icon, title, desc, children, id }: { icon: ReactNode; title: string; desc: string; children: ReactNode; id: string }) {
   return (
     <Card id={id} className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[260px_1fr]">
-      <div><div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-lime">{icon}</div><h2 className="font-display text-base font-semibold">{title}</h2><p className="mt-1 text-[13px] text-fg-muted">{desc}</p></div>
+      <div><div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-lime">{icon}</div><h2 className="font-sans text-base font-semibold">{title}</h2><p className="mt-1 text-[13px] text-fg-muted">{desc}</p></div>
       <div>{children}</div>
     </Card>
   )
@@ -82,9 +82,9 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader eyebrow="Settings" title="Your account & preferences" subtitle="Everything here feeds your calculations, plans and coach." actions={<Button onClick={saveProfile} loading={saving} icon={<Save className="h-4 w-4" />}>Save changes</Button>} />
+      <PageHeader title="Settings" subtitle="Your profile feeds your targets, plans and coach, so keep it up to date." actions={<Button onClick={saveProfile} loading={saving} icon={<Save className="h-4 w-4" />}>Save changes</Button>} />
       <div className="space-y-5">
-        <Section id="personal" icon={<User className="h-4 w-4" />} title="Personal information" desc="Used for BMR/TDEE calculations.">
+        <Section id="personal" icon={<User className="h-4 w-4" />} title="Personal information" desc="Used to work out your calorie and protein targets.">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2"><Label htmlFor="nm">Full name</Label><Input id="nm" value={name} onChange={e => setName(e.target.value)} /></div>
             <div><Label htmlFor="age">Age</Label><Input id="age" type="number" value={p.age} onChange={e => upd('age', +e.target.value)} suffix="years" /></div>
@@ -114,12 +114,12 @@ export default function Settings() {
         <Section id="units" icon={<Ruler className="h-4 w-4" />} title="Measurement units" desc="Data is stored in metric; display converts automatically.">
           <Segmented options={[['metric', 'Metric (kg, cm)'], ['imperial', 'Imperial (lb, ft/in)']] as const} value={units} onChange={setUnits} />
         </Section>
-        <Section id="ai" icon={<Bot className="h-4 w-4" />} title="AI provider" desc="API keys live only in backend/.env — never in the browser.">
+        <Section id="ai" icon={<Bot className="h-4 w-4" />} title="AI provider" desc="Keys are kept on the server, never in your browser.">
           {!ai ? <Skeleton className="h-24" /> : (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-fg-muted">Active:</span>
-                {ai.is_real_llm ? <Badge tone="lime">{ai.active_provider} · {ai.model}</Badge> : <Badge tone="amber">Demo mode (rule-based)</Badge>}
+                {ai.is_real_llm ? <Badge tone="lime">{ai.active_provider} {ai.model}</Badge> : <Badge tone="amber">Demo answers</Badge>}
                 {Object.entries(ai.configured).filter(([k]) => k !== 'mock').map(([k, v]) => <Badge key={k} tone={v ? 'moss' : 'neutral'}>{k}: {v ? 'key configured' : 'no key'}</Badge>)}
               </div>
               <div className="max-w-xs"><Label htmlFor="prov">Preferred provider</Label>

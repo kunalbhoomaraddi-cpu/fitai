@@ -2,6 +2,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.concurrency import run_in_threadpool
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -75,3 +76,21 @@ def delete_entry(entry_id: int, user: User = Depends(get_current_user), db: Sess
 @router.get("/history")
 def history(days: int = Query(14, ge=1, le=90), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return nutrition_service.history(db, user.id, days)
+
+
+@router.get("/recent")
+def recent(limit: int = Query(8, ge=1, le=20), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The user's most recently logged distinct foods, newest first, for one-tap re-logging."""
+    rows = db.scalars(select(FoodEntry).where(FoodEntry.user_id == user.id)
+                      .order_by(FoodEntry.eaten_on.desc(), FoodEntry.id.desc()).limit(200))
+    seen, out = set(), []
+    for e in rows:
+        key = e.name.strip().lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"name": e.name, "quantity_g": e.quantity_g, "calories": e.calories, "protein_g": e.protein_g,
+                    "carbs_g": e.carbs_g, "fat_g": e.fat_g, "source": e.source, "source_id": e.source_id, "meal": e.meal})
+        if len(out) >= limit:
+            break
+    return out

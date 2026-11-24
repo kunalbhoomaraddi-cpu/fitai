@@ -117,6 +117,28 @@ def test_workout_plan_and_session(client, auth):
     assert client.get("/api/workouts/stats", headers=auth).json()["total_completed"] == 1
 
 
+def test_session_keeps_logged_sets(client, auth):
+    """Weights and reps typed during a workout are saved and come back in history ("Last time")."""
+    plan = client.post("/api/workouts/generate", json={"days_per_week": 3}, headers=auth).json()
+    s = client.post("/api/workouts/sessions/start", json={"plan_id": plan["id"], "day_index": 0}, headers=auth).json()
+    log = [{"kg": 20, "reps": 10, "done": True}, {"kg": 22.5, "reps": 8, "done": True}]
+    ex = [{**s["exercises"][0], "set_log": log, "sets_done": 2}, *s["exercises"][1:]]
+    r = client.patch(f"/api/workouts/sessions/{s['id']}", json={"exercises": ex, "status": "completed"}, headers=auth)
+    assert r.status_code == 200, r.text
+    hist = client.get("/api/workouts/sessions", headers=auth).json()
+    assert hist[0]["exercises"][0]["set_log"] == log
+    too_many = client.patch(f"/api/workouts/sessions/{s['id']}", json={"exercises": [{}] * 41}, headers=auth)
+    assert too_many.status_code == 422
+
+
+def test_demo_history_has_set_weights(client):
+    tok = client.post("/api/auth/demo").json()["access_token"]
+    hist = client.get("/api/workouts/sessions", headers={"Authorization": f"Bearer {tok}"}).json()
+    logs = [x["set_log"] for w in hist for x in w["exercises"] if x.get("set_log")]
+    assert logs and all(st["done"] and 1 <= st["reps"] <= 60 for log in logs for st in log)
+    assert any(st["kg"] for log in logs for st in log)
+
+
 def test_coach_demo_mode_uses_tools(client, auth):
     st = client.get("/api/coach/status", headers=auth).json()
     assert st["active_provider"] == "mock" and st["is_real_llm"] is False
@@ -124,7 +146,7 @@ def test_coach_demo_mode_uses_tools(client, auth):
     assert r.status_code == 200, r.text
     msg = r.json()["message"]
     assert "calculate_calorie_target" in msg["tools_used"]
-    assert "Demo mode" in msg["content"] and msg["provider"].startswith("mock")
+    assert "built-in rules" in msg["content"] and msg["provider"].startswith("mock")
     cid = r.json()["conversation_id"]
     r2 = client.post("/api/coach/chat", json={"message": "What workout should I do today?", "conversation_id": cid}, headers=auth)
     assert "generate_workout" in r2.json()["message"]["tools_used"]
@@ -149,3 +171,12 @@ def test_settings_and_password(client, auth):
     assert client.get("/api/auth/me", headers=auth).status_code == 401  # old session signed out
     auth.update({"Authorization": f"Bearer {r.json()['access_token']}"})
     assert client.get("/api/auth/me", headers=auth).status_code == 200
+
+
+def test_recent_foods_are_distinct_and_newest_first(client, auth):
+    base = {"meal": "lunch", "quantity_g": 150, "calories": 200, "protein_g": 10, "carbs_g": 20, "fat_g": 5, "source": "custom"}
+    for name, day in [("Dal", "2026-11-01"), ("Roti", "2026-11-02"), ("dal", "2026-11-03")]:
+        assert client.post("/api/nutrition/entries", json={**base, "name": name, "eaten_on": day}, headers=auth).status_code == 201
+    names = [r["name"] for r in client.get("/api/nutrition/recent", headers=auth).json()]
+    assert names == ["dal", "Roti"]
+    assert client.get("/api/nutrition/recent").status_code == 401

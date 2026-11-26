@@ -104,10 +104,14 @@ def ai_status(preference: str | None = None) -> dict:
 
 def quick(provider: LLMProvider, seconds: float = 8.0) -> LLMProvider:
     """Tighten a provider for AI work that has a built-in fallback (the dashboard tip, meal plans, workout
-    notes, check-in summaries), so a slow AI service can't keep someone waiting for minutes: one attempt,
-    a time limit and no backup model, after which the caller uses FitAI's own engine and says so.
+    notes, check-in summaries), so a slow AI service can't keep someone waiting for minutes: no retries
+    and a time limit, after which the caller uses FitAI's own engine and says so.
     Coach chats and meal photos keep the normal, more patient settings because they have no fallback."""
-    for attr, value in (("timeout", seconds), ("max_retries", 0), ("fallback_model", None)):
-        if hasattr(provider, attr):
-            setattr(provider, attr, value)
+    # With a backup model (Gemini) the budget is split, so a rate-limited or failing main model is still
+    # rescued by the backup while the total wait stays within `seconds`.
+    has_backup = bool(getattr(provider, "fallback_model", None)) and provider.fallback_model != getattr(provider, "model", None)
+    if hasattr(provider, "timeout"):
+        provider.timeout = seconds / 2 if has_backup else seconds
+    if hasattr(provider, "max_retries"):
+        provider.max_retries = 0
     return provider

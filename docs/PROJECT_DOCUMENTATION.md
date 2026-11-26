@@ -7,7 +7,7 @@
 | **Live app** | https://fitai-app-pink.vercel.app (click **Explore the demo**, no sign-up needed) |
 | **Source code** | https://github.com/kunalbhoomaraddi-cpu/fitai (public) |
 | **Backend API** | https://fitai-api-nmtc.onrender.com/api/health |
-| **Status** | Live in production · 167 automated tests passing on every push |
+| **Status** | Live in production · 168 automated tests passing on every push |
 
 ---
 
@@ -130,7 +130,7 @@ The first version was delivered as a ZIP with a README, an example settings file
 ### 4.2 Progress photos (commit `ca0828f`)
 
 - Front, side and back photos with a timeline and a before/after comparison slider.
-- Photos are straightened automatically, stripped of GPS and camera data, and resized (1670 px full size, 480 px thumbnail).
+- Photos are straightened automatically, stripped of GPS and camera data, and resized (1680 px full size, 480 px thumbnail).
 - Stored privately and served only to their owner through a signed-in request.
 - Bug fixed after testing: the front/side/back switch wasn't changing the photo.
 
@@ -212,7 +212,7 @@ Commit `f418c6d`, "Phase 1 updates" (62 files).
 
 After the 23 Nov demo, the mentor asked for a better version. The first v2 feature removes the biggest pain in food tracking: typing every meal.
 
-1. The user takes or chooses a photo on the Nutrition page; the phone shrinks it to about 1670 px before upload.
+1. The user takes or chooses a photo on the Nutrition page; the phone shrinks it to about 1680 px before upload.
 2. The backend validates it, strips location data and sends a 1024 px copy to Gemini, which returns each food, its regional names and the grams it can see.
 3. FitAI matches every food against its own database and calculates calories and macros. Only unknown foods use the AI's estimate, labelled as such.
 4. The user reviews, adjusts grams, unticks anything wrong and adds the rest to a meal. Nothing is saved before that, and the photo is never stored.
@@ -270,7 +270,7 @@ After the 23 Nov demo, the mentor asked for a better version. The first v2 featu
 
 ```
 fitai/
-├── backend/            FastAPI app + 167 tests
+├── backend/            FastAPI app + 168 tests
 ├── frontend/           React app
 ├── docs/               guides, changelog, screenshots
 ├── scripts/            dev, test, reset and setup helpers
@@ -285,7 +285,7 @@ fitai/
 - `docs/LOCAL_SETUP.md`, `ENVIRONMENT_CONFIGURATION.md`, `PROJECT_ARCHITECTURE.md`, `API_DOCUMENTATION.md`
 - `docs/TESTING_GUIDE.md`, `DEPLOYMENT_GUIDE.md`, `IMAGE_CREDITS.md`, `CHANGELOG.md`
 
-**Automated checks (GitHub Actions):** every push runs Ruff, the 167 backend tests on SQLite and again on PostgreSQL 16, then ESLint, 25 Vitest tests, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
+**Automated checks (GitHub Actions):** every push runs Ruff, the 168 backend tests on SQLite and again on PostgreSQL 16, then ESLint, 25 Vitest tests, the TypeScript check and a production build. Every run so far has passed, in about a minute each.
 
 **Commit history (newest first)**
 
@@ -312,8 +312,8 @@ fitai/
 
 | Check | Result |
 |---|---|
-| Backend tests on SQLite | 167 / 167 passed, no warnings |
-| Backend tests on PostgreSQL 16 (same as Neon) | 167 / 167 passed |
+| Backend tests on SQLite | 168 / 168 passed, no warnings |
+| Backend tests on PostgreSQL 16 (same as Neon) | 168 / 168 passed |
 | Ruff (backend) and ESLint (frontend) | No problems |
 | TypeScript check and production build | Passed |
 | Browser tests: login code, forgot password, weekly check-in, progress photos, Indian food, exercise demos, type-DELETE confirmation, landing page, training days | All passed |

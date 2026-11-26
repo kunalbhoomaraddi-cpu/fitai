@@ -130,7 +130,7 @@ def test_slow_ai_never_holds_up_the_dashboard(client, auth, monkeypatch):
     r = client.get("/api/dashboard", headers=auth)
     assert r.status_code == 200
     assert r.json()["recommendation"]["source"] == "rule-based" and r.json()["recommendation"]["text"]
-    assert calls == [8.0]   # one attempt with an 8-second limit: no retries, no backup model
+    assert calls == [4.0, 4.0]   # main model, then the backup, 4 s each: 8 s at most, no retries
 
 
 def test_slow_ai_falls_back_quickly_for_plans_and_checkins(client, auth, monkeypatch):
@@ -154,10 +154,10 @@ def test_slow_ai_falls_back_quickly_for_plans_and_checkins(client, auth, monkeyp
 
     r = client.post("/api/diet/generate", json={"meals_per_day": 4}, headers=auth)
     assert r.status_code == 201 and r.json()["generated_by"] == "reference_engine" and r.json()["meals"]
-    assert calls == [40.0]
+    assert calls == [20.0, 20.0]
     r = client.post("/api/workouts/generate", json={}, headers=auth)
     assert r.status_code == 201 and r.json()["coach_note"]
-    assert calls[1:] == [15.0]
+    assert calls[2:] == [7.5, 7.5]
     r = client.post("/api/checkins/generate", headers=auth)
     assert r.status_code == 201 and r.json()["summary"]
-    assert calls[2:] == [20.0]
+    assert calls[4:] == [10.0, 10.0]

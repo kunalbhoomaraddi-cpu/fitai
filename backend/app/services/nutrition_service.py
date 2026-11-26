@@ -120,8 +120,10 @@ def _off_search(query: str) -> list[dict]:
     fields = "code,product_name,brands,nutriments,image_front_small_url"
     headers = {"User-Agent": settings.off_user_agent}
     try:
-        data = http_get_json(settings.off_search_url, params={"q": query, "page_size": 15, "fields": fields, "langs": "en"},
-                             headers=headers)
+        words = re.sub(r"[^\w\s'-]", " ", query).strip()  # people's words only, so ":" or "(" can't break the query
+        # only products that list calories: many popular ones (Nutella, for one) have entries without nutrition data
+        data = http_get_json(settings.off_search_url, headers=headers,
+                             params={"q": f"{words} AND nutriments.energy-kcal_100g:*", "page_size": 15, "fields": fields, "langs": "en"})
         return data.get("hits") or []
     except Exception as exc:
         log.warning("Open Food Facts search service failed (%s); trying the classic search", type(exc).__name__)

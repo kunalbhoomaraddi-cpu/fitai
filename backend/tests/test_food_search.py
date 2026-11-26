@@ -46,6 +46,19 @@ def test_uses_the_search_service_and_cleans_brands(client, auth, off):
     assert off.calls == [ns.settings.off_search_url]
 
 
+
+def test_search_asks_only_for_products_with_calories(monkeypatch):
+    seen = {}
+
+    def fake(url, params=None, headers=None, **kw):
+        seen.update(params or {})
+        return {"hits": []}
+    monkeypatch.setattr(ns, "http_get_json", fake)
+    ns._off_search('Nutella (jar): "big"')
+    assert seen["q"].endswith("AND nutriments.energy-kcal_100g:*")
+    assert ":" not in seen["q"].split(" AND ")[0] and "(" not in seen["q"] and '"' not in seen["q"]  # typed symbols can't break the query
+
+
 def test_falls_back_to_the_classic_search(client, auth, off):
     off.search_down = True
     r = client.get("/api/nutrition/search?q=nutella%20jar", headers=auth).json()

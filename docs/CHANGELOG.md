@@ -4,10 +4,10 @@ What was built, in the order it was built. Live app: https://fitai-app-pink.verc
 
 ## 26 Nov 2026: from-scratch check before batch 3
 
-- **Fixed: packaged-food name search had stopped working.** Open Food Facts' classic search page was failing from the server every time, so every search fell back to FitAI's own foods. Search now uses their newer search service (better ranking: "nutella" finds Nutella first), with the classic page as a backup. Brands from the new service ("xx:Amul") are cleaned up, and products with no nutrition data are skipped.
+- **Fixed: packaged-food name search had stopped working.** Open Food Facts' classic search page was failing from the server every time, so every search fell back to FitAI's own foods. Search now uses their newer search service (better ranking: "nutella" finds Nutella first), asking only for products that list calories (many popular entries have no nutrition data), with the classic page as a backup. Brands from the new service ("xx:Amul") are cleaned up, and products with no nutrition data are skipped.
 - **Fixed: an unknown barcode said the database "can't be reached".** Open Food Facts answers 404 for a barcode it doesn't list; that now reads as *not found* (and is remembered), while a real outage still says so.
 - **Typo guesses rank last.** Indian-food typo tolerance ("chapathi", "biriyani") still works, but a guess like "Nutrela" soya chunks no longer outranks a real match such as Nutella.
-- **No more multi-minute waits on a slow AI:** meal plans (40 s), workout plan notes (15 s) and check-in summaries (20 s) get one try, then FitAI's own engine finishes the job and says so. Coach chats and meal photos keep the patient limits.
+- **No more multi-minute waits on a slow AI:** meal plans (40 s), workout plan notes (15 s), check-in summaries (20 s) and the dashboard tip (8 s) get no retries; the time is split between Gemini's main and backup model, so a rate-limited main model is still rescued. After that, FitAI's own engine finishes the job and says so. Coach chats and meal photos keep the patient limits.
 - Open Food Facts requests now identify FitAI by its GitHub page, as they ask.
 
 ## 26 Nov 2026: fixes found checking batch 2 live

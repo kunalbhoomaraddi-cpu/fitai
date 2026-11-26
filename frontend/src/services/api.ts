@@ -71,3 +71,9 @@ export async function fetchBlobUrl(path: string): Promise<string> {
   }
   return URL.createObjectURL(await res.blob())
 }
+
+/** The free API host sleeps when nobody has used it for a while and takes about 40 seconds to wake.
+ *  Pinging it as soon as the site opens means it is usually awake by the time someone logs in. */
+export function wakeApi() {
+  try { void fetch(`${BASE}/health`, { cache: 'no-store' }).catch(() => undefined) } catch { /* offline */ }
+}

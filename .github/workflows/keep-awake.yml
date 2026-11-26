@@ -1,7 +1,9 @@
 # Render's free plan puts the API to sleep after 15 minutes without visitors, and the next
 # visitor then waits about 40 seconds. This free GitHub job visits the health check every
 # 10 minutes so it stays awake. One always-on service fits inside Render's free 750 hours a month.
-# GitHub may run scheduled jobs a few minutes late, so an occasional slow first load can still happen.
+# In practice GitHub runs schedules on quiet repositories only every few hours, so this job alone does NOT
+# keep the API awake. Use a free outside pinger as well (cron-job.org, see DEPLOYMENT_GUIDE.md, "Keep the API awake").
+# The website also wakes the API as soon as anyone opens it.
 name: Keep API awake
 
 on:

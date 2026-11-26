@@ -43,10 +43,13 @@ class SlidingWindowLimiter:
         self.limit, self.window = limit, window
         self._hits: dict = defaultdict(deque)
         self._lock = threading.Lock()
+        self._swept = time.time()
 
     def allow(self, key="global") -> bool:
         now = time.time()
         with self._lock:
+            if now - self._swept > self.window:  # forget keys (emails, IPs) not seen for a whole window
+                self._sweep(now)
             q = self._hits[key]
             while q and now - q[0] > self.window:
                 q.popleft()
@@ -54,6 +57,11 @@ class SlidingWindowLimiter:
                 return False
             q.append(now)
             return True
+
+    def _sweep(self, now: float) -> None:
+        for k in [k for k, q in self._hits.items() if not q or now - q[-1] > self.window]:
+            del self._hits[k]
+        self._swept = now
 
 
 def http_get_json(url: str, params: dict | None = None, headers: dict | None = None) -> dict:

@@ -2,6 +2,13 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 26 Nov 2026: fixes after the trust-and-speed release
+
+- **Security: Pillow 13.0.0.** 12.3.0 had three published security issues, and Pillow processes every uploaded photo.
+- **Package updates** (replacing Dependabot PRs #14 and #15): FastAPI 0.165, Uvicorn 0.54, SQLAlchemy 2.1, Pydantic 2.14, python-multipart 0.0.34, psycopg 3.3, PyJWT 2.15, pytest 9, Ruff 0.17; lucide-react 0.577, TypeScript 5.9. `pip-audit` and `npm audit` both report nothing.
+- **Fixed: rate-limit counters were never forgotten.** Every email and IP address that tried to sign in stayed in the server's memory until it restarted. They are now cleared after a minute, as the privacy policy says.
+- **Fixed: the API still went to sleep.** GitHub was running the keep-awake job only every few hours. The site now wakes the API as soon as it opens, and the deployment guide shows how to add a free 10-minute pinger.
+
 ## 26 Nov 2026: trust and speed
 
 - **Privacy policy and terms** at `/privacy` and `/terms`, written for India's DPDP Act: what FitAI stores, which services process it (including Gemini for coach chats and meal photos), how long it's kept, and how to delete it. Linked from the landing page, sign-in pages and Settings.

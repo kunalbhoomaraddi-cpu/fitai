@@ -8,8 +8,10 @@ import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import { startMonitoring } from './utils/monitoring'
+import { wakeApi } from './services/api'
 
 startMonitoring()
+wakeApi()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -84,6 +84,17 @@ Before pushing, run the same checks locally:
 ./scripts/test-all.sh
 ```
 
+## Keep the API awake
+
+Render's free plan sleeps after 15 minutes without visitors, and the next visitor waits about 40 seconds.
+GitHub's scheduled job (`keep-awake.yml`) is not enough on its own: GitHub runs schedules on quiet
+repositories only every few hours. Two things cover it:
+
+- The website pings the API as soon as anyone opens it, so it is usually awake by the time they log in.
+- A free outside pinger every 10 minutes. At **cron-job.org**: sign up, *Create cronjob*, URL
+  `https://fitai-api-nmtc.onrender.com/api/health`, schedule *every 10 minutes*, save.
+  One always-on service fits within Render's free 750 hours a month.
+
 ## Error reports (optional): Sentry
 
 Free plan, nothing is sent until you add a DSN. Reports are stripped of request bodies, query strings,

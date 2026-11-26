@@ -1,21 +1,21 @@
-fastapi==0.115.14
-uvicorn[standard]==0.34.0
-SQLAlchemy==2.0.41
-pydantic==2.11.7
-pydantic-settings==2.10.1
-email-validator==2.2.0
+fastapi==0.165.0
+uvicorn[standard]==0.54.0
+SQLAlchemy==2.1.9
+pydantic==2.14.4
+pydantic-settings==2.16.3
+email-validator==2.4.0
 bcrypt==4.3.0
-PyJWT==2.10.1
+PyJWT==2.15.1
 httpx==0.28.1
-python-multipart==0.0.20
+python-multipart==0.0.34
 # image processing for progress photos (resize, strip location/EXIF data)
 pillow==12.3.0
 # time-zone database, so user-local dates work on any host
-tzdata==2025.2
+tzdata==2025.3
 # PostgreSQL driver (used when DATABASE_URL starts with postgresql+psycopg://)
-psycopg[binary]==3.2.9
+psycopg[binary]==3.3.9
 # error reports; stays switched off unless SENTRY_DSN is set
 sentry-sdk[fastapi]==2.77.0
 
 # testing
-pytest==8.4.1
+pytest==8.4.2

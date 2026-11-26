@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.ai.provider import ai_status
@@ -7,9 +8,13 @@ from app.models import User
 from app.models._mixins import utcnow
 from app.schemas.auth import PasswordChangeIn, UserOut
 from app.schemas.coach import SettingsIn
+from app.services import export_service
 from app.services.auth_service import create_access_token, get_authenticated_user, get_current_user, hash_password, verify_password
+from app.utils.clock import local_today
+from app.utils.http import SlidingWindowLimiter
 
 router = APIRouter(prefix="/settings", tags=["settings"])
+_export_limiter = SlidingWindowLimiter(limit=5, window=3600)  # building a ZIP is heavy; 5 an hour is plenty
 
 
 @router.get("")
@@ -24,10 +29,31 @@ def update(body: SettingsIn, user: User = Depends(get_current_user), db: Session
         user.full_name = body.full_name.strip()
     if body.ai_provider_pref:
         user.ai_provider_pref = body.ai_provider_pref
+    if body.coach_language:
+        user.coach_language = body.coach_language
     if body.unit_system and user.profile:
         user.profile.unit_system = body.unit_system
     db.commit()
     return get_settings_(user)
+
+
+@router.get("/export")
+def export(user: User = Depends(get_authenticated_user), db: Session = Depends(get_db)):
+    """Everything FitAI stores about the signed-in person, as a ZIP download."""
+    if not _export_limiter.allow(f"u{user.id}"):
+        raise HTTPException(429, "You've exported several times in the last hour. Please try again later.")
+    f = export_service.build_export(db, user)
+
+    def chunks():
+        try:
+            while block := f.read(256 * 1024):
+                yield block
+        finally:
+            f.close()
+
+    name = f"fitai-export-{local_today().isoformat()}.zip"
+    return StreamingResponse(chunks(), media_type="application/zip",
+                             headers={"Content-Disposition": f'attachment; filename="{name}"', "Cache-Control": "no-store"})
 
 
 @router.post("/password")

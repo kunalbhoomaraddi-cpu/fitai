@@ -25,16 +25,19 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | PUT | `/profile` | Create or update (metric values). Completes onboarding |
 | GET | `/profile/targets` | `{bmi, bmr, tdee, calories, macros, disclaimer}` |
 | POST | `/profile/calculate` | Calculator for arbitrary inputs `{weight_kg, height_cm, age, gender, activity_level, goal}` |
+| GET | `/profile/breaks` | `{active, upcoming[]}`: travel or festival breaks (`{id, kind, label, start_on, end_on, note, active, days_left}`) |
+| POST | `/profile/breaks` | `{kind: travel\|festival, start_on, end_on, note?}` → the break. Up to 21 days, starting today to 90 days ahead, no overlaps (409). While active: maintenance calories in every target, streak paused, coach told |
+| POST | `/profile/breaks/{id}/end` | Ends it today (one that hasn't started is removed) |
 
 ## Dashboard
-| GET | `/dashboard?refresh_recommendation=false` | Everything the dashboard needs: weight series, today's macros, 14-day history, workouts, upcoming workout, AI or rule-based daily recommendation (cached per day), quote, achievements, challenges |
+| GET | `/dashboard?refresh_recommendation=false` | Everything the dashboard needs: weight series, today's macros, 14-day history, workouts, upcoming workout, AI or rule-based daily recommendation (cached per day), quote, achievements, challenges, `water` (today) and `break` (active or null) |
 |---|---|---|
 
 ## AI coach
 | Method | Path | Description |
 |---|---|---|
 | GET | `/coach/status` | Active provider, model, `is_real_llm` and configuration message |
-| GET | `/coach/suggestions` | Suggested prompts |
+| GET | `/coach/suggestions` | Suggested prompts, in the user's coach language |
 | POST | `/coach/chat` | `{message, conversation_id?}` → `{conversation_id, user_message, message: {content, cards[], tools_used[], provider}, is_real_llm, notice}` |
 | GET | `/coach/conversations` | Conversation list |
 | GET / DELETE | `/coach/conversations/{id}` | Messages, or delete |
@@ -62,12 +65,14 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | POST / DELETE | `/workouts/plans/{id}/save`, `/workouts/plans/{id}` | Save or delete |
 | POST | `/nutrition/photo` | Multipart `file` (JPG/PNG/WebP, ≤15 MB). Returns `{items[{name, grams, portion, calories, protein_g, carbs_g, fat_g, per_100g, basis: database\|ai_estimate, source_id, confidence}], totals, note}`. Nothing is saved; add items with `POST /nutrition/entries` (`source: "meal_photo"`). Needs Gemini; 30 photos per user per day (10 in the demo) |
 | PATCH | `/workouts/plans/{id}/days` | `{training_days}`: move the plan's workouts to these weekdays (same count as the plan) |
-| POST | `/workouts/sessions/start` | `{plan_id?, day_index}`. Starts a session; any other in-progress session is abandoned. Each exercise gets `target: {action, kg, reps, last_kg, last_reps}` from the last time it was logged (auto-progression, kg) |
+| POST | `/workouts/sessions/start` | `{plan_id?, day_index, travel?}`. Starts a session (`travel: true` gives a no-equipment Hotel-room workout); any other in-progress session is abandoned. Each exercise gets `target: {action, kg, reps, last_kg, last_reps}` from the last time it was logged (auto-progression, kg) |
 | GET | `/workouts/sessions/active` | Current session |
+| GET | `/workouts/sessions/{id}/alternatives?index=` | Up to 6 replacements for one exercise in a running workout: same muscle first, user's equipment only, none already in the session |
+| POST | `/workouts/sessions/{id}/swap` | `{index, exercise_id}` → session with the exercise replaced (same sets, new target, `swapped_from`). 409 if sets are logged or the workout finished |
 | PATCH | `/workouts/sessions/{id}` | `{exercises?, status?}` (at most 40 exercises). Each exercise may carry `set_log: [{kg, reps, done}]`; past logs power the *Last time* column. `completed` computes duration and returns `new_achievements` (only those this workout earned) |
 | GET | `/workouts/lifts` | Per-lift progress from logged sets, most-trained first: `{exercise_id, name, kind: weighted\|bodyweight\|timed, unit, metric, sessions, latest, best, change_8w, prs, points[{date, value, label, kg, reps, volume, pr}]}` (kg and reps let the app show the set in kg or lb). Weighted value = estimated 1-rep max (Epley, capped at 12 reps) |
 | GET | `/workouts/sessions` | Completed history |
-| GET | `/workouts/stats` | Totals, streak, last 7 days, 8-week counts |
+| GET | `/workouts/stats` | Totals, streak, `streak_freezes`, `frozen_days`, `best_streak`, `streak_paused`, last 7 days, 8-week counts |
 | GET | `/workouts/library?muscle=&equipment=` | Built-in exercise library |
 | GET | `/workouts/exercise-info?name=` | wger enrichment (image, IDs) with library fallback |
 
@@ -76,6 +81,8 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 |---|---|---|
 | GET | `/nutrition/search?q=` | `{results[], source: open_food_facts|reference, warning}` |
 | GET | `/nutrition/day?date=YYYY-MM-DD` | Entries, totals, by-meal breakdown, targets |
+| GET | `/nutrition/water?date=` | `{date, ml, goal_ml, glasses, goal_glasses}`. Goal ≈ 35 ml/kg, 2–4 L |
+| POST | `/nutrition/water` | `{ml: -2000..2000, date?}` adds (or undoes) water; never below 0, not for future days |
 | POST | `/nutrition/entries` | `{meal, name, quantity_g, calories, protein_g, carbs_g, fat_g, source, eaten_on?}` |
 | PATCH / DELETE | `/nutrition/entries/{id}` | Edit or delete (owner only) |
 | GET | `/nutrition/history?days=14` | Daily totals |
@@ -103,7 +110,8 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 ## Settings
 | Method | Path | Description |
 |---|---|---|
-| GET / PUT | `/settings` | `{full_name?, ai_provider_pref?, unit_system?}` |
+| GET / PUT | `/settings` | `{full_name?, ai_provider_pref?, unit_system?, coach_language?: en\|hi\|kn}` |
+| GET | `/settings/export` | ZIP of everything stored about the user: `fitai-data.json`, `food_log.csv`, `weights.csv`, `workout_sets.csv`, `photos/`. No password hashes or codes. 5 per hour |
 | POST | `/settings/password` | `{current_password, new_password}` |
 | DELETE | `/settings/account` | Deletes the user and all their data |
 

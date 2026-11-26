@@ -67,7 +67,9 @@ export async function fetchBlobUrl(path: string): Promise<string> {
   const res = await fetch(`${BASE}${path}`, { headers })
   if (!res.ok) {
     if (res.status === 401 && token && onUnauthorized) onUnauthorized()
-    throw new ApiError(`Could not load image (${res.status})`, res.status)
+    let msg = `Could not download (${res.status})`
+    try { const d = await res.json(); if (typeof d?.detail === 'string') msg = d.detail } catch { /* not JSON */ }
+    throw new ApiError(msg, res.status)
   }
   return URL.createObjectURL(await res.blob())
 }

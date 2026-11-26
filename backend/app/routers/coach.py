@@ -19,6 +19,14 @@ SUGGESTIONS = [
     "How can I improve my strength?", "How should I adjust my diet?", "Am I making progress?",
     "What should my next week's fitness plan look like?",
 ]
+SUGGESTIONS_BY_LANGUAGE = {
+    "hi": ["मुझे रोज़ कितनी कैलोरी खानी चाहिए?", "मुझे कितना प्रोटीन चाहिए?", "5 किलो वज़न कैसे कम करूँ?",
+           "वर्कआउट से पहले क्या खाऊँ?", "आज कौन सा वर्कआउट करूँ?", "मेरा वज़न कम होना क्यों रुक गया है?",
+           "क्या मेरी प्रोग्रेस ठीक चल रही है?", "अगले हफ़्ते का फ़िटनेस प्लान कैसा हो?"],
+    "kn": ["ನಾನು ದಿನಕ್ಕೆ ಎಷ್ಟು ಕ್ಯಾಲೊರಿ ತಿನ್ನಬೇಕು?", "ನನಗೆ ಎಷ್ಟು ಪ್ರೋಟೀನ್ ಬೇಕು?", "5 ಕೆಜಿ ತೂಕ ಹೇಗೆ ಇಳಿಸುವುದು?",
+           "ವರ್ಕೌಟ್‌ಗೆ ಮುಂಚೆ ಏನು ತಿನ್ನಬೇಕು?", "ಇವತ್ತು ಯಾವ ವರ್ಕೌಟ್ ಮಾಡಲಿ?", "ನನ್ನ ತೂಕ ಇಳಿಯುವುದು ಯಾಕೆ ನಿಂತಿದೆ?",
+           "ನನ್ನ ಪ್ರಗತಿ ಸರಿಯಾಗಿದೆಯಾ?", "ಮುಂದಿನ ವಾರದ ಫಿಟ್‌ನೆಸ್ ಪ್ಲಾನ್ ಹೇಗಿರಬೇಕು?"],
+}
 
 
 def _own(db, user, cid) -> Conversation:
@@ -34,8 +42,9 @@ def status(user: User = Depends(require_profile)):
 
 
 @router.get("/suggestions")
-def suggestions(_: User = Depends(require_profile)):
-    return SUGGESTIONS
+def suggestions(user: User = Depends(require_profile)):
+    """Starter questions, in the language the coach replies in."""
+    return SUGGESTIONS_BY_LANGUAGE.get(user.coach_language, SUGGESTIONS)
 
 
 @router.get("/conversations")

@@ -69,6 +69,9 @@ def run_light_migrations() -> None:
             with engine.begin() as conn:
                 conn.execute(text(f"ALTER TABLE users ADD COLUMN consented_at {ts} NULL"))
                 conn.execute(text("ALTER TABLE users ADD COLUMN consent_version VARCHAR(20) NULL"))
+        if "coach_language" not in cols:  # the coach's reply language (English for everyone until they pick)
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN coach_language VARCHAR(5) NOT NULL DEFAULT 'en'"))
     # PostgreSQL enforces VARCHAR lengths (SQLite doesn't): widen columns that grew in later versions
     if engine.dialect.name == "postgresql":
         widen = {("workout_plans", "generated_by"): 100, ("diet_plans", "generated_by"): 100,

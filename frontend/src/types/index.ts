@@ -13,7 +13,7 @@ export interface MealPhotoItem {
 export interface MealPhotoResult { items: MealPhotoItem[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number }; is_food: boolean; note: string | null; model: string; seconds: number }
 
 export interface User {
-  id: number; email: string; full_name: string; is_demo: boolean; email_verified: boolean; onboarding_complete: boolean; ai_provider_pref: string; needs_consent?: boolean
+  id: number; email: string; full_name: string; is_demo: boolean; email_verified: boolean; onboarding_complete: boolean; ai_provider_pref: string; coach_language?: CoachLanguage; needs_consent?: boolean
 }
 export interface Profile {
   full_name?: string; age: number; gender: 'male' | 'female' | 'other' | null; height_cm: number
@@ -56,6 +56,7 @@ export interface DietPlan {
 export interface Exercise {
   exercise_id: string; name: string; muscle: string; secondary: string[]; equipment: string[]; instructions: string
   image: string; sets: number; reps: string; rest_seconds: number; completed: boolean; sets_done?: number; set_log?: SetEntry[]; target?: SetTarget
+  swapped_from?: string
 }
 export interface WorkoutDay { index: number; weekday: string; name: string; focus: string[]; duration_minutes: number; exercises: Exercise[] }
 export interface WorkoutPlan {
@@ -86,3 +87,12 @@ export interface SetTarget { action: 'add_weight' | 'add_reps' | 'hold' | 'add_t
 
 /** A meal the user saved to log again in one tap. */
 export interface SavedMeal { id: number; name: string; meal: MealType; items: RecentFood[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number } }
+
+export type CoachLanguage = 'en' | 'hi' | 'kn'
+/** Water drunk on a day, in ml, against a goal based on body weight. */
+export interface WaterDay { date: string; ml: number; goal_ml: number; glasses: number; goal_glasses: number }
+export type BreakKind = 'travel' | 'festival'
+/** A travel or festival break: maintenance calories and a paused streak until end_on. */
+export interface Break { id: number; kind: BreakKind; label: string; start_on: string; end_on: string; note: string | null; active: boolean; days_left: number }
+/** An exercise that can replace another mid-workout. */
+export interface SwapOption { exercise_id: string; name: string; muscle: string; equipment: string[]; type: string; same_muscle: boolean }

@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Bookmark, BookmarkCheck, CalendarDays, Check, ChevronDown, Clock, Dumbbell, Flag, History, Info, Pause, Play, Plus, Sparkles, Timer, Trash2, TrendingUp, Trophy, X } from 'lucide-react'
+import { ArrowLeftRight, Bookmark, BookmarkCheck, CalendarDays, Check, ChevronDown, Clock, Dumbbell, Flag, History, Info, Pause, Play, Plus, Sparkles, Timer, Trash2, TrendingUp, Trophy, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ActivityChart } from '../../components/charts/LazyCharts'
@@ -11,6 +11,7 @@ import { ExerciseDemoModal, demoFor, demoImg } from '../../components/workout/Ex
 import { CalendarRow } from '../../components/workout/CalendarReminders'
 import { LiftProgress } from '../../components/workout/LiftProgress'
 import { NumCell } from '../../components/workout/NumCell'
+import { SwapExercise } from '../../components/workout/SwapExercise'
 import { firstReps, targetText } from '../../utils/workout'
 import { workoutApi } from '../../services/fitai'
 import type { Exercise, SetEntry, Units, WorkoutPlan, WorkoutSession } from '../../types'
@@ -39,7 +40,7 @@ function nextWorkoutIndex(plan: WorkoutPlan): number {
   return 0
 }
 
-function ExerciseRow({ e, index, session, onToggle, prev, onLog, units = 'metric' }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; prev?: SetEntry[]; onLog?: (log: SetEntry[], tickedNow: boolean) => void; units?: Units }) {
+function ExerciseRow({ e, index, session, onToggle, prev, onLog, onSwap, units = 'metric' }: { e: Exercise; index: number; session?: boolean; onToggle?: () => void; prev?: SetEntry[]; onLog?: (log: SetEntry[], tickedNow: boolean) => void; onSwap?: () => void; units?: Units }) {
   const [open, setOpen] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const hasDemo = !!demoFor(e.exercise_id)
@@ -61,7 +62,11 @@ function ExerciseRow({ e, index, session, onToggle, prev, onLog, units = 'metric
             <span className="rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums">{e.reps} reps</span>
             <span className="flex items-center gap-1 rounded-md bg-white/[0.05] px-2 py-0.5 tabular-nums"><Timer className="h-3 w-3" />{e.rest_seconds}s</span>
             <button onClick={() => setDemoOpen(true)} className="flex items-center gap-1 rounded-md bg-lime/10 px-2 py-0.5 font-medium text-lime transition hover:bg-lime/20"><Play className="h-3 w-3" />{hasDemo ? 'Demo' : 'How to'}</button>
+            {onSwap && !(e.sets_done && e.sets_done > 0) && (
+              <button onClick={onSwap} className="flex items-center gap-1 rounded-md bg-white/[0.05] px-2 py-0.5 font-medium text-fg-muted transition hover:bg-white/10 hover:text-fg"><ArrowLeftRight className="h-3 w-3" />Swap</button>
+            )}
           </div>
+          {e.swapped_from && <p className="mt-1.5 text-[11.5px] text-fg-dim">Instead of {e.swapped_from}</p>}
         </div>
         {session ? (
           <button onClick={onToggle} aria-label={e.completed ? 'Mark exercise not done' : 'Mark every set done'} title={e.completed ? 'Mark not done' : 'Mark all sets done'} className={clsx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 transition', e.completed ? 'border-lime bg-lime text-ink-950' : 'border-line-strong text-transparent hover:border-lime/60')}><Check className="h-4 w-4" /></button>
@@ -149,7 +154,8 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
   )
 }
 
-function ActiveSession({ s, onChange, onFinish, onAbandon, units }: { s: WorkoutSession; onChange: (ex: Exercise[]) => void; onFinish: () => void; onAbandon: () => void; units: Units }) {
+function ActiveSession({ s, onChange, onFinish, onAbandon, onSwap, units }: { s: WorkoutSession; onChange: (ex: Exercise[]) => void; onFinish: () => void; onAbandon: () => void; onSwap: (index: number, exerciseId: string) => Promise<void>; units: Units }) {
+  const [swapping, setSwapping] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   const [rest, setRest] = useState<number | null>(null)
   const [prev, setPrev] = useState<Record<string, SetEntry[]>>({})
@@ -190,8 +196,8 @@ function ActiveSession({ s, onChange, onFinish, onAbandon, units }: { s: Workout
         <Bar value={done} max={s.exercises.length} height="h-2" />
         {rest !== null && <RestTimer seconds={rest} onDone={() => setRest(null)} />}
         {s.exercises.map((e, i) => (
-          <ExerciseRow key={i} e={e} index={i} session units={units}
-            prev={prev[e.exercise_id]}
+          <ExerciseRow key={`${i}-${e.exercise_id}`} e={e} index={i} session units={units}
+            prev={prev[e.exercise_id]} onSwap={() => setSwapping(i)}
             onToggle={() => {
               const all = !e.completed
               const log = Array.from({ length: e.sets }, (_, k) => ({ ...(e.set_log?.[k] ?? { kg: null, reps: null }), done: all }))
@@ -209,6 +215,10 @@ function ActiveSession({ s, onChange, onFinish, onAbandon, units }: { s: Workout
         </div>
         <p className="text-center text-[11px] text-fg-dim">Stop if you feel sharp pain, dizziness or chest discomfort. Quality reps beat more reps.</p>
       </div>
+      {swapping !== null && s.exercises[swapping] && (
+        <SwapExercise open sessionId={s.id} index={swapping} name={s.exercises[swapping].name} onClose={() => setSwapping(null)}
+          onSwap={async id => { await onSwap(swapping, id); setSwapping(null) }} />
+      )}
     </Card>
   )
 }
@@ -266,6 +276,17 @@ export default function WorkoutPlanner() {
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => workoutApi.updateSession(session.id, { exercises: ex }).catch(() => undefined), 600)
   }
+  /** Swap one exercise. Any set changes still waiting to be saved go first, so they can't overwrite the swap. */
+  const swapExercise = async (index: number, exerciseId: string) => {
+    if (!session) return
+    clearTimeout(saveTimer.current)
+    try {
+      await workoutApi.updateSession(session.id, { exercises: session.exercises })
+      const next = await workoutApi.swap(session.id, index, exerciseId)
+      setSession(next)
+      toast('success', 'Exercise swapped', next.exercises[index]?.name)
+    } catch (e) { toast('error', 'Could not swap', (e as Error).message) }
+  }
   const finish = async () => {
     if (!session) return
     clearTimeout(saveTimer.current)
@@ -309,7 +330,7 @@ export default function WorkoutPlanner() {
         ))}
       </div>
 
-      {session && <div className="mb-6"><ActiveSession s={session} onChange={changeSession} onFinish={finish} onAbandon={abandon} units={units} /></div>}
+      {session && <div className="mb-6"><ActiveSession s={session} onChange={changeSession} onFinish={finish} onAbandon={abandon} onSwap={swapExercise} units={units} /></div>}
 
       {tab === 'plan' && !session && (
         active.loading ? <div className="space-y-4"><Skeleton className="h-28" /><Skeleton className="h-96" /></div> :

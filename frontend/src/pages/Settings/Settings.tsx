@@ -1,5 +1,5 @@
 import { tokenStore } from '../../services/api'
-import { Bot, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
+import { Bot, Download, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, Chip, Input, Label, Modal, Notice, PageHeader, Segmented, Select, Skeleton } from '../../components/ui'
@@ -8,7 +8,8 @@ import { CalendarRow } from '../../components/workout/CalendarReminders'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { profileApi, settingsApi } from '../../services/fitai'
-import type { Profile, Units } from '../../types'
+import type { CoachLanguage, Profile, Units } from '../../types'
+import { COACH_LANGUAGES, LANGUAGE_NAME } from '../../utils/language'
 import { ACTIVITY_LABEL, cmToFtIn, DIET_LABEL, EQUIPMENT, ftInToCm, GOAL_LABEL, kgToLb, lbToKg } from '../../utils/format'
 
 const RESTRICTIONS = ['dairy', 'gluten', 'nuts', 'peanuts', 'soy', 'eggs', 'seafood']
@@ -35,6 +36,7 @@ export default function Settings() {
   const [delOpen, setDelOpen] = useState(false)
   const [delText, setDelText] = useState('')
   const [delBusy, setDelBusy] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const units: Units = p?.unit_system ?? 'metric'
   const [disp, setDisp] = useState({ h: '', ft: '', inch: '', w: '', t: '' })
 
@@ -67,6 +69,14 @@ export default function Settings() {
   }
   const setProvider = async (v: string) => {
     try { const s = await settingsApi.update({ ai_provider_pref: v }); setAi(s.ai); await refresh(); toast('success', 'AI preference saved') } catch (e) { toast('error', 'Failed', (e as Error).message) }
+  }
+  const exportData = async () => {
+    setExporting(true)
+    try { await settingsApi.exportData(); toast('success', 'Export downloaded', 'A ZIP with your data, CSV files and photos.') }
+    catch (e) { toast('error', 'Export failed', (e as Error).message) } finally { setExporting(false) }
+  }
+  const setLanguage = async (v: CoachLanguage) => {
+    try { await settingsApi.update({ coach_language: v }); await refresh(); toast('success', `Coach replies in ${LANGUAGE_NAME[v]}`) } catch (e) { toast('error', 'Failed', (e as Error).message) }
   }
   const changePw = async () => {
     setPwBusy(true)
@@ -127,6 +137,9 @@ export default function Settings() {
                 {ai.is_real_llm ? <Badge tone="lime">{ai.active_provider} {ai.model}</Badge> : <Badge tone="amber">Demo answers</Badge>}
                 {Object.entries(ai.configured).filter(([k]) => k !== 'mock').map(([k, v]) => <Badge key={k} tone={v ? 'moss' : 'neutral'}>{k}: {v ? 'key configured' : 'no key'}</Badge>)}
               </div>
+              <div><Label>Coach replies in</Label>
+                <Segmented options={COACH_LANGUAGES} value={user.coach_language ?? 'en'} onChange={setLanguage} />
+                <p className="mt-2 text-xs text-fg-dim">Hindi and Kannada replies need the AI coach. Demo answers are in English.</p></div>
               <div className="max-w-xs"><Label htmlFor="prov">Preferred provider</Label>
                 <Select id="prov" value={user.ai_provider_pref} onChange={e => setProvider(e.target.value)}>
                   <option value="auto">Automatic (Gemini → Groq → demo)</option><option value="gemini">Google Gemini</option><option value="groq">Groq</option><option value="mock">Demo mode (no LLM)</option>
@@ -148,6 +161,10 @@ export default function Settings() {
             <div className="flex flex-wrap gap-2 border-t border-line-soft pt-5">
               <Button variant="secondary" onClick={() => { logout(); nav('/login') }} icon={<LogOut className="h-4 w-4" />}>Log out</Button>
               <Button variant="danger" onClick={() => setDelOpen(true)} icon={<ShieldAlert className="h-4 w-4" />}>Delete account</Button>
+            </div>
+            <div className="flex flex-col gap-3 border-t border-line-soft pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="text-sm font-medium text-fg">Your data</p><p className="text-[13px] text-fg-muted">Download everything FitAI stores about you: a ZIP with your logs, CSV files and progress photos.</p></div>
+              <Button variant="secondary" onClick={exportData} loading={exporting} icon={<Download className="h-4 w-4" />}>Export my data</Button>
             </div>
             <div className="flex gap-5 text-sm text-fg-muted">
               <Link to="/privacy" className="hover:text-fg">Privacy policy</Link>

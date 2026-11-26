@@ -1,5 +1,5 @@
-import { api } from './api'
-import type { AIStatus, Achievement, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
+import { api, fetchBlobUrl } from './api'
+import type { AIStatus, Achievement, Break, BreakKind, SwapOption, WaterDay, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
 
 export type Verification = { delivery: 'email' | 'console' | 'failed' | 'none'; error?: string; expires_in_minutes?: number; resend_in_seconds?: number }
 type Token = { access_token: string; user: User; verification?: Verification | null }
@@ -26,6 +26,9 @@ export const profileApi = {
   save: (p: Partial<Profile>) => api.put<Profile>('/profile', p),
   targets: () => api.get<any>('/profile/targets'),
   calculate: (b: any) => api.post<any>('/profile/calculate', b),
+  breaks: () => api.get<{ active: Break | null; upcoming: Break[] }>('/profile/breaks'),
+  addBreak: (kind: BreakKind, start_on: string, end_on: string, note?: string) => api.post<Break>('/profile/breaks', { kind, start_on, end_on, note: note || null }),
+  endBreak: (id: number) => api.post<{ detail: string }>(`/profile/breaks/${id}/end`),
 }
 export const dashboardApi = { get: (refresh = false) => api.get<any>(`/dashboard${refresh ? '?refresh_recommendation=true' : ''}`) }
 export const coachApi = {
@@ -57,6 +60,9 @@ export const workoutApi = {
   setDays: (id: number, training_days: string[]) => api.patch<WorkoutPlan>(`/workouts/plans/${id}/days`, { training_days }),
   remove: (id: number) => api.del<void>(`/workouts/plans/${id}`),
   start: (plan_id: number | null, day_index: number) => api.post<WorkoutSession>('/workouts/sessions/start', { plan_id, day_index }),
+  startTravel: () => api.post<WorkoutSession>('/workouts/sessions/start', { travel: true }),
+  alternatives: (sid: number, index: number) => api.get<SwapOption[]>(`/workouts/sessions/${sid}/alternatives?index=${index}`),
+  swap: (sid: number, index: number, exercise_id: string) => api.post<WorkoutSession>(`/workouts/sessions/${sid}/swap`, { index, exercise_id }),
   activeSession: () => api.get<WorkoutSession | null>('/workouts/sessions/active'),
   updateSession: (id: number, b: any) => api.patch<WorkoutSession>(`/workouts/sessions/${id}`, b),
   history: () => api.get<WorkoutSession[]>('/workouts/sessions'),
@@ -77,6 +83,8 @@ export const nutritionApi = {
   saveMeal: (name: string, eaten_on: string, meal: MealType) => api.post<SavedMeal>('/nutrition/saved-meals', { name, eaten_on, meal }),
   logSavedMeal: (id: number, eaten_on: string, meal: MealType) => api.post<SavedMeal & { logged: number }>(`/nutrition/saved-meals/${id}/log`, { eaten_on, meal }),
   deleteSavedMeal: (id: number) => api.del(`/nutrition/saved-meals/${id}`),
+  water: (date?: string) => api.get<WaterDay>(`/nutrition/water${date ? `?date=${date}` : ''}`),
+  addWater: (ml: number) => api.post<WaterDay>('/nutrition/water', { ml }),
   barcode: (code: string) => api.get<{ found: boolean; result: FoodResult | null; warning: string | null }>(`/nutrition/barcode/${code}`),
   analyzePhoto: (file: Blob) => { const f = new FormData(); f.append('file', file, 'meal.jpg'); return api.upload<MealPhotoResult>('/nutrition/photo', f) },
 }
@@ -99,6 +107,14 @@ export const settingsApi = {
   update: (b: any) => api.put<any>('/settings', b),
   password: (current_password: string, new_password: string) => api.post<{ detail: string; access_token: string }>('/settings/password', { current_password, new_password }),
   deleteAccount: () => api.del<void>('/settings/account'),
+  /** Downloads everything FitAI stores about the user as a ZIP. */
+  exportData: async () => {
+    const url = await fetchBlobUrl('/settings/export')
+    const a = document.createElement('a')
+    a.href = url; a.download = `fitai-export-${new Date().toISOString().slice(0, 10)}.zip`
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  },
 }
 
 export type CheckinFacts = {

@@ -10,7 +10,7 @@ from app.ai.provider import ProviderError, get_provider
 from app.data.quotes import quote_of_the_day
 from app.database import get_db
 from app.models import SavedRecommendation, User, WorkoutPlan
-from app.services import fitness_service, nutrition_service, progress_service
+from app.services import fitness_service, lifestyle_service, nutrition_service, progress_service
 from app.services.auth_service import require_profile
 from app.utils.clock import local_today
 
@@ -66,7 +66,8 @@ def _rule_recommendation(user: User, today_n: dict, targets: dict, analysis: dic
 
 
 def _daily_recommendation(db: Session, user: User, today_n, targets, analysis, upcoming, refresh: bool) -> dict:
-    key = f"daily:{local_today().isoformat()}"
+    brk = lifestyle_service.active_break(db, user.id)
+    key = f"daily:{local_today().isoformat()}" + (f":{brk.kind}" if brk else "")  # a new tip once a break starts
     cached = db.scalar(select(SavedRecommendation).where(SavedRecommendation.user_id == user.id,
                                                          SavedRecommendation.category == "daily",
                                                          SavedRecommendation.title == key))
@@ -79,7 +80,8 @@ def _daily_recommendation(db: Session, user: User, today_n, targets, analysis, u
                  "weight_trend_kg_per_week": analysis["weight"]["trend_kg_per_week"], "plateau": analysis["weight"]["plateau"],
                  "workouts_this_week": analysis["workouts"]["this_week"], "planned_days": user.profile.workout_days_per_week,
                  "streak": analysis["workouts"]["streak"], "upcoming_workout": upcoming,
-                 "avg_protein_14d": analysis["nutrition"]["avg_protein_g"], "days_logged_14d": analysis["nutrition"]["days_logged"]}
+                 "avg_protein_14d": analysis["nutrition"]["avg_protein_g"], "days_logged_14d": analysis["nutrition"]["days_logged"],
+                 "on_break": {"kind": brk.kind, "until": brk.end_on.isoformat(), "calorie_target": "maintenance"} if brk else None}
         try:
             raw = provider.generate_json("You are FitAI Coach. Write ONE specific, actionable recommendation for today "
                                          "(max 45 words) using only these facts. No invented numbers.\n" + SAFETY_RULES,
@@ -88,6 +90,12 @@ def _daily_recommendation(db: Session, user: User, today_n, targets, analysis, u
             source = provider.label[:100]
         except (ProviderError, json.JSONDecodeError, AttributeError):
             text = None
+    if not text and brk:
+        text = ("Travelling? Do the 25-minute Hotel-room workout (no equipment), walk where you can, and pick a protein "
+                "at each meal when eating out." if brk.kind == "travel" else
+                "Enjoy the festival. Have sweets after a proper meal rather than on an empty stomach, keep some protein at "
+                "lunch and dinner, and take a short walk after the big meals.")
+        source = "rule-based"
     if not text:
         text, source = _rule_recommendation(user, today_n, targets, analysis, upcoming), "rule-based"
     if cached:
@@ -125,6 +133,8 @@ def dashboard(refresh_recommendation: bool = False, user: User = Depends(require
         "targets": targets, "calc": {"bmr": calc["bmr"]["bmr"], "tdee": calc["tdee"]["tdee"], "bmi": calc["bmi"]},
         "today": today_n, "nutrition_history": hist,
         "workouts": analysis["workouts"], "upcoming_workout": upcoming,
+        "water": lifestyle_service.water_day(db, user, local_today()),
+        "break": lifestyle_service.break_out(lifestyle_service.active_break(db, user.id)),
         "recommendation": _daily_recommendation(db, user, today_n, targets, analysis, upcoming, refresh_recommendation),
         "quote": quote_of_the_day(),
         "achievements": achievements,

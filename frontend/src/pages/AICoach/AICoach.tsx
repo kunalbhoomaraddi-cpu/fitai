@@ -1,14 +1,15 @@
 import clsx from 'clsx'
-import { ArrowUp, Beef, Bookmark, Bot, CalendarDays, Copy, Dumbbell, Flame, History, Info, LineChart, MessageSquarePlus, Salad, Trash2, Wrench, X } from 'lucide-react'
+import { ArrowUp, Beef, Bookmark, Bot, CalendarDays, Copy, Dumbbell, Flame, History, Info, LineChart, MessageSquarePlus, Salad, Trash2, Wrench, X, Languages } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CoachCard } from '../../components/coach/CoachCards'
 import { Badge, Button, IconButton, Notice, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
+import { COACH_LANGUAGES, LANGUAGE_NAME } from '../../utils/language'
 import { useToast } from '../../context/ToastContext'
-import { coachApi } from '../../services/fitai'
-import type { AIStatus, ChatMessage } from '../../types'
+import { coachApi, settingsApi } from '../../services/fitai'
+import type { AIStatus, ChatMessage, CoachLanguage } from '../../types'
 
 const TOOL_LABEL: Record<string, string> = {
   calculate_bmr: 'BMR', calculate_tdee: 'TDEE', calculate_calorie_target: 'Calorie target', calculate_macros: 'Macros',
@@ -48,8 +49,17 @@ function Typing() {
 }
 
 export default function AICoach() {
-  const { units } = useAuth()
+  const { units, user, setUser } = useAuth()
   const toast = useToast()
+  const lang: CoachLanguage = user?.coach_language ?? 'en'
+  const setLang = async (v: CoachLanguage) => {
+    try {
+      const s = await settingsApi.update({ coach_language: v })
+      setUser(s.user)
+      coachApi.suggestions().then(setSuggestions).catch(() => undefined)
+      toast('success', `Coach replies in ${LANGUAGE_NAME[v]}`, v !== 'en' && status && !status.is_real_llm ? 'Demo answers stay in English. The AI coach replies in your language.' : undefined)
+    } catch (e) { toast('error', 'Could not change language', (e as Error).message) }
+  }
   const [status, setStatus] = useState<AIStatus | null>(null)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [convs, setConvs] = useState<{ id: number; title: string; updated_at: string }[]>([])
@@ -143,6 +153,13 @@ export default function AICoach() {
           <div className="min-w-0 flex-1">
             <p className="text-[15px] font-semibold">Your coach</p>
             <p className="truncate text-xs text-fg-dim">Checks your profile and logs before it answers</p>
+          </div>
+          <div className="relative">
+            <Languages className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-dim" aria-hidden />
+            <select aria-label="Language the coach replies in" value={lang} onChange={e => setLang(e.target.value as CoachLanguage)}
+              className="h-9 appearance-none rounded-lg border border-line bg-ink-900 pl-8 pr-3 text-[13px] text-fg focus:border-lime/60 focus:outline-none">
+              {COACH_LANGUAGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
           </div>
           <div className="hidden sm:block">{providerBadge}</div>
           <IconButton label="Conversation history" className="lg:hidden" onClick={() => setHistoryOpen(true)}><History className="h-4 w-4" /></IconButton>

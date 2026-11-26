@@ -12,7 +12,7 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-143%20passing-C6F36B)
+![Tests](https://img.shields.io/badge/tests-160%20passing-C6F36B)
 
 ![FitAI dashboard](docs/screenshots/dashboard.webp)
 
@@ -35,9 +35,10 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 - **Grounded AI coach.** Gemini function calling over 12 backend tools (targets, weight trend, meal plans, workouts, food search). Numbers come from Python, not from the model. Without an API key, a clearly labelled rule-based coach uses the same tools.
 - **Facts first, wording second.** The weekly check-in computes the score, wins and targets in code; the LLM only writes the sentences, with a rules engine as fallback.
 - **Snap your meal.** Photograph a plate and Gemini spots each food and its portion; FitAI's own food database then calculates the calories, so the AI identifies and the code calculates. The photo is never stored.
-- **Built for Indian users.** About 200 home-style dishes (jolada rotti, girmit, dosa, dal, biryani…) searchable by regional names and common misspellings, logged by household portion: 1 roti, 1 katori, 1 dosa. Dates follow the user's own time zone.
+- **Built for Indian users.** A coach that can reply in Hindi or Kannada, festival and travel breaks that switch to maintenance calories and pause the streak, and about 200 home-style dishes (jolada rotti, girmit, dosa, dal, biryani…) searchable by regional names and common misspellings, logged by household portion: 1 roti, 1 katori, 1 dosa. Dates follow the user's own time zone.
+- **Your data is yours.** A privacy policy written for India's DPDP Act, consent at sign-up, one-click *Export my data* (JSON, CSV and photos) and full account deletion.
 - **Security taken seriously.** Email verification and a one-time code on every login, codes hashed with HMAC and limited to 5 attempts, password changes sign out every other device, per-IP rate limits, API keys hidden from every logged error, and progress photos stripped of GPS and camera data and visible only to their owner.
-- **Production-minded.** 143 tests run on SQLite and PostgreSQL in GitHub Actions, linted with Ruff and ESLint. Production mode refuses to start with unsafe settings. Each demo visitor gets a private sandbox that deletes itself.
+- **Production-minded.** 160 tests run on SQLite and PostgreSQL in GitHub Actions, linted with Ruff and ESLint. Production mode refuses to start with unsafe settings. Each demo visitor gets a private sandbox that deletes itself.
 
 ## Screenshots
 
@@ -60,12 +61,12 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 
 | Area | What it does |
 |---|---|
-| **Accounts** | Registration with email verification, a 6-digit code on every login, forgot password, JWT sessions, account deletion confirmed by typing DELETE |
+| **Accounts** | Registration with consent and email verification, a 6-digit code on every login, forgot password, JWT sessions, Export my data (ZIP), account deletion confirmed by typing DELETE |
 | **Onboarding** | Six guided steps (metric or imperial) with a live preview of BMR, TDEE, calorie target and macros |
-| **Dashboard** | Goal-progress ring, daily AI recommendation, weight, calorie and protein charts, streaks, challenges and achievements |
-| **AI coach** | Persistent conversations, tool calling, structured answer cards (macros, weight trend, workouts, foods), suggested prompts |
+| **Dashboard** | Goal-progress ring, daily AI recommendation, weight, calorie and protein charts, water tracker, quick weigh-in, streaks with earned freezes, travel and festival breaks, challenges and achievements |
+| **AI coach** | Persistent conversations, tool calling, structured answer cards (macros, weight trend, workouts, foods), suggested prompts, replies in English, Hindi or Kannada |
 | **Diet planner** | 3–5 meal plans matched to calories, macros, diet type, restrictions and budget; swap foods, regenerate meals, mark meals eaten |
-| **Workout planner** | Push/Pull/Legs, Upper/Lower, Full Body, beginner, muscle-building, fat-loss and custom splits on the weekdays you choose; today's workout or a rest-day note; start-and-finish photo demos for 62 of 63 exercises; guided sessions with set tracking and a rest timer |
+| **Workout planner** | Push/Pull/Legs, Upper/Lower, Full Body, beginner, muscle-building, fat-loss and custom splits on the weekdays you choose; today's workout or a rest-day note; start-and-finish photo demos for 62 of 63 exercises; guided sessions with set tracking, a rest timer, auto-progression targets and mid-workout exercise swaps; a no-equipment Hotel-room workout for travel |
 | **Nutrition tracker** | **Snap a meal** (photo → foods, portions and calories to review), Open Food Facts search with an offline reference database, the Indian food library, custom foods, 14-day history |
 | **Progress** | Weight and body measurements, weekly averages, a 4-week regression trend, plateau detection, milestones |
 | **Progress photos** | Private front, side and back photos with a timeline and a before/after comparison slider |
@@ -121,7 +122,7 @@ Full instructions: [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) · every setting: 
 ./scripts/test-all.sh
 ```
 
-This runs the same checks as CI: Ruff and 143 pytest tests for the backend, and ESLint, 18 Vitest tests, strict TypeScript and a production build for the frontend. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for what each test file covers.
+This runs the same checks as CI: Ruff and 160 pytest tests for the backend, and ESLint, 25 Vitest tests, strict TypeScript and a production build for the frontend. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for what each test file covers.
 
 ## Project structure
 
@@ -137,7 +138,7 @@ fitai/
 │   │   ├── schemas/     Pydantic request and response models
 │   │   ├── data/        foods, Indian dishes, meal templates, exercise library, quotes
 │   │   └── utils/       time zones, rate limiting, HTTP helpers
-│   ├── tests/           143 pytest tests
+│   ├── tests/           160 pytest tests
 │   └── requirements.txt · requirements-dev.txt · ruff.toml
 ├── frontend/
 │   ├── src/             pages, components, layouts, hooks, services, context

@@ -108,19 +108,9 @@ def completed_sessions(db: Session, user_id: int, days: int | None = None) -> li
 
 
 def workout_streak(dates: list[date], today: date | None = None) -> int:
-    """Consecutive workouts where gaps are at most one rest day; resets if the last workout
-    was more than 2 days ago. Rest days never add to the count."""
-    today = today or local_today()
-    uniq = sorted(set(dates), reverse=True)
-    if not uniq or (today - uniq[0]).days > 2:
-        return 0
-    streak = 1
-    for prev, cur in zip(uniq, uniq[1:], strict=False):
-        if (prev - cur).days <= 2:
-            streak += 1
-        else:
-            break
-    return streak
+    """Current workout streak (see lifestyle_service.streak_detail for the rules, freezes and breaks)."""
+    from app.services.lifestyle_service import streak_detail
+    return streak_detail(dates, today)["streak"]
 
 
 def workout_stats(db: Session, user_id: int) -> dict:
@@ -138,7 +128,10 @@ def workout_stats(db: Session, user_id: int) -> dict:
         start = today - timedelta(days=today.weekday()) - timedelta(weeks=i)
         cnt = sum(1 for d in dates if start <= d < start + timedelta(days=7))
         weeks.append({"week_start": start.isoformat(), "workouts": cnt})
-    return {"total_completed": len(sessions), "streak": workout_streak(dates, today),
+    from app.services import lifestyle_service as ls
+    sd = ls.streak_detail(dates, today, ls.paused_days(ls.breaks(db, user_id)))
+    return {"total_completed": len(sessions), "streak": sd["streak"], "streak_freezes": sd["freezes"],
+            "frozen_days": sd["frozen_days"], "best_streak": sd["best"], "streak_paused": sd["paused_today"],
             "this_week": sum(w["workouts"] for w in week[-(today.weekday() + 1):]),
             "last_7_days": week, "weekly_counts": weeks,
             "avg_duration_min": round(sum(s.duration_minutes or 0 for s in sessions) / len(sessions)) if sessions else 0,
@@ -186,14 +179,7 @@ def evaluate_achievements(db: Session, user: User) -> list[dict]:
         earned.add("first_workout")
     if ws["total_completed"] >= 5:
         earned.add("five_workouts")
-    dates = [local_date(s.started_at) for s in completed_sessions(db, user.id)]
-    # best historical streak
-    best, run = 0, 0
-    prev = None
-    for d in sorted(set(dates)):
-        run = run + 1 if prev and (d - prev).days <= 2 else 1
-        best, prev = max(best, run), d
-    if best >= 7:
+    if ws["best_streak"] >= 7:  # best streak ever (freezes and breaks count, as on the dashboard)
         earned.add("streak_7")
     if p:
         recs = weight_records(db, user.id)

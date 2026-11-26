@@ -62,6 +62,10 @@ def run_coach(db: Session, user: User, history: list[tuple[str, str]], text: str
         notice = f"{provider.name.title()} is unavailable right now ({e}). Showing a demo response instead."
         provider = MockProvider()
         reply, cards, tools_used = _run(provider, db, user, history, text)
+    if not provider.is_real_llm and getattr(user, "coach_language", "en") != "en":
+        from app.ai.prompts import LANGUAGES
+        lang_note = f"Demo replies are in English only. {LANGUAGES[user.coach_language]} replies need the AI coach (Gemini)."
+        notice = f"{notice} {lang_note}" if notice else lang_note
     # de-duplicate cards of the same type/title
     seen, uniq = set(), []
     for c in cards:

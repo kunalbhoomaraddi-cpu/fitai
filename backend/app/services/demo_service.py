@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import BodyMeasurement, DietPlan, FitnessProfile, FoodEntry, User, WeightRecord, WorkoutPlan, WorkoutSession
+from app.models import BodyMeasurement, DietPlan, FitnessProfile, FoodEntry, User, WaterLog, WeightRecord, WorkoutPlan, WorkoutSession
 from app.models._mixins import utcnow
 from app.services import fitness_service, nutrition_service, progress_service, workout_service
 from app.services.auth_service import hash_password
@@ -124,6 +124,8 @@ def create_demo(db: Session) -> User:
     db.flush()
     latest = db.scalar(select(WeightRecord).where(WeightRecord.user_id == user.id).order_by(WeightRecord.recorded_on.desc()))
     prof.current_weight_kg = latest.weight_kg
+    for back, ml in ((0, 1250), (1, 2750), (2, 2250)):  # a few days of water, today partly done
+        db.add(WaterLog(user_id=user.id, logged_on=today - timedelta(days=back), ml=ml))
     db.commit()
     db.refresh(user)
     progress_service.evaluate_achievements(db, user)

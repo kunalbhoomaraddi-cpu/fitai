@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import FoodEntry, SavedMeal, User
+from app.schemas.lifestyle import WaterIn
 from app.schemas.tracking import CopyMealIn, FoodEntryIn, FoodEntryOut, FoodEntryUpdate, LogSavedMealIn, SavedMealIn
-from app.services import fitness_service, meal_photo_service, nutrition_service, photo_service
+from app.services import fitness_service, lifestyle_service, meal_photo_service, nutrition_service, photo_service
 from app.services.auth_service import get_current_user, require_profile
 from app.utils.clock import local_today
 from app.utils.ratelimit import ai_rate_limit
@@ -32,6 +33,21 @@ def search(q: str = Query(min_length=2, max_length=80), _: User = Depends(get_cu
 def barcode(code: str = Path(pattern=r"^\d{8,14}$"), _: User = Depends(get_current_user)):
     """Packaged food by barcode (EAN-8, UPC-A, EAN-13, GTIN-14) from Open Food Facts."""
     return nutrition_service.lookup_barcode(code)
+
+
+@router.get("/water")
+def water(d: date | None = Query(default=None, alias="date"), user: User = Depends(require_profile),
+          db: Session = Depends(get_db)):
+    """Water drunk on a day, with a goal of about 35 ml per kg of body weight."""
+    return lifestyle_service.water_day(db, user, d or local_today())
+
+
+@router.post("/water")
+def add_water(body: WaterIn, user: User = Depends(require_profile), db: Session = Depends(get_db)):
+    d = body.date or local_today()
+    if d > local_today():
+        raise HTTPException(400, "Water can't be logged for a future day")
+    return lifestyle_service.add_water(db, user, d, body.ml)
 
 
 @router.get("/day")

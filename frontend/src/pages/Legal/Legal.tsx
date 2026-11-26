@@ -49,7 +49,7 @@ export function Privacy() {
         <ul className={ul}>
           <li><span className="text-fg">Account:</span> your name, email address and a scrambled (hashed) password. We never see or store your actual password.</li>
           <li><span className="text-fg">Profile:</span> age, sex, height, weight, activity level, goal, diet type, food preferences and allergies, training experience and equipment.</li>
-          <li><span className="text-fg">What you log:</span> meals, workouts and sets, body weight and measurements, check-ins, and progress photos.</li>
+          <li><span className="text-fg">What you log:</span> meals, water, workouts and sets, body weight and measurements, check-ins, travel or festival breaks you set, and progress photos.</li>
           <li><span className="text-fg">Coach chats:</span> the messages you send the AI coach and its replies.</li>
           <li><span className="text-fg">Technical:</span> your time zone (so "today" is your today), and short-lived sign-in codes and attempt counters that stop abuse.</li>
         </ul>
@@ -90,6 +90,7 @@ export function Privacy() {
       <Sec title="Your rights">
         <ul className={ul}>
           <li><span className="text-fg">See and correct:</span> everything you entered is visible and editable in the app.</li>
+          <li><span className="text-fg">Get a copy:</span> Settings, then Export my data, downloads all of it as a ZIP (with spreadsheet files and your photos).</li>
           <li><span className="text-fg">Delete:</span> Settings, then Delete account, removes all of it.</li>
           <li><span className="text-fg">Withdraw consent:</span> you can withdraw at any time by deleting your account. We can't run FitAI for you without this data.</li>
           <li><span className="text-fg">Complain:</span> write to us first (below). If you are not satisfied, you can complain to the Data Protection Board of India.</li>

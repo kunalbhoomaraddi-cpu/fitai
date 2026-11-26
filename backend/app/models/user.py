@@ -25,6 +25,8 @@ class User(TimestampMixin, Base):
     onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # per-user AI preference: auto | gemini | groq | mock (keys always stay server-side)
     ai_provider_pref: Mapped[str] = mapped_column(String(20), default="auto", nullable=False)
+    # language the coach replies in: en | hi (Hindi) | kn (Kannada)
+    coach_language: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
 
     profile = relationship("FitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 

@@ -24,6 +24,35 @@ STYLE_RULES = """Response style:
 - End with one concrete next step when useful."""
 
 
+LANGUAGES = {"en": "English", "hi": "Hindi", "kn": "Kannada"}
+LANGUAGE_RULES = {
+    "hi": ("Language: reply in simple, everyday Hindi written in Devanagari script, as a friendly Indian coach would speak. "
+           "Keep food names as people say them (dal, roti, paneer, poha), keep exercise names in English, "
+           "and write all numbers and units in digits (1,850 kcal, 120 g, 72 kg). Use the same Markdown style."),
+    "kn": ("Language: reply in simple, everyday Kannada written in Kannada script, as a friendly coach from Karnataka would speak. "
+           "Keep food names as people say them (ragi mudde, idli, dal, chapati), keep exercise names in English, "
+           "and write all numbers and units in digits (1,850 kcal, 120 g, 72 kg). Use the same Markdown style."),
+}
+
+
+def _break_context(user) -> str:
+    from sqlalchemy.orm import object_session
+
+    from app.services.lifestyle_service import active_break
+    db = object_session(user)
+    b = active_break(db, user.id) if db is not None else None
+    if not b:
+        return ""
+    if b.kind == "travel":
+        tip = ("They're travelling: suggest short no-equipment workouts (the app has a Hotel-room workout), walking, "
+               "and practical eating out or on the road. Don't push their usual gym plan.")
+    else:
+        tip = ("It's a festival: encourage enjoying it without guilt, sensible portions of sweets and fried food, "
+               "protein at main meals and a walk after big meals. No compensation through skipping meals or extra cardio.")
+    return (f"\n\nRight now the user is on a {b.kind} break ({b.note or b.kind}) until {b.end_on.isoformat()}. "
+            f"Their calorie target is maintenance during the break and their workout streak is paused. {tip}")
+
+
 def coach_system_prompt(user) -> str:
     p = user.profile
     profile = (f"Name: {user.full_name}. Age {p.age}, {p.gender or 'gender not specified'}, height {p.height_cm} cm, "
@@ -32,6 +61,7 @@ def coach_system_prompt(user) -> str:
                f"Diet: {p.custom_diet if p.diet_preference == 'custom' else p.diet_preference}; restrictions: "
                f"{', '.join(p.food_restrictions) or 'none'}. Trains {p.workout_days_per_week} days/week for ~{p.workout_minutes} min. "
                f"Equipment: {', '.join(p.equipment) or 'bodyweight only'}. Preferred units: {p.unit_system}.")
+    language = LANGUAGE_RULES.get(getattr(user, "coach_language", "en"), "")
     return f"""You are FitAI Coach, the AI fitness coach inside the FitAI app. Today is {local_today().isoformat()}.
 
 User profile (summary — use tools for exact calculations and history):
@@ -41,7 +71,7 @@ User profile (summary — use tools for exact calculations and history):
 
 {SAFETY_RULES}
 
-{STYLE_RULES}"""
+{STYLE_RULES}{_break_context(user)}{chr(10) * 2 + language if language else ""}"""
 
 
 def meal_plan_prompt(profile, targets: dict, prefs: dict, slots: list[tuple]) -> tuple[str, str]:

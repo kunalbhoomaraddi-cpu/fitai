@@ -146,6 +146,18 @@ def full_calculation(weight_kg: float, height_cm: float, age: int, gender: str |
 
 
 def profile_targets(profile) -> dict:
-    """Targets for a FitnessProfile ORM object."""
-    return full_calculation(profile.current_weight_kg, profile.height_cm, profile.age, profile.gender,
-                            profile.activity_level, profile.goal)
+    """Targets for a FitnessProfile ORM object. During a travel or festival break the calorie target is
+    maintenance, so a trip or Diwali week isn't spent fighting a deficit; it goes back after the break."""
+    from sqlalchemy.orm import object_session
+
+    from app.services.lifestyle_service import BREAK_KINDS, active_break
+    db = object_session(profile)
+    brk = active_break(db, profile.user_id) if db is not None and profile.user_id else None
+    goal = "maintenance" if brk and profile.goal != "maintenance" else profile.goal
+    out = full_calculation(profile.current_weight_kg, profile.height_cm, profile.age, profile.gender,
+                           profile.activity_level, goal)
+    if brk:
+        out["break"] = {"kind": brk.kind, "end_on": brk.end_on.isoformat(), "goal": profile.goal}
+        out["calories"]["rationale"] = (f"{BREAK_KINDS.get(brk.kind, 'Break')} mode until "
+                                        f"{brk.end_on.strftime('%d %b')}: maintenance calories, then back to your plan.")
+    return out

@@ -11,6 +11,7 @@ from app.ai.provider import ProviderError, get_provider
 from app.database import get_db
 from app.models import User, WorkoutPlan, WorkoutSession
 from app.models._mixins import utcnow
+from app.schemas.lifestyle import SwapIn
 from app.schemas.plans import PlanDaysIn, StartWorkoutIn, UpdateSessionIn, WorkoutPlanIn
 from app.services import lift_service, progress_service
 from app.services import workout_service as wsvc
@@ -132,7 +133,11 @@ def start(body: StartWorkoutIn, user: User = Depends(require_profile), db: Sessi
     # one active session at a time
     for s in db.scalars(select(WorkoutSession).where(WorkoutSession.user_id == user.id, WorkoutSession.status == "in_progress")):
         s.status = "abandoned"
-    if body.plan_id:
+    if body.travel:
+        t = wsvc.travel_workout(user.profile.goal, user.profile.experience)
+        name, exercises = t["name"], t["exercises"]
+        body.plan_id = None
+    elif body.plan_id:
         p = _own_plan(db, user, body.plan_id)
         if body.day_index >= len(p.days):
             raise HTTPException(400, "Invalid day")
@@ -155,6 +160,51 @@ def start(body: StartWorkoutIn, user: User = Depends(require_profile), db: Sessi
     s = WorkoutSession(user_id=user.id, plan_id=body.plan_id, name=name, started_at=utcnow(), exercises=exercises,
                        status="in_progress")
     db.add(s)
+    db.commit()
+    return _session_out(s)
+
+
+def _own_active(db: Session, user: User, sid: int) -> WorkoutSession:
+    s = db.get(WorkoutSession, sid)
+    if not s or s.user_id != user.id:
+        raise HTTPException(404, "Session not found")
+    if s.status != "in_progress":
+        raise HTTPException(409, "This workout has already finished")
+    return s
+
+
+@router.get("/sessions/{sid}/alternatives")
+def alternatives(sid: int, index: int = Query(ge=0, le=30), user: User = Depends(require_profile),
+                 db: Session = Depends(get_db)):
+    """Exercises that can replace one in a running workout, using the user's equipment."""
+    s = _own_active(db, user, sid)
+    if index >= len(s.exercises):
+        raise HTTPException(400, "Invalid exercise")
+    in_session = {e.get("exercise_id") for e in s.exercises}
+    return wsvc.alternatives(s.exercises[index], user.profile.equipment, in_session)
+
+
+@router.post("/sessions/{sid}/swap")
+def swap(sid: int, body: SwapIn, user: User = Depends(require_profile), db: Session = Depends(get_db)):
+    """Replaces one exercise in a running workout. Its logged sets are cleared, so only swap before starting it."""
+    s = _own_active(db, user, sid)
+    if body.index >= len(s.exercises):
+        raise HTTPException(400, "Invalid exercise")
+    allowed = {a["exercise_id"] for a in wsvc.alternatives(s.exercises[body.index], user.profile.equipment,
+                                                          {e.get("exercise_id") for e in s.exercises}, limit=50)}
+    if body.exercise_id not in allowed:
+        raise HTTPException(400, "That exercise isn't a suitable swap here")
+    cur = s.exercises[body.index]
+    if (cur.get("sets_done") or 0) > 0 or any(x.get("done") for x in cur.get("set_log") or []):
+        raise HTTPException(409, "You've already logged sets for this exercise. Finish it, or add the other one next time.")
+    new = wsvc.swap_in(cur, body.exercise_id, user.profile.equipment, user.profile.goal, user.profile.experience)
+    new["sets_done"] = 0
+    target = lift_service.suggest(new, lift_service.last_logged_sets(db, user.id).get(body.exercise_id, []))
+    if target:
+        new["target"] = target
+    exercises = list(s.exercises)
+    exercises[body.index] = new
+    s.exercises = exercises  # reassign so the JSON column is saved
     db.commit()
     return _session_out(s)
 

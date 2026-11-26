@@ -15,7 +15,7 @@ backend tests run twice, once on SQLite and once on PostgreSQL 16.
 cd backend && source .venv/bin/activate
 pip install -r requirements-dev.txt     # once: adds ruff
 ruff check .                            # lint
-python -m pytest -q                     # 143 tests
+python -m pytest -q                     # 160 tests
 ```
 
 The tests use a throwaway SQLite file, no external APIs and no LLM keys, so they are deterministic and need no network.
@@ -46,6 +46,8 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 | `test_deploy_config.py` | Production safety checks, Neon URL normalising, trimming pasted settings, keys hidden in logs, Brevo and Gmail API email |
 | `test_api.py` (consent) | Sign-up refused without accepting the terms, older accounts asked once, demo copies never asked |
 | `test_monitoring.py` | Error reports carry no request body, query, token, cookies, user or local variables; Sentry off without a DSN; rate-limit counters are forgotten after their window |
+| `test_lifestyle.py` | Water goal and logging (undo, no negatives, no future days, private), streak rules (one rest day, freezes earned and used, at most 2, break days not missed), breaks (maintenance target, dashboard, end now, limits, overlaps, privacy, coach told) |
+| `test_swap_export_language.py` | Swap mid-workout (same muscle, own equipment only, never one already planned, keeps sets, refused after logging or finishing), hotel-room workout needs no equipment, export ZIP (own data only, photos, CSV, no secrets), coach language in the prompt, localized starter questions, demo notice |
 | `test_ai_provider.py`, `test_real_llm_paths.py` | Provider selection, Gemini schema conversion, a simulated tool-calling round trip |
 
 ## Frontend
@@ -54,7 +56,7 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 cd frontend
 npm run lint          # ESLint (TypeScript + React hooks rules)
 npm run typecheck     # strict TypeScript
-npm test              # 18 Vitest + Testing Library tests
+npm test              # 25 Vitest + Testing Library tests
 npm run build         # tsc + vite production build
 ```
 
@@ -66,6 +68,8 @@ npm run build         # tsc + vite production build
 | `utils/monitoring.test.ts` | Browser error reports drop users, headers, queries, console output and clicks |
 | `components/workout/NumCell.test.tsx` | Typing 42.5 key by key, letters ignored |
 | `pages/Register/Register.test.tsx` | Sign-up blocked until the consent box is ticked; links to both documents |
+| `components/dashboard/QuickLog.test.tsx` | Water: add a glass, undo disabled at zero, number restored if saving fails; weigh-in in lb saved as kg, impossible numbers refused; ending a break |
+| `components/workout/SwapExercise.test.tsx` | Alternatives listed and the picked one swapped |
 | `components/ConsentGate.test.tsx` | One-time prompt: hidden once accepted, needs the tick, records consent, sign-out option |
 
 ## End-to-end journey (manual checklist)

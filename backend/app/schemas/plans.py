@@ -54,6 +54,7 @@ class PlanDaysIn(BaseModel):
 class StartWorkoutIn(BaseModel):
     plan_id: int | None = None
     day_index: int = Field(ge=0, le=7, default=0)
+    travel: bool = False  # a no-equipment session for when you're away from your gym
 
 
 class UpdateSessionIn(BaseModel):

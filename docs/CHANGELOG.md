@@ -2,6 +2,17 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 26 Nov 2026: everyday features (v2 batch 2)
+
+- **Water tracker.** A Water card on the dashboard: one tap per glass (250 ml), with undo. The goal is about 35 ml per kg of body weight, rounded to a glass and kept between 2 and 4 litres. New table `water_logs` and `GET/POST /api/nutrition/water`.
+- **Quick weigh-in** from the dashboard, in kg or lb, without opening Progress.
+- **Swap an exercise mid-workout.** Machine taken, or something doesn't feel right? *Swap* offers exercises for the same muscle (then close ones) using only your equipment, keeps the planned sets, and sets today's target from the last time you did the new one. Not offered once sets are logged, so nothing is lost. `GET /api/workouts/sessions/{id}/alternatives`, `POST /api/workouts/sessions/{id}/swap`.
+- **Streak freezes.** Every 7 workouts in a streak earns a freeze (up to 2). A freeze covers one extra missed day automatically, so one busy week doesn't wipe out a long streak. Shown next to the streak on the dashboard.
+- **Travel and festival breaks.** Set dates (up to 21 days) and FitAI moves calories to maintenance, pauses the workout streak, and tells the coach. Travel breaks put a no-equipment **Hotel-room workout** on the dashboard; festival breaks get guilt-free festival tips. New table `breaks` and `/api/profile/breaks`.
+- **Export my data.** Settings, then *Export my data*, downloads a ZIP: every record as JSON, the food log, weigh-ins and every workout set as CSV, and the original progress photos. No password hashes or sign-in codes. Limited to 5 exports an hour. `GET /api/settings/export`. The privacy policy now lists this right.
+- **Coach in Hindi or Kannada.** Pick English, हिन्दी or ಕನ್ನಡ on the Coach page or in Settings. The AI coach replies in that language and script (food names as people say them, numbers in digits), and the starter questions switch too. Demo answers stay in English and say so. New column `users.coach_language` (added automatically).
+- The demo account now has a few days of water logged.
+
 ## 26 Nov 2026: fixes after the trust-and-speed release
 
 - **Security: Pillow 13.0.0.** 12.3.0 had three published security issues, and Pillow processes every uploaded photo.

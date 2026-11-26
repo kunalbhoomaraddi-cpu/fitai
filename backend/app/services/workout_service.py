@@ -216,3 +216,45 @@ def library(muscle: str | None = None, equipment: str | None = None) -> list[dic
 
 def get_exercise(eid: str) -> dict | None:
     return EXERCISE_BY_ID.get(eid)
+
+
+# --------------------------------------------------------------------------- swaps and travel workouts
+def _exercise_entry(ex: dict, eq: set[str], goal: str, experience: str) -> dict:
+    return {"exercise_id": ex["id"], "name": ex["name"], "muscle": ex["muscle"], "secondary": ex["secondary"],
+            "equipment": [e for e in ex["equipment"] if e in eq] or ex["equipment"], "instructions": ex["instructions"],
+            "image": f"muscle-{ex['muscle']}", **_prescription(ex, goal, experience, "standard"), "completed": False}
+
+
+def alternatives(current: dict, equipment: list[str], exclude: set[str], limit: int = 6) -> list[dict]:
+    """Exercises that can replace `current` when the machine is taken or something hurts:
+    same main muscle first, then ones that work it as a secondary muscle, using only the user's equipment."""
+    eq = set(equipment) | {"bodyweight"}
+    muscle = current.get("muscle")
+    skip = exclude | {current.get("exercise_id")}
+    same = [e for e in EXERCISES if e["muscle"] == muscle and _available(e, eq) and e["id"] not in skip]
+    near = [e for e in EXERCISES if muscle in e["secondary"] and _available(e, eq) and e["id"] not in skip]
+    kind = next((e["type"] for e in EXERCISES if e["id"] == current.get("exercise_id")), None)
+    same.sort(key=lambda e: (e["type"] != kind, e["name"]))  # like-for-like first (compound for compound)
+    out = []
+    for e in same + near:
+        if e["id"] not in {o["id"] for o in out}:
+            out.append(e)
+    return [{"exercise_id": e["id"], "name": e["name"], "muscle": e["muscle"], "equipment": e["equipment"],
+             "type": e["type"], "same_muscle": e["muscle"] == muscle} for e in out[:limit]]
+
+
+def swap_in(current: dict, new_id: str, equipment: list[str], goal: str, experience: str) -> dict:
+    """The replacement exercise, keeping the planned number of sets."""
+    ex = EXERCISE_BY_ID.get(new_id)
+    if not ex:
+        raise ValueError("Unknown exercise")
+    entry = _exercise_entry(ex, set(equipment) | {"bodyweight"}, goal, experience)
+    entry["sets"] = current.get("sets", entry["sets"])
+    entry["swapped_from"] = current.get("name")
+    return entry
+
+
+def travel_workout(goal: str, experience: str, minutes: int = 40) -> dict:
+    """A short full-body session needing no equipment: for a hotel room, a terrace or a relative's house."""
+    day = generate_plan(goal, experience, 1, ["bodyweight"], minutes, split="full_body")["days"][0]
+    return {"name": "Hotel-room workout", "exercises": day["exercises"]}

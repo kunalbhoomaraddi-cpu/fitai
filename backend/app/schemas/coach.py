@@ -25,3 +25,4 @@ class SettingsIn(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=120)
     ai_provider_pref: str | None = Field(default=None, pattern="^(auto|gemini|groq|mock)$")
     unit_system: str | None = Field(default=None, pattern="^(metric|imperial)$")
+    coach_language: str | None = Field(default=None, pattern="^(en|hi|kn)$")

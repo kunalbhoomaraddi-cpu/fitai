@@ -34,6 +34,7 @@ class UserOut(BaseModel):
     email_verified: bool
     onboarding_complete: bool
     ai_provider_pref: str
+    coach_language: str = "en"
     needs_consent: bool = False
 
     model_config = {"from_attributes": True}

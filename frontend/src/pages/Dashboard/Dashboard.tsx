@@ -1,15 +1,16 @@
 import clsx from 'clsx'
-import { ArrowRight, ArrowUpRight, Award, Beef, Bot, Calendar, CalendarCheck, CheckCircle2, Dumbbell, Flame, Lock, NotebookPen, Plus, Quote, RefreshCw, Scale, Sparkles, Target, Timer, Trophy, TrendingDown, TrendingUp, UtensilsCrossed, Zap } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Award, Beef, Bot, Calendar, CalendarCheck, CheckCircle2, Dumbbell, Flame, Lock, Luggage, NotebookPen, PartyPopper, Plus, Quote, RefreshCw, Scale, Snowflake, Sparkles, Target, Timer, Trophy, TrendingDown, TrendingUp, UtensilsCrossed, Zap } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ActivityChart, CaloriesChart, ProteinChart, WeightChart } from '../../components/charts/LazyCharts'
 import { Badge, Bar, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, MacroRow, PageSkeleton, Photo, Ring } from '../../components/ui'
 import { InstallBanner } from '../../components/InstallApp'
+import { BreakCard, WaterCard, WeighInCard } from '../../components/dashboard/QuickLog'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { useCountUp } from '../../hooks/useCountUp'
-import { checkinApi, dashboardApi, progressApi } from '../../services/fitai'
+import { checkinApi, dashboardApi, progressApi, workoutApi } from '../../services/fitai'
 import { fmtWeight, weightUnit, weightValue } from '../../utils/format'
 
 const CH_ICON: Record<string, any> = { dumbbell: Dumbbell, notebook: NotebookPen, beef: Beef, scale: Scale }
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const toast = useToast()
   const { data: d, error, loading, reload, setData } = useAsync(() => dashboardApi.get(), [])
   const [refreshing, setRefreshing] = useState(false)
+  const [travelBusy, setTravelBusy] = useState(false)
   const [confetti, setConfetti] = useState(0)
   const celebrated = useRef(false)
 
@@ -92,6 +94,12 @@ export default function Dashboard() {
   const diff = w.difference_kg
   const unlocked = d.achievements.filter((a: any) => a.unlocked).length
   const up = d.upcoming_workout
+  const brk = d.break
+  const lastWeigh = w.series.length ? w.series[w.series.length - 1] : null
+  const startTravel = async () => {
+    setTravelBusy(true)
+    try { await workoutApi.startTravel(); nav('/workouts') } catch (e) { toast('error', 'Could not start', (e as Error).message); setTravelBusy(false) }
+  }
 
   return (
     <div className="space-y-6">
@@ -109,14 +117,21 @@ export default function Dashboard() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="lime"><Target className="h-3 w-3" />{d.goal.label}</Badge>
-            {d.workouts.streak > 0 && <Badge tone="amber"><Flame className="h-3 w-3" />{d.workouts.streak}-workout streak</Badge>}
+            {brk && <Badge tone="amber">{brk.kind === 'travel' ? <Luggage className="h-3 w-3" /> : <PartyPopper className="h-3 w-3" />}{brk.note || brk.label} break, {brk.days_left} {brk.days_left === 1 ? 'day' : 'days'} left</Badge>}
+            {d.workouts.streak > 0 && <Badge tone="amber"><Flame className="h-3 w-3" />{d.workouts.streak}-workout streak{d.workouts.streak_paused ? ' (paused)' : ''}</Badge>}
+            {d.workouts.streak_freezes > 0 && (
+              <span title={`A freeze covers a missed day so your streak survives. You earn one for every 7 workouts in a streak (up to 2).`}>
+                <Badge tone="sky"><Snowflake className="h-3 w-3" />{d.workouts.streak_freezes} streak {d.workouts.streak_freezes === 1 ? 'freeze' : 'freezes'}</Badge>
+              </span>
+            )}
           </div>
           <h1 className="mt-4 font-display text-[44px] font-extrabold uppercase leading-[.92] tracking-[.01em] sm:text-[56px]">
             {w.goal_progress_pct >= 100 ? 'Goal reached. Set the next one.' : up?.when === 'Today' ? `${up.name} today` : up ? `Rest day, ${d.user.first_name}` : `Let's plan your week, ${d.user.first_name}`}
           </h1>
           <p className="mt-5 max-w-xl border-l-2 border-lime pl-4 text-[15px] leading-relaxed text-fg/90">{d.recommendation.text}</p>
           <div className="mt-6 flex flex-wrap gap-2.5">
-            {up ? <Button size="lg" icon={<Dumbbell className="h-4 w-4" />} onClick={() => nav('/workouts', { state: { start: up } })}>Start {up.when === 'Today' ? "today's" : 'next'} workout</Button>
+            {brk?.kind === 'travel' ? <Button size="lg" icon={<Luggage className="h-4 w-4" />} loading={travelBusy} onClick={startTravel}>Hotel-room workout</Button>
+              : up ? <Button size="lg" icon={<Dumbbell className="h-4 w-4" />} onClick={() => nav('/workouts', { state: { start: up } })}>Start {up.when === 'Today' ? "today's" : 'next'} workout</Button>
               : <Button size="lg" icon={<Dumbbell className="h-4 w-4" />} onClick={() => nav('/workouts')}>Create workout plan</Button>}
             <Button size="lg" variant="secondary" icon={<Bot className="h-4 w-4" />} onClick={() => nav('/coach')}>Ask your coach</Button>
           </div>
@@ -142,6 +157,13 @@ export default function Dashboard() {
           sub={<Bar value={t.protein_g} max={tg.protein_g} />} />
         <Stat className="col-span-2 border-t border-line lg:col-span-1 lg:border-l lg:border-t-0" label="Workouts done" value={d.workouts.total_completed}
           sub={`${d.workouts.this_week} this week, ${d.workouts.streak} in a row`} />
+      </section>
+
+      {/* QUICK LOG */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <WaterCard initial={d.water} />
+        <WeighInCard units={units} lastKg={lastWeigh?.weight_kg ?? null} lastDate={lastWeigh?.date ?? null} onSaved={() => reload(true)} />
+        <BreakCard active={brk} onChanged={() => reload(true)} />
       </section>
 
       <CheckinPrompt />

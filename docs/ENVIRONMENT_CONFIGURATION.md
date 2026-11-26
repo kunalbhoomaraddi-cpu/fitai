@@ -39,7 +39,8 @@ All secrets live in **`backend/.env`**, which is git-ignored. The browser never 
 | `SMTP_USE_TLS` | `true` | STARTTLS on port 587 |
 | `VERIFICATION_CODE_MINUTES` | `15` | Code lifetime |
 | `ENABLE_EXTERNAL_APIS` | `true` | Set `false` to work fully offline (reference data only) |
-| `OFF_BASE_URL` | `https://world.openfoodfacts.org` | Open Food Facts base URL |
+| `OFF_BASE_URL` | `https://world.openfoodfacts.org` | Open Food Facts base URL (barcodes, and the fallback search) |
+| `OFF_SEARCH_URL` | `https://search.openfoodfacts.org/search` | Open Food Facts search service used for name search |
 | `OFF_USER_AGENT` | `FitAI/1.0 (...)` | Identify your app and contact, as Open Food Facts requires |
 | `WGER_BASE_URL` | `https://wger.de/api/v2` | wger API base |
 | `EXTERNAL_TIMEOUT_SECONDS` | `6` | Timeout for food and exercise APIs |

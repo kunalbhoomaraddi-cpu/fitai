@@ -1,4 +1,6 @@
+
 """Barcode lookup: Open Food Facts product mapping, serving size, not-found, failures, input checks."""
+import httpx
 import pytest
 
 from app.services import nutrition_service as ns
@@ -23,6 +25,10 @@ def online(monkeypatch):
             return PRODUCT
         if code == "11111111":
             raise TimeoutError("slow")
+        if code in ("22222222", "33333333"):  # what the real API does: an HTTP status, not a 200
+            status = 404 if code == "22222222" else 503
+            req = httpx.Request("GET", url)
+            raise httpx.HTTPStatusError("x", request=req, response=httpx.Response(status, request=req, json={"status": 0}))
         return {"status": 0, "status_verbose": "product not found"}
     monkeypatch.setattr(ns, "http_get_json", fake)
     return calls
@@ -44,6 +50,14 @@ def test_unknown_and_unreachable(client, auth, online):
     assert r == {"found": False, "result": None, "warning": None}
     r = client.get("/api/nutrition/barcode/11111111", headers=auth).json()
     assert not r["found"] and "can't be reached" in r["warning"]
+    # Open Food Facts answers 404 for a barcode it doesn't list: that's "not found", not "unreachable"
+    r = client.get("/api/nutrition/barcode/22222222", headers=auth).json()
+    assert r == {"found": False, "result": None, "warning": None}
+    n = len(online)
+    client.get("/api/nutrition/barcode/22222222", headers=auth)
+    assert len(online) == n  # and it's remembered, so scanning it again doesn't ask again
+    r = client.get("/api/nutrition/barcode/33333333", headers=auth).json()
+    assert not r["found"] and "can't be reached" in r["warning"]  # a real outage still says so
 
 
 def test_rejects_non_barcodes_and_needs_login(client, auth):

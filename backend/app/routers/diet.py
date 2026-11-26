@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.ai.prompts import meal_plan_prompt
-from app.ai.provider import ProviderError, get_provider
+from app.ai.provider import ProviderError, get_provider, quick
 from app.database import get_db
 from app.models import DietPlan, FoodEntry, User
 from app.schemas.plans import DietPlanIn, MealCompleteIn, RegenerateMealIn, ReplaceItemIn
@@ -51,7 +51,7 @@ def generate(body: DietPlanIn, user: User = Depends(ai_rate_limit), db: Session 
     prefs = {"diet": diet if diet != "custom" else (prof.custom_diet or "custom"), "restrictions": restrictions,
              "budget": body.budget, "preferences": body.food_preferences, "meals_per_day": body.meals_per_day}
     meals, generated_by, note, notice = None, "reference_engine", None, None
-    provider = get_provider(user.ai_provider_pref)
+    provider = quick(get_provider(user.ai_provider_pref), 40)  # then the reference engine, never minutes of waiting
     if body.use_ai and provider.is_real_llm:
         try:
             system, prompt = meal_plan_prompt(prof, targets, prefs, ns.SLOTS[body.meals_per_day])

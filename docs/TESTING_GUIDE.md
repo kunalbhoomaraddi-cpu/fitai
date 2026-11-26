@@ -15,7 +15,7 @@ backend tests run twice, once on SQLite and once on PostgreSQL 16.
 cd backend && source .venv/bin/activate
 pip install -r requirements-dev.txt     # once: adds ruff
 ruff check .                            # lint
-python -m pytest -q                     # 161 tests
+python -m pytest -q                     # 167 tests
 ```
 
 The tests use a throwaway SQLite file, no external APIs and no LLM keys, so they are deterministic and need no network.
@@ -46,8 +46,9 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 | `test_deploy_config.py` | Production safety checks, Neon URL normalising, trimming pasted settings, keys hidden in logs, Brevo and Gmail API email |
 | `test_api.py` (consent) | Sign-up refused without accepting the terms, older accounts asked once, demo copies never asked |
 | `test_monitoring.py` | Error reports carry no request body, query, token, cookies, user or local variables; Sentry off without a DSN; rate-limit counters are forgotten after their window |
-| `test_lifestyle.py` | Water goal and logging (undo, no negatives, no future days, private), streak rules (one rest day, freezes earned and used, at most 2, break days not missed), breaks (maintenance target, dashboard, end now, limits, overlaps, privacy, coach told), a timing-out AI gets one 8-second try for the dashboard tip |
+| `test_lifestyle.py` | Water goal and logging (undo, no negatives, no future days, private), streak rules (one rest day, freezes earned and used, at most 2, break days not missed), breaks (maintenance target, dashboard, end now, limits, overlaps, privacy, coach told), a timing-out AI gets one short try for the dashboard tip, meal plans, workout notes and check-ins |
 | `test_swap_export_language.py` | Swap mid-workout (same muscle, own equipment only, never one already planned, keeps sets, refused after logging or finishing), hotel-room workout needs no equipment, export ZIP (own data only, photos, CSV, no secrets), coach language in the prompt, localized starter questions, demo notice |
+| `test_food_search.py` | Name search uses Open Food Facts' search service (brands cleaned, products without nutrition skipped), falls back to the classic search, shows FitAI's foods with a note when both are down, and ranks typo guesses after real matches |
 | `test_ai_provider.py`, `test_real_llm_paths.py` | Provider selection, Gemini schema conversion, a simulated tool-calling round trip |
 
 ## Frontend

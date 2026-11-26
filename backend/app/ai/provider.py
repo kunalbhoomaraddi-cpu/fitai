@@ -103,9 +103,10 @@ def ai_status(preference: str | None = None) -> dict:
 
 
 def quick(provider: LLMProvider, seconds: float = 8.0) -> LLMProvider:
-    """Tighten a provider for small extras shown on a page (the dashboard's daily tip), so a slow AI
-    service can never hold the page up: one attempt, a short time limit and no backup model. The
-    caller falls back to its built-in wording. Chats keep the normal, more patient settings."""
+    """Tighten a provider for AI work that has a built-in fallback (the dashboard tip, meal plans, workout
+    notes, check-in summaries), so a slow AI service can't keep someone waiting for minutes: one attempt,
+    a time limit and no backup model, after which the caller uses FitAI's own engine and says so.
+    Coach chats and meal photos keep the normal, more patient settings because they have no fallback."""
     for attr, value in (("timeout", seconds), ("max_retries", 0), ("fallback_model", None)):
         if hasattr(provider, attr):
             setattr(provider, attr, value)

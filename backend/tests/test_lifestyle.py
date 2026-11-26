@@ -131,3 +131,33 @@ def test_slow_ai_never_holds_up_the_dashboard(client, auth, monkeypatch):
     assert r.status_code == 200
     assert r.json()["recommendation"]["source"] == "rule-based" and r.json()["recommendation"]["text"]
     assert calls == [8.0]   # one attempt with an 8-second limit: no retries, no backup model
+
+
+def test_slow_ai_falls_back_quickly_for_plans_and_checkins(client, auth, monkeypatch):
+    """Meal plans, workout notes and check-ins have their own engines: a timing-out AI gets one try each."""
+    import httpx
+
+    import app.routers.diet as diet
+    import app.routers.workouts as workouts
+    import app.services.checkin_service as checkins
+    from app.ai.gemini import GeminiProvider
+    calls = []
+
+    def fake_post(self, url, **kw):
+        calls.append(self.timeout.read)
+        raise httpx.ReadTimeout("slow")
+
+    slow = lambda pref=None: GeminiProvider("test-key", "gemini-main", "gemini-backup")  # noqa: E731
+    for mod in (diet, workouts, checkins):
+        monkeypatch.setattr(mod, "get_provider", slow)
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+
+    r = client.post("/api/diet/generate", json={"meals_per_day": 4}, headers=auth)
+    assert r.status_code == 201 and r.json()["generated_by"] == "reference_engine" and r.json()["meals"]
+    assert calls == [40.0]
+    r = client.post("/api/workouts/generate", json={}, headers=auth)
+    assert r.status_code == 201 and r.json()["coach_note"]
+    assert calls[1:] == [15.0]
+    r = client.post("/api/checkins/generate", headers=auth)
+    assert r.status_code == 201 and r.json()["summary"]
+    assert calls[2:] == [20.0]

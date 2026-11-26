@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.prompts import workout_note_prompt
-from app.ai.provider import ProviderError, get_provider
+from app.ai.provider import ProviderError, get_provider, quick
 from app.database import get_db
 from app.models import User, WorkoutPlan, WorkoutSession
 from app.models._mixins import utcnow
@@ -55,7 +55,7 @@ def generate(body: WorkoutPlanIn, user: User = Depends(ai_rate_limit), db: Sessi
     dur = body.duration_minutes or prof.workout_minutes
     plan = wsvc.generate_plan(goal, exp, days, eq, dur, body.split, body.target_muscles, body.recovery, training_days=training_days)
     note, generated_by, notice = None, "fitai_engine", None
-    provider = get_provider(user.ai_provider_pref)
+    provider = quick(get_provider(user.ai_provider_pref), 15)  # the AI only writes the note; the plan is ready
     if body.use_ai and provider.is_real_llm:
         try:
             system, prompt = workout_note_prompt(prof, plan)

@@ -69,7 +69,9 @@ class Settings(BaseSettings):
     # External APIs
     enable_external_apis: bool = True
     off_base_url: str = "https://world.openfoodfacts.org"
-    off_user_agent: str = "FitAI/1.0 (local development; https://github.com/your-org/fitai)"
+    # Name search runs on Open Food Facts' newer search service; the old /cgi/search.pl is the fallback
+    off_search_url: str = "https://search.openfoodfacts.org/search"
+    off_user_agent: str = "FitAI/1.0 (https://github.com/kunalbhoomaraddi-cpu/fitai)"
     wger_base_url: str = "https://wger.de/api/v2"
     external_timeout_seconds: float = 6.0
 

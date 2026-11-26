@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.prompts import GOAL_LABEL, SAFETY_RULES
-from app.ai.provider import ProviderError, get_provider
+from app.ai.provider import ProviderError, get_provider, quick
 from app.models import FoodEntry, User, UserAchievement, WeeklyCheckin
 from app.services import fitness_service, progress_service
 from app.utils.clock import local_date, local_today
@@ -184,7 +184,7 @@ def out(c: WeeklyCheckin) -> dict:
 
 def generate(db: Session, user: User) -> tuple[WeeklyCheckin, str | None]:
     facts = compute_facts(db, user)
-    provider = get_provider(user.ai_provider_pref)
+    provider = quick(get_provider(user.ai_provider_pref), 20)  # the rules engine writes it if the AI is slow
     summary, notice = None, None
     if provider.is_real_llm:
         summary = llm_summary(provider, user, facts)

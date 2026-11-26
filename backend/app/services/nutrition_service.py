@@ -9,6 +9,7 @@ import re
 from collections import defaultdict
 from datetime import date, timedelta
 
+import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -41,8 +42,11 @@ def _map_off_product(p: dict) -> dict | None:
     name = (p.get("product_name") or "").strip()
     if not name or kcal is None:
         return None
+    brands = p.get("brands") or ""
+    first = (brands[0] if brands else "") if isinstance(brands, list) else brands.split(",")[0]
+    brand = re.sub(r"^[a-z]{2}:", "", str(first)).strip() or None  # the search service tags brands like "xx:Amul"
     return {
-        "id": f"off:{p.get('code', '')}", "name": name, "brand": (p.get("brands") or "").split(",")[0] or None,
+        "id": f"off:{p.get('code', '')}", "name": name, "brand": brand,
         "calories_100g": round(float(kcal)), "protein_100g": round(float(n.get("proteins_100g") or 0), 1),
         "carbs_100g": round(float(n.get("carbohydrates_100g") or 0), 1),
         "fat_100g": round(float(n.get("fat_100g") or 0), 1), "source": "open_food_facts",
@@ -64,7 +68,7 @@ def indian_result(f: dict) -> dict:
             "image_url": None, "servings": f["servings"], "diet": f["diet"], "category": f["category"]}
 
 
-def search_indian_foods(query: str, limit: int = 10, word_guess: bool = True) -> list[dict]:
+def search_indian_foods(query: str, limit: int = 10, word_guess: bool = True, typos: bool = True) -> list[dict]:
     """Ranked search over names + regional aliases, with typo tolerance (e.g. 'chapathi', 'biriyani').
 
     word_guess=False skips the last-resort single-word guess, which is fine for a search box
@@ -94,7 +98,7 @@ def search_indian_foods(query: str, limit: int = 10, word_guess: bool = True) ->
             best = max(best, s + bonus)
         if best:
             scored[key] = best
-    if not scored:  # typo tolerance
+    if not scored and typos:  # typo tolerance
         for term in difflib.get_close_matches(q, list(_INDIAN_VOCAB), n=limit, cutoff=0.78):
             # strict mode: every word must resemble a word of the match ("dal curry" is not "egg curry")
             if not word_guess and not all(
@@ -110,35 +114,48 @@ def search_indian_foods(query: str, limit: int = 10, word_guess: bool = True) ->
     return [indian_result(INDIAN_FOODS[k]) for k in ranked[:limit]]
 
 
+def _off_search(query: str) -> list[dict]:
+    """Products matching a name. Uses Open Food Facts' search service (better ranking, and the one they
+    keep up); falls back to the classic search page if it fails. Raises if both fail."""
+    fields = "code,product_name,brands,nutriments,image_front_small_url"
+    headers = {"User-Agent": settings.off_user_agent}
+    try:
+        data = http_get_json(settings.off_search_url, params={"q": query, "page_size": 15, "fields": fields, "langs": "en"},
+                             headers=headers)
+        return data.get("hits") or []
+    except Exception as exc:
+        log.warning("Open Food Facts search service failed (%s); trying the classic search", type(exc).__name__)
+    data = http_get_json(f"{settings.off_base_url}/cgi/search.pl", headers=headers,
+                         params={"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 15,
+                                 "fields": fields})
+    return data.get("products") or []
+
+
 def search_food(query: str, limit: int = 12) -> dict:
     """Returns {results, source, warning}. Never raises for upstream failures."""
     query = query.strip()[:80]
     if not query:
         return {"results": [], "source": "none", "warning": None}
-    indian = search_indian_foods(query, limit=10)
+    indian = search_indian_foods(query, limit=10, typos=False)
+    # typo guesses ("chapathi" -> chapati) go after real matches, so "nutella" shows Nutella before "Nutrela" soya chunks
+    guesses = [] if indian else search_indian_foods(query, limit=4)
     reference = (indian + [r for r in search_reference_foods(query, limit=6)
                            if r["id"].removeprefix("ref:") not in REPLACES_REFERENCE])[:12]
     if not settings.enable_external_apis:
-        return {"results": reference, "source": "reference", "warning": "External food database disabled; showing FitAI reference foods."}
+        return {"results": reference + guesses, "source": "reference", "warning": "External food database disabled; showing FitAI reference foods."}
     cached = _off_cache.get(query.lower())
     if cached is not None:
-        return {"results": (reference + cached)[:max(limit, len(reference) + 4)], "source": "open_food_facts", "warning": None}
+        return {"results": (reference + cached)[:max(limit, len(reference) + 4)] + guesses, "source": "open_food_facts", "warning": None}
     if not _off_limiter.allow():
-        return {"results": reference, "source": "reference",
+        return {"results": reference + guesses, "source": "reference",
                 "warning": "Open Food Facts search limit reached (≈10/min). Showing reference foods — try again in a minute."}
     try:
-        data = http_get_json(
-            f"{settings.off_base_url}/cgi/search.pl",
-            params={"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 15,
-                    "fields": "code,product_name,brands,nutriments,image_front_small_url"},
-            headers={"User-Agent": settings.off_user_agent},
-        )
-        mapped = [m for m in (_map_off_product(p) for p in data.get("products", [])) if m][:10]
+        mapped = [m for m in (_map_off_product(p) for p in _off_search(query)) if m][:10]
         _off_cache.set(query.lower(), mapped)
-        return {"results": (reference + mapped)[:max(limit, len(reference) + 4)], "source": "open_food_facts", "warning": None}
+        return {"results": (reference + mapped)[:max(limit, len(reference) + 4)] + guesses, "source": "open_food_facts", "warning": None}
     except Exception as exc:  # network, timeout, 5xx, JSON
         log.warning("Open Food Facts unavailable: %s", type(exc).__name__)
-        return {"results": reference, "source": "reference",
+        return {"results": reference + guesses, "source": "reference",
                 "warning": "Packaged foods (Open Food Facts) can't be reached right now. Showing foods from FitAI's own database."}
 
 
@@ -159,7 +176,12 @@ def lookup_barcode(code: str) -> dict:
             params={"fields": "code,product_name,brands,nutriments,image_front_small_url,serving_size,serving_quantity"},
             headers={"User-Agent": settings.off_user_agent},
         )
-    except Exception as exc:  # network, timeout, 5xx, JSON
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code != 404:  # Open Food Facts answers 404 for a barcode it doesn't list
+            log.warning("Open Food Facts barcode lookup failed: HTTP %s", exc.response.status_code)
+            return {"found": False, "result": None, "warning": "The packaged-food database can't be reached right now. Search by name instead."}
+        data = {"status": 0}
+    except Exception as exc:  # network, timeout, JSON
         log.warning("Open Food Facts barcode lookup failed: %s", type(exc).__name__)
         return {"found": False, "result": None, "warning": "The packaged-food database can't be reached right now. Search by name instead."}
     product = data.get("product") if data.get("status") == 1 else None

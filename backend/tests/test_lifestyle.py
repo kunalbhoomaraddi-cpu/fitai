@@ -117,16 +117,27 @@ def test_slow_ai_never_holds_up_the_dashboard(client, auth, monkeypatch):
     """A timing-out AI service gets one short try for the daily tip, then the built-in tip is used."""
     import httpx
 
+    import app.ai.gemini as gemini_mod
     import app.routers.dashboard as dash
     from app.ai.gemini import GeminiProvider
     calls = []
 
-    def fake_post(self, url, **kw):
-        calls.append(self.timeout.read)
-        raise httpx.ReadTimeout("slow")
+    class SlowClient:  # stands in for httpx.Client inside the Gemini provider only (not the test client)
+        def __init__(self, timeout=None, **kw):
+            self.timeout = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, url, **kw):
+            calls.append(self.timeout)
+            raise httpx.ReadTimeout("slow")
 
     monkeypatch.setattr(dash, "get_provider", lambda pref=None: GeminiProvider("test-key", "gemini-main", "gemini-backup"))
-    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    monkeypatch.setattr(gemini_mod.httpx, "Client", SlowClient)
     r = client.get("/api/dashboard", headers=auth)
     assert r.status_code == 200
     assert r.json()["recommendation"]["source"] == "rule-based" and r.json()["recommendation"]["text"]
@@ -137,20 +148,31 @@ def test_slow_ai_falls_back_quickly_for_plans_and_checkins(client, auth, monkeyp
     """Meal plans, workout notes and check-ins have their own engines: a timing-out AI gets one try each."""
     import httpx
 
+    import app.ai.gemini as gemini_mod
     import app.routers.diet as diet
     import app.routers.workouts as workouts
     import app.services.checkin_service as checkins
     from app.ai.gemini import GeminiProvider
     calls = []
 
-    def fake_post(self, url, **kw):
-        calls.append(self.timeout.read)
-        raise httpx.ReadTimeout("slow")
+    class SlowClient:  # stands in for httpx.Client inside the Gemini provider only (not the test client)
+        def __init__(self, timeout=None, **kw):
+            self.timeout = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, url, **kw):
+            calls.append(self.timeout)
+            raise httpx.ReadTimeout("slow")
 
     slow = lambda pref=None: GeminiProvider("test-key", "gemini-main", "gemini-backup")  # noqa: E731
     for mod in (diet, workouts, checkins):
         monkeypatch.setattr(mod, "get_provider", slow)
-    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    monkeypatch.setattr(gemini_mod.httpx, "Client", SlowClient)
 
     r = client.post("/api/diet/generate", json={"meals_per_day": 4}, headers=auth)
     assert r.status_code == 201 and r.json()["generated_by"] == "reference_engine" and r.json()["meals"]

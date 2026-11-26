@@ -96,7 +96,7 @@ export function BreakCard({ active, onChanged }: { active: Break | null; onChang
   }
   const I = active ? KIND_ICON[active.kind] : Luggage
   return (
-    <Card className={clsx('flex flex-col', active && 'border-amber/30')}>
+    <Card className={clsx('flex h-full flex-col', active && 'border-amber/30')}>
       <CardHeader title={active ? `${active.label} break` : 'Travel or festival'} subtitle={active ? `${active.note ? `${active.note}, ` : ''}until ${shortDate(active.end_on)}` : 'Pause without losing progress'}
         icon={<I className="h-4 w-4" />} />
       <div className="flex flex-1 flex-col justify-between gap-4 p-5">

@@ -100,3 +100,13 @@ def ai_status(preference: str | None = None) -> dict:
         "The AI coach isn't connected, so answers come from FitAI's built-in rules. "
         "They still use your real numbers. (Setup: add GEMINI_API_KEY to backend/.env.)",
     }
+
+
+def quick(provider: LLMProvider, seconds: float = 8.0) -> LLMProvider:
+    """Tighten a provider for small extras shown on a page (the dashboard's daily tip), so a slow AI
+    service can never hold the page up: one attempt, a short time limit and no backup model. The
+    caller falls back to its built-in wording. Chats keep the normal, more patient settings."""
+    for attr, value in (("timeout", seconds), ("max_retries", 0), ("fallback_model", None)):
+        if hasattr(provider, attr):
+            setattr(provider, attr, value)
+    return provider

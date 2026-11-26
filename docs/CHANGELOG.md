@@ -2,6 +2,12 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 26 Nov 2026: fixes found checking batch 2 live
+
+- **Fixed: a slow AI service could hold the dashboard for minutes.** The daily tip waited up to 45 seconds per try, with retries and a backup model; live, a new account's first dashboard took 2 minutes while Gemini was slow. The tip now gets one 8-second try and otherwise uses the built-in tip. Coach chats keep the more patient limits.
+- **Fixed: swaps in the Hotel-room workout offered gym equipment** (barbell squats, leg press). On the road, swaps now offer only no-equipment exercises.
+- **Dashboard layout:** the Water, Weigh-in and break cards use two columns on medium screens (the break card full width) and three on wide ones, so nothing is squeezed.
+
 ## 26 Nov 2026: everyday features (v2 batch 2)
 
 - **Water tracker.** A Water card on the dashboard: one tap per glass (250 ml), with undo. The goal is about 35 ml per kg of body weight, rounded to a glass and kept between 2 and 4 litres. New table `water_logs` and `GET/POST /api/nutrition/water`.

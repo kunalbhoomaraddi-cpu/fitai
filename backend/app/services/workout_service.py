@@ -219,6 +219,14 @@ def get_exercise(eid: str) -> dict | None:
 
 
 # --------------------------------------------------------------------------- swaps and travel workouts
+TRAVEL_WORKOUT = "Hotel-room workout"
+
+
+def session_equipment(session_name: str, profile_equipment: list[str]) -> list[str]:
+    """Equipment a running workout can use: none on the road, otherwise what the person has."""
+    return ["bodyweight"] if session_name == TRAVEL_WORKOUT else profile_equipment
+
+
 def _exercise_entry(ex: dict, eq: set[str], goal: str, experience: str) -> dict:
     return {"exercise_id": ex["id"], "name": ex["name"], "muscle": ex["muscle"], "secondary": ex["secondary"],
             "equipment": [e for e in ex["equipment"] if e in eq] or ex["equipment"], "instructions": ex["instructions"],
@@ -257,4 +265,4 @@ def swap_in(current: dict, new_id: str, equipment: list[str], goal: str, experie
 def travel_workout(goal: str, experience: str, minutes: int = 40) -> dict:
     """A short full-body session needing no equipment: for a hotel room, a terrace or a relative's house."""
     day = generate_plan(goal, experience, 1, ["bodyweight"], minutes, split="full_body")["days"][0]
-    return {"name": "Hotel-room workout", "exercises": day["exercises"]}
+    return {"name": TRAVEL_WORKOUT, "exercises": day["exercises"]}

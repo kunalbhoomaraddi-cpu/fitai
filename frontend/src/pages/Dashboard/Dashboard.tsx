@@ -160,10 +160,10 @@ export default function Dashboard() {
       </section>
 
       {/* QUICK LOG */}
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <WaterCard initial={d.water} />
         <WeighInCard units={units} lastKg={lastWeigh?.weight_kg ?? null} lastDate={lastWeigh?.date ?? null} onSaved={() => reload(true)} />
-        <BreakCard active={brk} onChanged={() => reload(true)} />
+        <div className="sm:col-span-2 xl:col-span-1"><BreakCard active={brk} onChanged={() => reload(true)} /></div>
       </section>
 
       <CheckinPrompt />

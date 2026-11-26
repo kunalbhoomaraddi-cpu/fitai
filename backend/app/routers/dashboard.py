@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.prompts import SAFETY_RULES
-from app.ai.provider import ProviderError, get_provider
+from app.ai.provider import ProviderError, get_provider, quick
 from app.data.quotes import quote_of_the_day
 from app.database import get_db
 from app.models import SavedRecommendation, User, WorkoutPlan
@@ -73,7 +73,7 @@ def _daily_recommendation(db: Session, user: User, today_n, targets, analysis, u
                                                          SavedRecommendation.title == key))
     if cached and not refresh:
         return {"text": cached.content, "source": cached.source}
-    provider = get_provider(user.ai_provider_pref)
+    provider = quick(get_provider(user.ai_provider_pref))  # the tip must never hold up the dashboard
     text, source = None, "rule-based"
     if provider.is_real_llm:
         facts = {"goal": user.profile.goal, "today_logged": today_n["totals"], "targets": targets,

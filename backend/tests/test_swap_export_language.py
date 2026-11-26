@@ -48,6 +48,9 @@ def test_hotel_room_workout_needs_no_equipment(client, auth):
     s = _start(client, auth, travel=True)
     assert s["name"] == "Hotel-room workout" and len(s["exercises"]) >= 4
     assert all(e["equipment"] == ["bodyweight"] for e in s["exercises"])
+    alts = client.get(f"/api/workouts/sessions/{s['id']}/alternatives?index=0", headers=auth).json()
+    assert alts and all(a["equipment"] == ["bodyweight"] or "bodyweight" in a["equipment"] for a in alts)  # still no gym kit
+    assert client.post(f"/api/workouts/sessions/{s['id']}/swap", json={"index": 0, "exercise_id": "goblet_squat"}, headers=auth).status_code == 400
 
 
 # --------------------------------------------------------------------------- export

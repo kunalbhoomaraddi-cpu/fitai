@@ -111,3 +111,23 @@ def test_coach_knows_about_the_break(client, auth):
     with SessionLocal() as db:
         prompt = coach_system_prompt(db.get(User, uid))
     assert "travel break (Goa trip)" in prompt and "Hotel-room workout" in prompt
+
+
+def test_slow_ai_never_holds_up_the_dashboard(client, auth, monkeypatch):
+    """A timing-out AI service gets one short try for the daily tip, then the built-in tip is used."""
+    import httpx
+
+    import app.routers.dashboard as dash
+    from app.ai.gemini import GeminiProvider
+    calls = []
+
+    def fake_post(self, url, **kw):
+        calls.append(self.timeout.read)
+        raise httpx.ReadTimeout("slow")
+
+    monkeypatch.setattr(dash, "get_provider", lambda pref=None: GeminiProvider("test-key", "gemini-main", "gemini-backup"))
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    r = client.get("/api/dashboard", headers=auth)
+    assert r.status_code == 200
+    assert r.json()["recommendation"]["source"] == "rule-based" and r.json()["recommendation"]["text"]
+    assert calls == [8.0]   # one attempt with an 8-second limit: no retries, no backup model

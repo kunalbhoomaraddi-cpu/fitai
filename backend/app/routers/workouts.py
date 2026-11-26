@@ -181,7 +181,7 @@ def alternatives(sid: int, index: int = Query(ge=0, le=30), user: User = Depends
     if index >= len(s.exercises):
         raise HTTPException(400, "Invalid exercise")
     in_session = {e.get("exercise_id") for e in s.exercises}
-    return wsvc.alternatives(s.exercises[index], user.profile.equipment, in_session)
+    return wsvc.alternatives(s.exercises[index], wsvc.session_equipment(s.name, user.profile.equipment), in_session)
 
 
 @router.post("/sessions/{sid}/swap")
@@ -190,14 +190,15 @@ def swap(sid: int, body: SwapIn, user: User = Depends(require_profile), db: Sess
     s = _own_active(db, user, sid)
     if body.index >= len(s.exercises):
         raise HTTPException(400, "Invalid exercise")
-    allowed = {a["exercise_id"] for a in wsvc.alternatives(s.exercises[body.index], user.profile.equipment,
+    equipment = wsvc.session_equipment(s.name, user.profile.equipment)
+    allowed = {a["exercise_id"] for a in wsvc.alternatives(s.exercises[body.index], equipment,
                                                           {e.get("exercise_id") for e in s.exercises}, limit=50)}
     if body.exercise_id not in allowed:
         raise HTTPException(400, "That exercise isn't a suitable swap here")
     cur = s.exercises[body.index]
     if (cur.get("sets_done") or 0) > 0 or any(x.get("done") for x in cur.get("set_log") or []):
         raise HTTPException(409, "You've already logged sets for this exercise. Finish it, or add the other one next time.")
-    new = wsvc.swap_in(cur, body.exercise_id, user.profile.equipment, user.profile.goal, user.profile.experience)
+    new = wsvc.swap_in(cur, body.exercise_id, equipment, user.profile.goal, user.profile.experience)
     new["sets_done"] = 0
     target = lift_service.suggest(new, lift_service.last_logged_sets(db, user.id).get(body.exercise_id, []))
     if target:

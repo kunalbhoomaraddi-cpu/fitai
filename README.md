@@ -12,7 +12,7 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-160%20passing-C6F36B)
+![Tests](https://img.shields.io/badge/tests-161%20passing-C6F36B)
 
 ![FitAI dashboard](docs/screenshots/dashboard.webp)
 
@@ -38,7 +38,7 @@ FitAI turns a person's profile, meals, workouts and weigh-ins into calorie and m
 - **Built for Indian users.** A coach that can reply in Hindi or Kannada, festival and travel breaks that switch to maintenance calories and pause the streak, and about 200 home-style dishes (jolada rotti, girmit, dosa, dal, biryani…) searchable by regional names and common misspellings, logged by household portion: 1 roti, 1 katori, 1 dosa. Dates follow the user's own time zone.
 - **Your data is yours.** A privacy policy written for India's DPDP Act, consent at sign-up, one-click *Export my data* (JSON, CSV and photos) and full account deletion.
 - **Security taken seriously.** Email verification and a one-time code on every login, codes hashed with HMAC and limited to 5 attempts, password changes sign out every other device, per-IP rate limits, API keys hidden from every logged error, and progress photos stripped of GPS and camera data and visible only to their owner.
-- **Production-minded.** 160 tests run on SQLite and PostgreSQL in GitHub Actions, linted with Ruff and ESLint. Production mode refuses to start with unsafe settings. Each demo visitor gets a private sandbox that deletes itself.
+- **Production-minded.** 161 tests run on SQLite and PostgreSQL in GitHub Actions, linted with Ruff and ESLint. Production mode refuses to start with unsafe settings. Each demo visitor gets a private sandbox that deletes itself.
 
 ## Screenshots
 
@@ -122,7 +122,7 @@ Full instructions: [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) · every setting: 
 ./scripts/test-all.sh
 ```
 
-This runs the same checks as CI: Ruff and 160 pytest tests for the backend, and ESLint, 25 Vitest tests, strict TypeScript and a production build for the frontend. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for what each test file covers.
+This runs the same checks as CI: Ruff and 161 pytest tests for the backend, and ESLint, 25 Vitest tests, strict TypeScript and a production build for the frontend. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for what each test file covers.
 
 ## Project structure
 
@@ -138,7 +138,7 @@ fitai/
 │   │   ├── schemas/     Pydantic request and response models
 │   │   ├── data/        foods, Indian dishes, meal templates, exercise library, quotes
 │   │   └── utils/       time zones, rate limiting, HTTP helpers
-│   ├── tests/           160 pytest tests
+│   ├── tests/           161 pytest tests
 │   └── requirements.txt · requirements-dev.txt · ruff.toml
 ├── frontend/
 │   ├── src/             pages, components, layouts, hooks, services, context

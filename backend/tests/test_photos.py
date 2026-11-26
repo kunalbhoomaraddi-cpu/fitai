@@ -62,7 +62,7 @@ def test_rejects_bad_files_and_inputs(client, auth):
 
 def test_photos_are_private_and_editable(client, auth):
     pid = _up(client, auth).json()["id"]
-    r = client.post("/api/auth/register", json={"full_name": "Snoop", "email": "snoop@example.com", "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Snoop", "email": "snoop@example.com", "password": "secret123", "accept_terms": True})
     h = {"Authorization": f"Bearer {r.json()['access_token']}"}
     verify(client, h, "snoop@example.com")
     client.put("/api/profile", json=PROFILE, headers=h)

@@ -61,10 +61,14 @@ def run_light_migrations() -> None:
         if "timezone" not in cols:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN timezone VARCHAR(64) NULL"))
+        ts = "TIMESTAMP" if engine.dialect.name == "postgresql" else "DATETIME"
         if "password_changed_at" not in cols:
-            ts = "TIMESTAMP" if engine.dialect.name == "postgresql" else "DATETIME"
             with engine.begin() as conn:
                 conn.execute(text(f"ALTER TABLE users ADD COLUMN password_changed_at {ts} NULL"))
+        if "consented_at" not in cols:  # privacy-policy consent (existing accounts are asked once on their next visit)
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN consented_at {ts} NULL"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN consent_version VARCHAR(20) NULL"))
     # PostgreSQL enforces VARCHAR lengths (SQLite doesn't): widen columns that grew in later versions
     if engine.dialect.name == "postgresql":
         widen = {("workout_plans", "generated_by"): 100, ("diet_plans", "generated_by"): 100,

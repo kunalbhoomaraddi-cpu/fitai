@@ -2,7 +2,7 @@ from tests.conftest import LOGIN_CODES, verify
 
 
 def _verified_user(client, email):
-    r = client.post("/api/auth/register", json={"full_name": "Otp User", "email": email, "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Otp User", "email": email, "password": "secret123", "accept_terms": True})
     verify(client, {"Authorization": f"Bearer {r.json()['access_token']}"}, email)
 
 
@@ -57,6 +57,6 @@ def test_code_single_use_and_resend_cooldown(client):
 
 def test_demo_and_unverified_skip_login_code(client):
     assert "access_token" in client.post("/api/auth/demo").json()
-    client.post("/api/auth/register", json={"full_name": "Not Yet", "email": "o5@example.com", "password": "secret123"})
+    client.post("/api/auth/register", json={"full_name": "Not Yet", "email": "o5@example.com", "password": "secret123", "accept_terms": True})
     r = client.post("/api/auth/login", json={"email": "o5@example.com", "password": "secret123"})
     assert "access_token" in r.json() and r.json()["user"]["email_verified"] is False

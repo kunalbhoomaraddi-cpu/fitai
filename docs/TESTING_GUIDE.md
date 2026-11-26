@@ -3,7 +3,7 @@
 ## Run everything
 
 ```bash
-./scripts/test-all.sh     # backend lint + tests, frontend lint + type-check + production build
+./scripts/test-all.sh     # backend lint + tests, frontend lint + tests + type-check + production build
 ```
 
 The same checks run automatically on GitHub for every push and pull request (`.github/workflows/ci.yml`):
@@ -15,7 +15,7 @@ backend tests run twice, once on SQLite and once on PostgreSQL 16.
 cd backend && source .venv/bin/activate
 pip install -r requirements-dev.txt     # once: adds ruff
 ruff check .                            # lint
-python -m pytest -q                     # 138 tests
+python -m pytest -q                     # 142 tests
 ```
 
 The tests use a throwaway SQLite file, no external APIs and no LLM keys, so they are deterministic and need no network.
@@ -44,6 +44,8 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 | `test_training_days.py` | Plans on the user's chosen weekdays, moving an existing plan's days, dashboard follows the new days |
 | `test_demo.py` | Each demo visitor gets a private copy, copies expire, the demo email domain is reserved |
 | `test_deploy_config.py` | Production safety checks, Neon URL normalising, trimming pasted settings, keys hidden in logs, Brevo and Gmail API email |
+| `test_api.py` (consent) | Sign-up refused without accepting the terms, older accounts asked once, demo copies never asked |
+| `test_monitoring.py` | Error reports carry no request body, query, token, cookies, user or local variables; Sentry off without a DSN |
 | `test_ai_provider.py`, `test_real_llm_paths.py` | Provider selection, Gemini schema conversion, a simulated tool-calling round trip |
 
 ## Frontend
@@ -52,8 +54,19 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 cd frontend
 npm run lint          # ESLint (TypeScript + React hooks rules)
 npm run typecheck     # strict TypeScript
+npm test              # 18 Vitest + Testing Library tests
 npm run build         # tsc + vite production build
 ```
+
+| Test file | What it checks |
+|---|---|
+| `utils/format.test.ts` | kg/lb display and round trips (135 lb stays 135), set formatting |
+| `utils/workout.test.ts` | Typed decimals and commas, "8–12" read as 8, progression tips in kg and lb |
+| `utils/calendar.test.ts` | Next training date, one weekly event per day plus the check-in, escaping |
+| `utils/monitoring.test.ts` | Browser error reports drop users, headers, queries, console output and clicks |
+| `components/workout/NumCell.test.tsx` | Typing 42.5 key by key, letters ignored |
+| `pages/Register/Register.test.tsx` | Sign-up blocked until the consent box is ticked; links to both documents |
+| `components/ConsentGate.test.tsx` | One-time prompt: hidden once accepted, needs the tick, records consent, sign-out option |
 
 ## End-to-end journey (manual checklist)
 

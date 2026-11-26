@@ -19,7 +19,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
               ))}
             </ul>
           </div>
-          <p className="text-xs text-fg-dim">FitAI provides general fitness guidance, not medical advice.</p>
+          <p className="text-xs text-fg-dim">FitAI provides general fitness guidance, not medical advice. <Link to="/privacy" className="ml-2 underline hover:text-fg">Privacy</Link><Link to="/terms" className="ml-3 underline hover:text-fg">Terms</Link></p>
         </div>
       </div>
       <div className="relative flex items-center justify-center px-5 py-10 sm:px-10">

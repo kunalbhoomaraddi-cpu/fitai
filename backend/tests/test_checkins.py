@@ -61,7 +61,7 @@ def test_fast_loss_is_flagged(client, auth):
 
 def test_checkins_are_private(client, auth):
     cid = client.post("/api/checkins/generate", headers=auth).json()["id"]
-    r = client.post("/api/auth/register", json={"full_name": "Other", "email": "peek@example.com", "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Other", "email": "peek@example.com", "password": "secret123", "accept_terms": True})
     from tests.conftest import PROFILE, verify
     h = {"Authorization": f"Bearer {r.json()['access_token']}"}
     verify(client, h, "peek@example.com")

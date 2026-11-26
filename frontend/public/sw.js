@@ -1,7 +1,7 @@
 /* FitAI service worker: makes the app installable and lets it open without a connection.
    It caches only the app itself (pages, scripts, fonts, pictures), never personal data:
    the API lives on another domain and is always fetched live. Bump VERSION to clear old caches. */
-const VERSION = 'fitai-v1'
+const VERSION = 'fitai-v2'
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png']
 
 self.addEventListener('install', event => {

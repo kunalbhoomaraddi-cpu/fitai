@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { BookmarkCheck, Bookmark, Check, ChefHat, ChevronDown, Clock, History, Info, RefreshCw, Repeat2, Sparkles, Trash2, Wand2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { MacroDonut } from '../../components/charts/Charts'
+import { MacroDonut } from '../../components/charts/LazyCharts'
 import { Badge, Button, Card, CardHeader, Chip, EmptyState, ErrorState, Input, Label, MacroRow, Meta, Modal, Notice, PageHeader, Photo, Segmented, Select, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'

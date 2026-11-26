@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import AppLayout from './layouts/AppLayout'
 import { Logo, PageSkeleton } from './components/ui'
+import ConsentGate from './components/ConsentGate'
 import Login from './pages/Login/Login'
 import Register from './pages/Register/Register'
 import VerifyEmail from './pages/VerifyEmail/VerifyEmail'
@@ -19,6 +20,8 @@ const ProgressTracker = lazy(() => import('./pages/ProgressTracker/ProgressTrack
 const ProgressPhotos = lazy(() => import('./pages/ProgressPhotos/ProgressPhotos'))
 const Checkins = lazy(() => import('./pages/Checkins/Checkins'))
 const Settings = lazy(() => import('./pages/Settings/Settings'))
+const Privacy = lazy(() => import('./pages/Legal/Legal').then(m => ({ default: m.Privacy })))
+const Terms = lazy(() => import('./pages/Legal/Legal').then(m => ({ default: m.Terms })))
 
 function Splash() {
   return <div className="flex min-h-screen items-center justify-center"><div className="animate-pulse"><Logo /></div></div>
@@ -31,7 +34,7 @@ function Protected({ children, needsProfile = true }: { children: ReactNode; nee
   if (!user) return <Navigate to="/login" state={{ from: loc.pathname }} replace />
   if (!user.email_verified) return <Navigate to="/verify-email" replace />
   if (needsProfile && !user.onboarding_complete) return <Navigate to="/onboarding" replace />
-  return <>{children}</>
+  return <>{children}<ConsentGate /></>
 }
 
 function PublicOnly({ children }: { children: ReactNode }) {
@@ -59,6 +62,8 @@ export default function App() {
         <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
         <Route path="/forgot-password" element={<PublicOnly><ForgotPassword /></PublicOnly>} />
         <Route path="/verify-email" element={<VerifyRoute />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/onboarding" element={<Protected needsProfile={false}><Onboarding /></Protected>} />
         <Route element={<Protected><AppLayout /></Protected>}>
           <Route path="/dashboard" element={<Suspense fallback={<PageSkeleton />}><Dashboard /></Suspense>} />

@@ -274,7 +274,7 @@ export default function Landing() {
       <footer className="border-t border-line-soft">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-fg-dim sm:flex-row">
           <div className="flex items-center gap-3"><Logo /><span>Your numbers, your plan, your coach.</span></div>
-          <div className="flex gap-6">{home ? <Link to={home} className="hover:text-fg">{homeLabel}</Link> : <><Link to="/login" className="hover:text-fg">Log in</Link><Link to="/register" className="hover:text-fg">Sign up</Link></>}<a href="#faq" className="hover:text-fg">FAQ</a></div>
+          <div className="flex gap-6">{home ? <Link to={home} className="hover:text-fg">{homeLabel}</Link> : <><Link to="/login" className="hover:text-fg">Log in</Link><Link to="/register" className="hover:text-fg">Sign up</Link></>}<a href="#faq" className="hover:text-fg">FAQ</a><Link to="/privacy" className="hover:text-fg">Privacy</Link><Link to="/terms" className="hover:text-fg">Terms</Link></div>
         </div>
         <p className="pb-8 text-center text-xs text-fg-dim">FitAI provides general fitness guidance, not medical advice. © {new Date().getFullYear()} FitAI</p>
       </footer>

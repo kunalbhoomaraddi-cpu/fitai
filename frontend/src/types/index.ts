@@ -13,7 +13,7 @@ export interface MealPhotoItem {
 export interface MealPhotoResult { items: MealPhotoItem[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number }; is_food: boolean; note: string | null; model: string; seconds: number }
 
 export interface User {
-  id: number; email: string; full_name: string; is_demo: boolean; email_verified: boolean; onboarding_complete: boolean; ai_provider_pref: string
+  id: number; email: string; full_name: string; is_demo: boolean; email_verified: boolean; onboarding_complete: boolean; ai_provider_pref: string; needs_consent?: boolean
 }
 export interface Profile {
   full_name?: string; age: number; gender: 'male' | 'female' | 'other' | null; height_cm: number

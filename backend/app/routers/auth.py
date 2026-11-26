@@ -1,9 +1,12 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
+from app.legal import POLICY_VERSION
 from app.models import User
 from app.schemas.auth import (
     ForgotPasswordIn,
@@ -32,9 +35,12 @@ def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(400, "This email address is reserved. Please use your own email.")
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
+    if not body.accept_terms:
+        raise HTTPException(400, "Please accept the Terms and Privacy Policy to create an account.")
     required = get_settings().email_verification_required
     user = User(email=email, full_name=body.full_name, hashed_password=hash_password(body.password),
-                email_verified=not required)
+                email_verified=not required, consented_at=datetime.now(UTC).replace(tzinfo=None),
+                consent_version=POLICY_VERSION)
     db.add(user)
     db.commit()
     verification = None
@@ -124,3 +130,12 @@ def reset_password(body: ResetPasswordIn, request: Request, db: Session = Depend
     auth_rate_limit(f"reset:{request.client.host if request.client else 'x'}")
     password_reset_service.complete(db, body.reset_token, body.code, body.new_password)
     return {"detail": "Your password has been reset. Please log in with your new password."}
+
+
+@router.post("/consent", response_model=UserOut)
+def consent(user: User = Depends(get_authenticated_user), db: Session = Depends(get_db)):
+    """Records that the signed-in person accepted the current Terms and Privacy Policy."""
+    user.consented_at = datetime.now(UTC).replace(tzinfo=None)
+    user.consent_version = POLICY_VERSION
+    db.commit()
+    return UserOut.model_validate(user)

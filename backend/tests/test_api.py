@@ -6,16 +6,40 @@ def test_health(client):
     assert r.status_code == 200 and r.json()["status"] == "ok"
 
 
+def test_sign_up_requires_accepting_the_terms(client):
+    body = {"full_name": "Consent Test", "email": "consent@example.com", "password": "secret123"}
+    r = client.post("/api/auth/register", json=body)
+    assert r.status_code == 400 and "Privacy Policy" in r.json()["detail"]
+    r = client.post("/api/auth/register", json={**body, "accept_terms": True})
+    assert r.status_code == 201 and r.json()["user"]["needs_consent"] is False
+
+
+def test_existing_accounts_are_asked_once(client, auth):
+    from app.database import SessionLocal
+    from app.models import User
+    me = client.get("/api/auth/me", headers=auth).json()
+    with SessionLocal() as db:  # an account from before the policy existed
+        u = db.get(User, me["id"])
+        u.consent_version = None
+        u.consented_at = None
+        db.commit()
+    assert client.get("/api/auth/me", headers=auth).json()["needs_consent"] is True
+    assert client.post("/api/auth/consent", headers=auth).json()["needs_consent"] is False
+    assert client.get("/api/auth/me", headers=auth).json()["needs_consent"] is False
+    demo = client.post("/api/auth/demo").json()
+    assert demo["user"]["needs_consent"] is False  # demo copies hold no personal data
+
+
 def test_register_validation_and_duplicate(client):
-    assert client.post("/api/auth/register", json={"full_name": "A", "email": "bad", "password": "x"}).status_code == 422
-    body = {"full_name": "Dup User", "email": "dup@example.com", "password": "secret123"}
+    assert client.post("/api/auth/register", json={"full_name": "A", "email": "bad", "password": "x", "accept_terms": True}).status_code == 422
+    body = {"full_name": "Dup User", "email": "dup@example.com", "password": "secret123", "accept_terms": True}
     assert client.post("/api/auth/register", json=body).status_code == 201
     assert client.post("/api/auth/register", json=body).status_code == 409
 
 
 def test_login(client):
     from tests.conftest import LOGIN_CODES, verify
-    r = client.post("/api/auth/register", json={"full_name": "Log In", "email": "login@example.com", "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Log In", "email": "login@example.com", "password": "secret123", "accept_terms": True})
     verify(client, {"Authorization": f"Bearer {r.json()['access_token']}"}, "login@example.com")
     assert client.post("/api/auth/login", json={"email": "login@example.com", "password": "wrong999"}).status_code == 401
     r = client.post("/api/auth/login", json={"email": "LOGIN@example.com", "password": "secret123"})
@@ -54,7 +78,7 @@ def test_nutrition_crud_and_isolation(client, auth):
     assert day["totals"]["calories"] == 233 and day["by_meal"]["breakfast"]["count"] == 1
     assert client.patch(f"/api/nutrition/entries/{eid}", json={"calories": 300}, headers=auth).json()["calories"] == 300
     # another user cannot touch it
-    r2 = client.post("/api/auth/register", json={"full_name": "Other", "email": "other@example.com", "password": "secret123"})
+    r2 = client.post("/api/auth/register", json={"full_name": "Other", "email": "other@example.com", "password": "secret123", "accept_terms": True})
     h2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
     from tests.conftest import verify
     verify(client, h2, "other@example.com")

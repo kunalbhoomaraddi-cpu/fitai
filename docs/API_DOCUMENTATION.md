@@ -7,12 +7,13 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 ## Auth
 | Method | Path | Description |
 |---|---|---|
-| POST | `/auth/register` | `{full_name, email, password}` → `{access_token, user, verification}`. Password must be at least 8 characters, with a letter and a number. Sends a 6-digit code; every other endpoint returns **403** until it's verified |
+| POST | `/auth/register` | `{full_name, email, password, accept_terms: true}` → `{access_token, user, verification}`. Password must be at least 8 characters, with a letter and a number. Sends a 6-digit code; every other endpoint returns **403** until it's verified |
 | POST | `/auth/login` | `{email, password}`. With two-step login on → `{otp_required, otp_token, email_masked, delivery}` and a code is emailed (no session yet). Otherwise → token |
 | POST | `/auth/login/verify` | `{otp_token, code}` → `{access_token, user}`. 5 attempts; a new login cancels the previous pending one |
 | POST | `/auth/login/resend` | `{otp_token}` → new code (60 s cooldown) |
 | POST | `/auth/demo` | Creates or resets the labelled demo account → token |
-| GET | `/auth/me` | Current user (works before verification) |
+| GET | `/auth/me` | Current user (works before verification). `needs_consent` is true until the current Privacy Policy is accepted |
+| POST | `/auth/consent` | Records acceptance of the current Terms and Privacy Policy; returns the user |
 | POST | `/auth/verify-email` | `{code: "123456"}` → verified user. 5 attempts per code |
 | POST | `/auth/resend-code` | Sends a new code (60 s cooldown) → `{delivery: email|console}` |
 | POST | `/auth/logout` | 204 (stateless JWT; the client discards the token) |

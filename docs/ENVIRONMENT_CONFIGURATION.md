@@ -7,6 +7,7 @@ All secrets live in **`backend/.env`**, which is git-ignored. The browser never 
 | Key | Required? | Where to get it | Free tier |
 |---|---|---|---|
 | `GEMINI_API_KEY` | Optional (without it: demo mode) | https://aistudio.google.com/apikey | Yes. Free-tier access covers the Flash and Flash-Lite models, with per-minute and per-day limits shown in AI Studio. Limits change, so FitAI never assumes unlimited use |
+| `SENTRY_DSN` / `VITE_SENTRY_DSN` | Optional (without them: no error reports) | https://sentry.io (FastAPI and Browser JavaScript projects) | Yes, the free Developer plan |
 | Gmail App Password (`SMTP_PASSWORD`) | Optional (without it, development prints codes in the terminal; production refuses to register users) | https://myaccount.google.com/apppasswords (needs 2-Step Verification) | Yes. Gmail allows roughly 500 emails a day, plenty for a small app |
 | `GROQ_API_KEY` | Optional alternative | https://console.groq.com/keys | Yes, rate-limited |
 | Open Food Facts | No key | — | About 10 search requests a minute per IP. FitAI caches results and stays under 8 a minute, and requires an identifying `OFF_USER_AGENT` |

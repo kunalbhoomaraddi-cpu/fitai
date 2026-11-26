@@ -7,5 +7,5 @@ echo "▸ Backend lint + tests"
   && { command -v ruff >/dev/null || pip install -q -r requirements-dev.txt; } \
   && ruff check . && python -m pytest -q )
 echo "▸ Frontend lint + type-check + production build"
-( cd "$ROOT/frontend" && npm run lint && npm run build )
+( cd "$ROOT/frontend" && npm run lint && npm test && npm run build )
 echo "✓ All checks passed"

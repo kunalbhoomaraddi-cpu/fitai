@@ -29,3 +29,5 @@ services:
         sync: false
       - key: EMAIL_FROM        # e.g. FitAI <you@gmail.com> (verified in Brevo)
         sync: false
+      - key: SENTRY_DSN        # optional error reports; leave unset to keep them off
+        sync: false

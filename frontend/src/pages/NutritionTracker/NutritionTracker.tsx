@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { Bookmark, Camera, ChevronLeft, ChevronRight, Coffee, Cookie, Copy, Database, Loader2, Moon, Pencil, Plus, ScanBarcode, Search, Sun, Trash2, UtensilsCrossed } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { CaloriesChart, ProteinChart } from '../../components/charts/Charts'
+import { CaloriesChart, ProteinChart } from '../../components/charts/LazyCharts'
 import { BarcodeScanner } from '../../components/nutrition/BarcodeScanner'
 import { MealPhoto } from '../../components/nutrition/MealPhoto'
 import { Badge, Button, Card, CardHeader, ErrorState, Input, Label, MacroRow, Meta, Modal, Notice, PageHeader, Ring, Segmented, Skeleton } from '../../components/ui'

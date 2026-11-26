@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     app_name: str = "FitAI"
     environment: Literal["development", "production", "test"] = "development"
     log_level: str = "INFO"
+    # Error reports (optional). Leave empty to keep Sentry switched off.
+    sentry_dsn: str = ""
 
     # Database: SQLite locally, PostgreSQL in production (postgresql+psycopg://user:pass@host/db)
     database_url: str = "sqlite:///./fitai.db"

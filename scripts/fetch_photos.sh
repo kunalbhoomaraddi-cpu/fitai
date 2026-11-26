@@ -11,7 +11,7 @@ ok=0; skip=0; fail=0
 while IFS='|' read -r name id subject; do
   [[ -z "${name// }" || "$name" == \#* ]] && continue
   dest="$OUT/$name.jpg"
-  if [[ -s "$dest" ]]; then skip=$((skip+1)); continue; fi
+  if [[ -s "$OUT/$name.webp" ]]; then skip=$((skip+1)); continue; fi
   url="https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=72&fm=jpg"
   if curl -fsSL --max-time 25 -o "$dest.tmp" "$url" && file "$dest.tmp" 2>/dev/null | grep -qiE 'jpeg|image'; then
     mv "$dest.tmp" "$dest"; ok=$((ok+1)); echo "  ✓ $name ($subject)"
@@ -20,3 +20,5 @@ while IFS='|' read -r name id subject; do
   fi
 done < "$ROOT/scripts/photos.txt"
 echo "Photos: $ok downloaded, $skip already present, $fail using artwork fallback → $OUT"
+# The app serves WebP in three sizes; convert what was downloaded (needs Python with Pillow).
+[[ $ok -gt 0 ]] && python3 "$ROOT/scripts/make_webp.py"

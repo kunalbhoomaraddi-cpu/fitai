@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts'
 import type { Card as CardT, Units } from '../../types'
 import { fmtWeight } from '../../utils/format'
-import { MacroDonut } from '../charts/Charts'
+import { MacroDonut } from '../charts/LazyCharts'
 import { MacroRow } from '../ui'
 
 const ICON: Record<string, any> = { metrics: Flame, macros: Salad, weight_trend: LineIcon, workout: Dumbbell, foods: Search, nutrition_day: Utensils, insights: Info, saved: Bookmark, profile: User }

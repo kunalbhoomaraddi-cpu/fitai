@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { TrendingUp, Trophy } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { LiftChart } from '../charts/Charts'
+import { LiftChart } from '../charts/LazyCharts'
 import { Card, CardHeader, EmptyState, Select, Skeleton } from '../ui'
 import { workoutApi } from '../../services/fitai'
 import type { Lift } from '../../types'

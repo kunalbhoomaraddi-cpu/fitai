@@ -5,6 +5,8 @@ class RegisterIn(BaseModel):
     full_name: str = Field(min_length=2, max_length=120)
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
+    # Must be true: the person agreed to the Terms and Privacy Policy, including processing of health data.
+    accept_terms: bool = False
 
     @field_validator("password")
     @classmethod
@@ -32,6 +34,7 @@ class UserOut(BaseModel):
     email_verified: bool
     onboarding_complete: bool
     ai_provider_pref: str
+    needs_consent: bool = False
 
     model_config = {"from_attributes": True}
 

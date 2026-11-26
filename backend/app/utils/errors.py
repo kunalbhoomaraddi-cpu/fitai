@@ -5,6 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.monitoring import report
+
 log = logging.getLogger("fitai")
 
 
@@ -31,4 +33,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def unhandled(_: Request, exc: Exception):
         log.exception("Unhandled error: %s", type(exc).__name__)
+        report(exc)
         return JSONResponse({"detail": "Something went wrong on our side. Please try again."}, status_code=500)

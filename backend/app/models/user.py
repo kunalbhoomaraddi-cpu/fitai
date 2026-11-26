@@ -19,9 +19,17 @@ class User(TimestampMixin, Base):
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # sessions issued before this moment are rejected (set on password change/reset)
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    consented_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # when they accepted the privacy policy
+    consent_version: Mapped[str | None] = mapped_column(String(20), nullable=True)  # which version they accepted
     timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)  # IANA name from the browser, e.g. Asia/Kolkata
     onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # per-user AI preference: auto | gemini | groq | mock (keys always stay server-side)
     ai_provider_pref: Mapped[str] = mapped_column(String(20), default="auto", nullable=False)
 
     profile = relationship("FitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+    @property
+    def needs_consent(self) -> bool:
+        """True until the person has accepted the current Privacy Policy (demo copies never ask)."""
+        from app.legal import POLICY_VERSION
+        return not self.is_demo and self.consent_version != POLICY_VERSION

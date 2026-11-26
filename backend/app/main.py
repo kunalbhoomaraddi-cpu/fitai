@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from app.ai.provider import available_providers
 from app.config import get_settings
 from app.database import init_db
+from app.monitoring import init_sentry
 from app.routers import auth, checkins, coach, dashboard, diet, nutrition, photos, profile, progress, workouts
 from app.routers import settings as settings_router
 from app.utils.clock import TimezoneMiddleware
@@ -18,6 +19,7 @@ from app.utils.errors import register_exception_handlers
 settings = get_settings()
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("fitai")
+init_sentry()
 
 
 @asynccontextmanager

@@ -2,7 +2,7 @@ from tests.conftest import SENT_CODES
 
 
 def _register(client, email):
-    r = client.post("/api/auth/register", json={"full_name": "Verify Me", "email": email, "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Verify Me", "email": email, "password": "secret123", "accept_terms": True})
     assert r.status_code == 201, r.text
     body = r.json()
     return {"Authorization": f"Bearer {body['access_token']}"}, body

@@ -2,6 +2,17 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 26 Nov 2026: trust and speed
+
+- **Privacy policy and terms** at `/privacy` and `/terms`, written for India's DPDP Act: what FitAI stores, which services process it (including Gemini for coach chats and meal photos), how long it's kept, and how to delete it. Linked from the landing page, sign-in pages and Settings.
+- **Consent at sign-up.** Creating an account needs a ticked box (18+, Terms and Privacy Policy, use of health details). Accounts made before this see a one-time prompt and can accept or sign out. Stored as `consented_at` and `consent_version` on users (columns added automatically); changing `POLICY_VERSION` in `backend/app/legal.py` asks everyone again. New endpoint `POST /api/auth/consent`; `/auth/register` now needs `accept_terms: true`.
+- **Error reports with Sentry (optional).** Off until `SENTRY_DSN` (Render) and `VITE_SENTRY_DSN` (Vercel) are set. Reports leave out request bodies, query strings, sign-in tokens, cookies, local variables and user details. In the browser, Sentry downloads only after the page has loaded.
+- **Weekly encrypted database backups** (`.github/workflows/backup.yml`), kept 30 days. Off until the `DATABASE_URL` and `BACKUP_PASSPHRASE` repository secrets exist. Restore steps are in the deployment guide.
+- **Upgrades:** React Router 7 and Vite 8 (with its new bundler). `npm audit` now reports 0 problems. CI runs on Node 22.
+- **Frontend tests:** 18 Vitest and Testing Library tests (unit conversions, progression tips, calendar file, decimal typing, sign-up consent, the consent prompt, error-report scrubbing), run in CI before the build.
+- **Faster first load.** The charts library (about 430 KB) no longer loads on the landing and sign-in pages, and on other pages the text appears first while charts fill in.
+- **Smaller photos.** The 46 photos are WebP now, in 640, 960 and 1280 px copies; phones download the size they need. 6.8 MB of JPG became 4.0 MB at full size.
+
 ## 24 Nov 2026: v2 begins
 
 - **Install FitAI like a phone app.** Add it to the home screen from Chrome (one-tap Install) or iPhone Safari (Share, then Add to Home Screen; the app shows the steps). It opens full screen with its own icon and shortcuts, and opens even without a connection. Only the app itself is cached, never personal data. A dismissible invite appears on phones; Settings has an *App and reminders* section.

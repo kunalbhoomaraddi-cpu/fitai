@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { Bookmark, BookmarkCheck, CalendarDays, Check, ChevronDown, Clock, Dumbbell, Flag, History, Info, Pause, Play, Plus, Sparkles, Timer, Trash2, TrendingUp, Trophy, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ActivityChart } from '../../components/charts/Charts'
+import { ActivityChart } from '../../components/charts/LazyCharts'
 import { Badge, Bar, Button, Card, CardHeader, Celebration, Chip, EmptyState, ErrorState, Label, Modal, Notice, PageHeader, Photo, Ring, Segmented, Select, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -10,8 +10,10 @@ import { useAsync } from '../../hooks/useAsync'
 import { ExerciseDemoModal, demoFor, demoImg } from '../../components/workout/ExerciseDemo'
 import { CalendarRow } from '../../components/workout/CalendarReminders'
 import { LiftProgress } from '../../components/workout/LiftProgress'
+import { NumCell } from '../../components/workout/NumCell'
+import { firstReps, targetText } from '../../utils/workout'
 import { workoutApi } from '../../services/fitai'
-import type { Exercise, SetEntry, SetTarget, Units, WorkoutPlan, WorkoutSession } from '../../types'
+import type { Exercise, SetEntry, Units, WorkoutPlan, WorkoutSession } from '../../types'
 import { cap, EQUIPMENT, fmtLiftSet, GOAL_LABEL, liftShow, liftToKg, MUSCLES, planTitle, shortDate, weightUnit } from '../../utils/format'
 
 const SPLITS: [string, string, string][] = [
@@ -87,33 +89,6 @@ function ExerciseRow({ e, index, session, onToggle, prev, onLog, units = 'metric
   )
 }
 
-const num = (v: string) => { const n = parseFloat(v.replace(',', '.')); return Number.isFinite(n) && n >= 0 ? n : null }
-
-/** A number box that keeps exactly what is typed ("42." stays "42." while you type 42.5) and reports the parsed value. */
-function NumCell({ value, onValue, label, placeholder, decimal }: { value: number | null; onValue: (v: number | null) => void; label: string; placeholder: string; decimal?: boolean }) {
-  const [text, setText] = useState(value == null ? '' : String(value))
-  const [focused, setFocused] = useState(false)
-  useEffect(() => { if (!focused) setText(value == null ? '' : String(value)) }, [value, focused])
-  return (
-    <input inputMode={decimal ? 'decimal' : 'numeric'} aria-label={label} value={text} placeholder={placeholder}
-      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-      onChange={ev => { const t = ev.target.value; if (!/^\d*([.,]\d*)?$/.test(t)) return; setText(t); onValue(num(t)) }}
-      className="h-9 w-full rounded-lg border border-line bg-ink-900 px-2 text-center tabular-nums text-fg placeholder:text-fg-dim focus:border-lime/60 focus:outline-none" />
-  )
-}
-const firstReps = (r: string) => { const m = r.match(/\d+/); return m ? Number(m[0]) : null }
-
-/** The progression tip shown above the set table, in the user's units. */
-function targetText(t: SetTarget, units: Units) {
-  const w = (kg: number | null) => (kg == null ? '' : `${liftShow(kg, units)} ${weightUnit(units)}`)
-  switch (t.action) {
-    case 'add_weight': return { head: `Try ${w(t.kg)} × ${t.reps}`, why: `You did ${t.last_reps}+ reps on every set at ${w(t.last_kg)} last time.` }
-    case 'add_reps': return { head: t.kg != null ? `${w(t.kg)}, aim for ${t.reps} reps` : `Aim for ${t.reps} reps`, why: `One more rep than your weakest set last time (${t.last_reps}).` }
-    case 'hold': return { head: `Stay at ${w(t.kg)}`, why: `Build up to ${t.reps} reps on every set before adding weight (last time: ${t.last_reps}).` }
-    case 'add_time': return { head: `Hold for ${t.reps} s`, why: `5 seconds longer than your best last time (${t.last_reps} s).` }
-    case 'harder': return { head: `Aim for ${t.reps} reps, or a harder version`, why: `You hit the top of the range on every set. Slow the lowering to 3 seconds, or try a harder variation.` }
-  }
-}
 
 /** Hevy-style set table: last time's numbers on the left, today's kg and reps, one tap to tick a set. */
 function SetTable({ e, prev, units, onChange }: { e: Exercise; prev?: SetEntry[]; units: Units; onChange: (log: SetEntry[], tickedNow: boolean) => void }) {

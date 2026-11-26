@@ -54,7 +54,7 @@ _counter = {"n": 0}
 def auth(client):
     _counter["n"] += 1
     email = f"user{_counter['n']}@example.com"
-    r = client.post("/api/auth/register", json={"full_name": "Test User", "email": email, "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Test User", "email": email, "password": "secret123", "accept_terms": True})
     assert r.status_code == 201, r.text
     h = {"Authorization": f"Bearer {r.json()['access_token']}"}
     verify(client, h, email)
@@ -72,7 +72,7 @@ def second_user(client):
 def _make_user(client):
     _counter["n"] += 1
     email = f"user{_counter['n']}@example.com"
-    r = client.post("/api/auth/register", json={"full_name": "Other User", "email": email, "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Other User", "email": email, "password": "secret123", "accept_terms": True})
     h = {"Authorization": f"Bearer {r.json()['access_token']}"}
     verify(client, h, email)
     client.put("/api/profile", json=PROFILE, headers=h)

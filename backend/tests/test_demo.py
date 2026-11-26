@@ -52,5 +52,5 @@ def test_cap_keeps_newest(client):
 
 
 def test_demo_domain_reserved(client):
-    r = client.post("/api/auth/register", json={"full_name": "Test User", "email": "visitor-abc@demo.fitai.app", "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Test User", "email": "visitor-abc@demo.fitai.app", "password": "secret123", "accept_terms": True})
     assert r.status_code == 400

@@ -6,7 +6,7 @@ from tests.conftest import RESET_CODES, verify
 
 
 def _user(client, email="reset@example.com"):
-    r = client.post("/api/auth/register", json={"full_name": "Reset Me", "email": email, "password": "secret123"})
+    r = client.post("/api/auth/register", json={"full_name": "Reset Me", "email": email, "password": "secret123", "accept_terms": True})
     h = {"Authorization": f"Bearer {r.json()['access_token']}"}
     verify(client, h, email)
     return h

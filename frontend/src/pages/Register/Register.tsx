@@ -12,12 +12,14 @@ export default function Register() {
   const [f, setF] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [agree, setAgree] = useState(false)
   const rules = [[f.password.length >= 8, '8+ characters'], [/[a-zA-Z]/.test(f.password), 'A letter'], [/\d/.test(f.password), 'A number']] as const
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setError(null)
     if (f.name.trim().length < 2) return setError('Enter your full name')
     if (!/^\S+@\S+\.\S+$/.test(f.email)) return setError('Enter a valid email address')
     if (!rules.every(r => r[0])) return setError('Password needs at least 8 characters, including a letter and a number')
+    if (!agree) return setError('Tick the box to accept the Terms and Privacy Policy')
     setBusy(true)
     try { const u = await register(f.name.trim(), f.email.trim(), f.password); nav(u.email_verified ? '/onboarding' : '/verify-email', { replace: true }) }
     catch (err) { setError(err instanceof Error ? err.message : 'Registration failed') } finally { setBusy(false) }
@@ -36,6 +38,10 @@ export default function Register() {
             {rules.map(([ok, l]) => <span key={l} className={clsx('flex items-center gap-1 text-xs transition', ok ? 'text-lime' : 'text-fg-dim')}><Check className="h-3 w-3" />{l}</span>)}
           </div>
         </div>
+        <label className="flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-fg-muted">
+          <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-lime" />
+          <span>I am 18 or older and agree to the <Link to="/terms" target="_blank" className="text-fg underline underline-offset-2 hover:text-lime">Terms</Link> and <Link to="/privacy" target="_blank" className="text-fg underline underline-offset-2 hover:text-lime">Privacy Policy</Link>, including FitAI using my health and fitness details to build my plans.</span>
+        </label>
         {error && <Notice tone="warn">{error}</Notice>}
         <Button type="submit" size="lg" full loading={busy} icon={busy ? undefined : <ArrowRight className="h-4 w-4" />}>Create account</Button>
       </form>

@@ -1,7 +1,7 @@
 import { tokenStore } from '../../services/api'
 import { Bot, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, Chip, Input, Label, Modal, Notice, PageHeader, Segmented, Select, Skeleton } from '../../components/ui'
 import { InstallRow } from '../../components/InstallApp'
 import { CalendarRow } from '../../components/workout/CalendarReminders'
@@ -148,6 +148,10 @@ export default function Settings() {
             <div className="flex flex-wrap gap-2 border-t border-line-soft pt-5">
               <Button variant="secondary" onClick={() => { logout(); nav('/login') }} icon={<LogOut className="h-4 w-4" />}>Log out</Button>
               <Button variant="danger" onClick={() => setDelOpen(true)} icon={<ShieldAlert className="h-4 w-4" />}>Delete account</Button>
+            </div>
+            <div className="flex gap-5 text-sm text-fg-muted">
+              <Link to="/privacy" className="hover:text-fg">Privacy policy</Link>
+              <Link to="/terms" className="hover:text-fg">Terms of use</Link>
             </div>
           </div>
         </Section>

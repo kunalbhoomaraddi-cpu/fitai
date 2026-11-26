@@ -84,6 +84,44 @@ Before pushing, run the same checks locally:
 ./scripts/test-all.sh
 ```
 
+## Error reports (optional): Sentry
+
+Free plan, nothing is sent until you add a DSN. Reports are stripped of request bodies, query strings,
+sign-in tokens, cookies and user details before they leave the server or browser.
+
+1. Sign up at sentry.io and create two projects: **FastAPI** and **Browser JavaScript**.
+2. Render → Environment: add `SENTRY_DSN` with the FastAPI project's DSN, then save and deploy.
+3. Vercel → Settings → Environment Variables: add `VITE_SENTRY_DSN` with the Browser project's DSN, then redeploy
+   (it is read at build time).
+
+## Backups
+
+`.github/workflows/backup.yml` dumps the database every Sunday at 02:47 India time, encrypts it, and keeps it
+as a workflow artifact for 30 days. The repository is public and anyone signed in to GitHub can download
+artifacts, so **the dump is always encrypted**.
+
+Turn it on with two repository secrets (GitHub → Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `DATABASE_URL` | the same value as on Render |
+| `BACKUP_PASSPHRASE` | a long random phrase, e.g. from `openssl rand -base64 32`. Store a copy in your password manager. Without it no backup can be opened. |
+
+Then Actions → Weekly database backup → **Run workflow** to make the first one.
+
+**Restore** (needs `gpg` and PostgreSQL client tools 18, e.g. `brew install gnupg libpq`):
+
+```bash
+# 1. Download the newest "fitai-db-backup" artifact from the Actions tab and unzip it
+# 2. Decrypt (asks for the passphrase)
+gpg -d fitai-YYYY-MM-DD.dump.gpg > fitai.dump
+# 3. Restore into an EMPTY database (a new Neon branch is safest), using a postgresql:// URL
+pg_restore --no-owner --no-privileges -d "postgresql://USER:PASSWORD@HOST/DB?sslmode=require" fitai.dump
+# 4. Point Render's DATABASE_URL at it (add +psycopg after postgresql) and redeploy
+```
+
+Delete `fitai.dump` when you are done: it is not encrypted.
+
 ## Other options
 
 - **Docker Compose (single server):** `docker compose up --build` with `ENVIRONMENT=production` and the same variables.

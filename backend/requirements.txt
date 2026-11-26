@@ -14,6 +14,8 @@ pillow==12.3.0
 tzdata==2025.2
 # PostgreSQL driver (used when DATABASE_URL starts with postgresql+psycopg://)
 psycopg[binary]==3.2.9
+# error reports; stays switched off unless SENTRY_DSN is set
+sentry-sdk[fastapi]==2.77.0
 
 # testing
 pytest==8.4.1

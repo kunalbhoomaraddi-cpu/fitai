@@ -1,5 +1,6 @@
 import { tokenStore } from '../../services/api'
-import { Bot, Download, Dumbbell, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
+import { Bot, Download, Dumbbell, Gauge, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
+import { AdaptiveSettings } from '../../components/AdaptiveTarget'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, Chip, Input, Label, Modal, Notice, PageHeader, Segmented, Select, Skeleton } from '../../components/ui'
@@ -122,6 +123,9 @@ export default function Settings() {
             {p.diet_preference === 'custom' && <div><Label htmlFor="cd">Custom diet</Label><Input id="cd" value={p.custom_diet ?? ''} onChange={e => upd('custom_diet', e.target.value)} /></div>}
             <div><Label>Restrictions & allergies</Label><div className="flex flex-wrap gap-2">{RESTRICTIONS.map(r => <Chip key={r} active={p.food_restrictions.includes(r)} onClick={() => toggle('food_restrictions', r)}>{r}</Chip>)}</div></div>
           </div>
+        </Section>
+        <Section id="target" icon={<Gauge className="h-4 w-4" />} title="Calorie target" desc="How your daily calories are worked out.">
+          <AdaptiveSettings />
         </Section>
         <Section id="units" icon={<Ruler className="h-4 w-4" />} title="Measurement units" desc="Data is stored in metric; display converts automatically.">
           <Segmented options={[['metric', 'Metric (kg, cm)'], ['imperial', 'Imperial (lb, ft/in)']] as const} value={units} onChange={setUnits} />

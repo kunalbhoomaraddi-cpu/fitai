@@ -1,9 +1,10 @@
 import clsx from 'clsx'
-import { Bookmark, Camera, ChevronLeft, ChevronRight, Coffee, Cookie, Copy, Database, Loader2, Moon, Pencil, Plus, ScanBarcode, Search, Sun, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Bookmark, Camera, ChevronLeft, ChevronRight, Coffee, Cookie, Copy, Database, Loader2, Moon, Pencil, Plus, ScanBarcode, Search, Sun, Trash2, UtensilsCrossed, Mic } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { CaloriesChart, ProteinChart } from '../../components/charts/LazyCharts'
 import { BarcodeScanner } from '../../components/nutrition/BarcodeScanner'
 import { MealPhoto } from '../../components/nutrition/MealPhoto'
+import { DescribeMeal } from '../../components/nutrition/DescribeMeal'
 import { Badge, Button, Card, CardHeader, ErrorState, Input, Label, MacroRow, Meta, Modal, Notice, PageHeader, Ring, Segmented, Skeleton } from '../../components/ui'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -211,6 +212,7 @@ export default function NutritionTracker() {
   const [adding, setAdding] = useState<MealType | null>(null)
   const [editing, setEditing] = useState<FoodEntry | null>(null)
   const [snapping, setSnapping] = useState(false)
+  const [describing, setDescribing] = useState(false)
   const isToday = date === todayISO()
   const [busy, setBusy] = useState<string | null>(null)
   const [saving, setSaving] = useState<MealType | null>(null)
@@ -235,12 +237,14 @@ export default function NutritionTracker() {
 
   return (
     <div>
-      <PageHeader title="Food log" subtitle="Snap your plate or search for a food. Dal, dosa and paneer are in there, and so are packaged foods from Open Food Facts."
+      <PageHeader title="Food log" subtitle="Snap your plate, say what you ate, or search for a food. Dal, dosa and paneer are in there, and so are packaged foods from Open Food Facts."
         actions={<div className="flex flex-wrap gap-2">
           <Button icon={<Camera className="h-4 w-4" />} onClick={() => setSnapping(true)}>Snap a meal</Button>
+          <Button variant="secondary" icon={<Mic className="h-4 w-4" />} onClick={() => setDescribing(true)}>Say it</Button>
           <Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setAdding('breakfast')}>Add food</Button>
         </div>} />
       <MealPhoto open={snapping} onClose={() => setSnapping(false)} date={date} onAdded={refresh} />
+      <DescribeMeal open={describing} onClose={() => setDescribing(false)} date={date} onAdded={refresh} />
       <Modal open={!!saving} onClose={() => setSaving(null)} title="Save this meal">
         <p className="mb-3 text-sm text-fg-muted">Saves the {saving ? MEAL_LABEL[saving].toLowerCase() : ''} foods you logged so you can add them all again in one tap.</p>
         <form onSubmit={e => { e.preventDefault(); saveMeal() }}>

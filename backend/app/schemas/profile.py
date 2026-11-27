@@ -30,6 +30,7 @@ class ProfileIn(BaseModel):
 
 class ProfileOut(ProfileIn):
     start_weight_kg: float
+    adaptive_target: bool = False
     model_config = {"from_attributes": True}
 
 

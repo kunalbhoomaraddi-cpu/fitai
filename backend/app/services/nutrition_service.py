@@ -58,7 +58,13 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9 ]+", " ", s.lower()).strip()
 
 
-_INDIAN_INDEX = [(k, _norm(f["name"]), [_norm(a) for a in f["aliases"]]) for k, f in INDIAN_FOODS.items()]
+def _name_parts(name: str) -> list[str]:
+    """'Curd / Dahi' and 'Roti (Phulka)' are each also known by their parts, so 'curd' is an exact match."""
+    parts = [_norm(p) for p in re.split(r"[/()]", name)]
+    return [p for p in parts if p and p != _norm(name)]
+
+
+_INDIAN_INDEX = [(k, _norm(f["name"]), [_norm(a) for a in f["aliases"]] + _name_parts(f["name"])) for k, f in INDIAN_FOODS.items()]
 _INDIAN_VOCAB = {term: k for k, name, aliases in _INDIAN_INDEX for term in [name, *aliases]}
 
 

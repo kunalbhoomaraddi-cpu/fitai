@@ -2,6 +2,14 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 27 Nov 2026: smarter targets, voice logging, weekly recap (v2 batch 3)
+
+- **Adaptive calorie target (opt-in).** FitAI estimates your real maintenance from the last 4 weeks: average calories on fully logged days, corrected by your weight trend (a straight-line fit, about 7,700 kcal per kg). It needs 10 logged days and 5 weigh-ins over 10+ days, blends with the formula until 3 weeks of data, stays within 25% of the formula, and keeps the safety floors. Turn it on in Settings, then *Calorie target*, or from the dashboard suggestion that appears when your real number differs by 100 kcal or more. Breaks use the adaptive maintenance too. New column `fitness_profiles.adaptive_target` (added automatically), `GET/PUT /api/profile/adaptive`.
+- **Say what you ate.** On the Food log, *Say it*: tap the microphone (English, हिन्दी or ಕನ್ನಡ, using the browser's speech recognition) or type, e.g. "two rotis, a bowl of dal and a glass of milk". The AI splits it into foods and portions; calories come from FitAI's food database; you review and add. Without AI, a built-in reader handles plain English, uses household servings (1 medium roti = 40 g, 1 glass = 250 ml, 1 almond = 1.2 g) and says which foods it couldn't find. Logged entries are tagged `voice`. `POST /api/nutrition/describe`.
+- **Weekly recap.** Monday to Sunday: workouts against plan, time, sets, volume and change from the week before, new personal records, average calories and protein against targets, weight change, water and the streak, with a one-line highlight. On the Progress page (last week or this week so far), and on the dashboard from Monday to Wednesday. *Share* makes a 1080×1350 image for WhatsApp or Instagram. `GET /api/progress/recap?which=last|this`.
+- **Search ranking:** a food's name parts count as exact names, so "curd" finds Curd / Dahi before Curd Rice.
+- Privacy policy: says that spoken meals are turned into text by the browser's speech service (Google in Chrome and Android, Apple in Safari) and that FitAI only receives the words.
+
 ## 26 Nov 2026: from-scratch check before batch 3
 
 - **Fixed: packaged-food name search had stopped working.** Open Food Facts' classic search page was failing from the server every time, so every search fell back to FitAI's own foods. Search now uses their newer search service (better ranking: "nutella" finds Nutella first), asking only for products that list calories (many popular entries have no nutrition data), with the classic page as a backup. Brands from the new service ("xx:Amul") are cleaned up, and products with no nutrition data are skipped.

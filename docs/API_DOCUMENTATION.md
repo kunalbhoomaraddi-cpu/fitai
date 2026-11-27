@@ -25,6 +25,8 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | PUT | `/profile` | Create or update (metric values). Completes onboarding |
 | GET | `/profile/targets` | `{bmi, bmr, tdee, calories, macros, disclaimer}` |
 | POST | `/profile/calculate` | Calculator for arbitrary inputs `{weight_kg, height_cm, age, gender, activity_level, goal}` |
+| GET | `/profile/adaptive` | Adaptive maintenance estimate: `{enabled, status: ready\|collecting, formula_tdee, tdee, estimated_tdee, logged_days, weigh_ins, weigh_span_days, needs, confidence, avg_intake, weekly_change_kg, difference, capped}` |
+| PUT | `/profile/adaptive` | `{enabled}` → the resulting targets. When on and ready, every target uses the adaptive maintenance |
 | GET | `/profile/breaks` | `{active, upcoming[]}`: travel or festival breaks (`{id, kind, label, start_on, end_on, note, active, days_left}`) |
 | POST | `/profile/breaks` | `{kind: travel\|festival, start_on, end_on, note?}` → the break. Up to 21 days, starting today to 90 days ahead, no overlaps (409). While active: maintenance calories in every target, streak paused, coach told |
 | POST | `/profile/breaks/{id}/end` | Ends it today (one that hasn't started is removed) |
@@ -73,6 +75,7 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | GET | `/workouts/lifts` | Per-lift progress from logged sets, most-trained first: `{exercise_id, name, kind: weighted\|bodyweight\|timed, unit, metric, sessions, latest, best, change_8w, prs, points[{date, value, label, kg, reps, volume, pr}]}` (kg and reps let the app show the set in kg or lb). Weighted value = estimated 1-rep max (Epley, capped at 12 reps) |
 | GET | `/workouts/sessions` | Completed history |
 | GET | `/workouts/stats` | Totals, streak, `streak_freezes`, `frozen_days`, `best_streak`, `streak_paused`, last 7 days, 8-week counts |
+| GET | `/progress/recap?which=last\|this` | Weekly recap (Mon–Sun): workouts, prs, nutrition, weight, water, streak, highlight, empty |
 | GET | `/workouts/library?muscle=&equipment=` | Built-in exercise library |
 | GET | `/workouts/exercise-info?name=` | wger enrichment (image, IDs) with library fallback |
 
@@ -83,6 +86,7 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 | GET | `/nutrition/day?date=YYYY-MM-DD` | Entries, totals, by-meal breakdown, targets |
 | GET | `/nutrition/water?date=` | `{date, ml, goal_ml, glasses, goal_glasses}`. Goal ≈ 35 ml/kg, 2–4 L |
 | POST | `/nutrition/water` | `{ml: -2000..2000, date?}` adds (or undoes) water; never below 0, not for future days |
+| POST | `/nutrition/describe` | `{text}` (2–500 chars, any of English/Hindi/Kannada) → `{text, items[], totals, source, notice, not_found[]}`; items have the meal-photo shape. Nothing is saved |
 | POST | `/nutrition/entries` | `{meal, name, quantity_g, calories, protein_g, carbs_g, fat_g, source, eaten_on?}` |
 | PATCH / DELETE | `/nutrition/entries/{id}` | Edit or delete (owner only) |
 | GET | `/nutrition/history?days=14` | Daily totals |

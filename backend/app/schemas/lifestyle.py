@@ -24,6 +24,14 @@ class BreakIn(BaseModel):
         return self
 
 
+class MealTextIn(BaseModel):
+    text: str = Field(min_length=2, max_length=500)
+
+
+class AdaptiveIn(BaseModel):
+    enabled: bool
+
+
 class SwapIn(BaseModel):
     index: int = Field(ge=0, le=30)
     exercise_id: str = Field(min_length=1, max_length=60)

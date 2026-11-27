@@ -15,7 +15,7 @@ backend tests run twice, once on SQLite and once on PostgreSQL 16.
 cd backend && source .venv/bin/activate
 pip install -r requirements-dev.txt     # once: adds ruff
 ruff check .                            # lint
-python -m pytest -q                     # 168 tests
+python -m pytest -q                     # 193 tests
 ```
 
 The tests use a throwaway SQLite file, no external APIs and no LLM keys, so they are deterministic and need no network.
@@ -48,6 +48,9 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 | `test_monitoring.py` | Error reports carry no request body, query, token, cookies, user or local variables; Sentry off without a DSN; rate-limit counters are forgotten after their window |
 | `test_lifestyle.py` | Water goal and logging (undo, no negatives, no future days, private), streak rules (one rest day, freezes earned and used, at most 2, break days not missed), breaks (maintenance target, dashboard, end now, limits, overlaps, privacy, coach told), a timing-out AI gets one short try for the dashboard tip, meal plans, workout notes and check-ins |
 | `test_swap_export_language.py` | Swap mid-workout (same muscle, own equipment only, never one already planned, keeps sets, refused after logging or finishing), hotel-room workout needs no equipment, export ZIP (own data only, photos, CSV, no secrets), coach language in the prompt, localized starter questions, demo notice |
+| `test_adaptive.py` | Waits for enough data, 2,000 kcal while losing 0.5 kg/week reads as ~2,550 maintenance, partly logged days ignored, 25% cap, blending, on/off, breaks use it, privacy |
+| `test_meal_text.py` | Built-in reader portions (rotis, dal, curd, eggs, almonds, bread), unknown foods reported, AI reads Hindi while the database does the maths, AI failure falls back, Hindi without AI says so, `voice` tag, input limits |
+| `test_recap.py` | Week bounds, a full week (workouts, volume, records, food, weight from the previous weigh-in, water, highlight), empty week, this week, highlights in kg or lb |
 | `test_food_search.py` | Name search uses Open Food Facts' search service (brands cleaned, products without nutrition skipped), falls back to the classic search, shows FitAI's foods with a note when both are down, and ranks typo guesses after real matches |
 | `test_ai_provider.py`, `test_real_llm_paths.py` | Provider selection, Gemini schema conversion, a simulated tool-calling round trip |
 
@@ -57,7 +60,7 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 cd frontend
 npm run lint          # ESLint (TypeScript + React hooks rules)
 npm run typecheck     # strict TypeScript
-npm test              # 25 Vitest + Testing Library tests
+npm test              # 32 Vitest + Testing Library tests
 npm run build         # tsc + vite production build
 ```
 
@@ -71,6 +74,8 @@ npm run build         # tsc + vite production build
 | `pages/Register/Register.test.tsx` | Sign-up blocked until the consent box is ticked; links to both documents |
 | `components/dashboard/QuickLog.test.tsx` | Water: add a glass, undo disabled at zero, number restored if saving fails; weigh-in in lb saved as kg, impossible numbers refused; ending a break |
 | `components/workout/SwapExercise.test.tsx` | Alternatives listed and the picked one swapped |
+| `components/WeeklyRecap.test.tsx` | Week label, headline numbers in kg and lb, highlight, records and share button |
+| `components/nutrition/DescribeMeal.test.tsx` | Typed meal to foods, unticking one, logged with the `voice` tag, foods not found, typing when the browser can't listen |
 | `components/ConsentGate.test.tsx` | One-time prompt: hidden once accepted, needs the tick, records consent, sign-out option |
 
 ## End-to-end journey (manual checklist)

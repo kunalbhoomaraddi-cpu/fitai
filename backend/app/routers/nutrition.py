@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import FoodEntry, SavedMeal, User
-from app.schemas.lifestyle import WaterIn
+from app.schemas.lifestyle import MealTextIn, WaterIn
 from app.schemas.tracking import CopyMealIn, FoodEntryIn, FoodEntryOut, FoodEntryUpdate, LogSavedMealIn, SavedMealIn
-from app.services import fitness_service, lifestyle_service, meal_photo_service, nutrition_service, photo_service
+from app.services import fitness_service, lifestyle_service, meal_photo_service, meal_text_service, nutrition_service, photo_service
 from app.services.auth_service import get_current_user, require_profile
 from app.utils.clock import local_today
 from app.utils.ratelimit import ai_rate_limit
@@ -67,6 +67,13 @@ async def analyze_meal_photo(file: UploadFile = File(...), user: User = Depends(
     """Snap your meal: identify foods and portions in a photo. Nothing is saved; the user reviews and adds."""
     raw = await file.read(photo_service.MAX_UPLOAD_BYTES + 1)
     return await run_in_threadpool(meal_photo_service.analyze, raw, user.id, user.ai_provider_pref, user.is_demo)
+
+
+@router.post("/describe")
+async def describe_meal(body: MealTextIn, user: User = Depends(ai_rate_limit)):
+    """Log by voice or text: "two rotis, dal and a glass of milk" -> foods with portions to review.
+    Nothing is saved; the user checks the list and adds it."""
+    return await run_in_threadpool(meal_text_service.parse, body.text, user.ai_provider_pref)
 
 
 @router.post("/entries", response_model=FoodEntryOut, status_code=201)

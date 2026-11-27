@@ -15,7 +15,7 @@ class FoodEntryIn(BaseModel):
     protein_g: float = Field(ge=0, le=1000)
     carbs_g: float = Field(ge=0, le=1000)
     fat_g: float = Field(ge=0, le=1000)
-    source: Literal["open_food_facts", "reference", "custom", "meal_plan", "meal_photo"] = "custom"
+    source: Literal["open_food_facts", "reference", "custom", "meal_plan", "meal_photo", "voice"] = "custom"
     source_id: str | None = Field(default=None, max_length=64)
 
 

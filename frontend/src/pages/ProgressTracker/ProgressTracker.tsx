@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { MeasureChart, WeightChart } from '../../components/charts/LazyCharts'
 import { Badge, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, Input, Label, Modal, Notice, PageHeader, Ring, Segmented, Skeleton } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
+import { ProgressRecap } from '../../components/RecapSections'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
 import { progressApi } from '../../services/fitai'
@@ -116,6 +117,8 @@ export default function ProgressTracker() {
               ))}
             </Card>
           </div>
+
+          <ProgressRecap units={units} />
 
           <Card>
             <CardHeader title="Weight progression" subtitle={`${wa.data_points} weigh-ins in the last 90 days${wa.plateau ? ', possible plateau' : ''}`} icon={<Scale className="h-4 w-4" />}

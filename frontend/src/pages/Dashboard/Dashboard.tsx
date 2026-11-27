@@ -6,6 +6,8 @@ import { ActivityChart, CaloriesChart, ProteinChart, WeightChart } from '../../c
 import { Badge, Bar, Button, Card, CardHeader, Celebration, EmptyState, ErrorState, MacroRow, PageSkeleton, Photo, Ring } from '../../components/ui'
 import { InstallBanner } from '../../components/InstallApp'
 import { BreakCard, WaterCard, WeighInCard } from '../../components/dashboard/QuickLog'
+import { AdaptiveSuggestion } from '../../components/AdaptiveTarget'
+import { DashboardRecap } from '../../components/RecapSections'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -158,6 +160,9 @@ export default function Dashboard() {
         <Stat className="col-span-2 border-t border-line lg:col-span-1 lg:border-l lg:border-t-0" label="Workouts done" value={d.workouts.total_completed}
           sub={`${d.workouts.this_week} this week, ${d.workouts.streak} in a row`} />
       </section>
+
+      <DashboardRecap units={units} />
+      <AdaptiveSuggestion onChanged={() => reload(true)} />
 
       {/* QUICK LOG */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -72,6 +72,10 @@ def run_light_migrations() -> None:
         if "coach_language" not in cols:  # the coach's reply language (English for everyone until they pick)
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN coach_language VARCHAR(5) NOT NULL DEFAULT 'en'"))
+    if "fitness_profiles" in insp.get_table_names():
+        if "adaptive_target" not in {c["name"] for c in insp.get_columns("fitness_profiles")}:
+            with engine.begin() as conn:  # adaptive calorie target is opt-in: off for everyone at first
+                conn.execute(text("ALTER TABLE fitness_profiles ADD COLUMN adaptive_target BOOLEAN NOT NULL DEFAULT FALSE"))
     # PostgreSQL enforces VARCHAR lengths (SQLite doesn't): widen columns that grew in later versions
     if engine.dialect.name == "postgresql":
         widen = {("workout_plans", "generated_by"): 100, ("diet_plans", "generated_by"): 100,

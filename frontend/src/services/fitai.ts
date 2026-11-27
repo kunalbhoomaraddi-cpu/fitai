@@ -1,5 +1,5 @@
 import { api, fetchBlobUrl } from './api'
-import type { AIStatus, Achievement, Break, BreakKind, SwapOption, WaterDay, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
+import type { AIStatus, Achievement, AdaptiveEstimate, Break, BreakKind, MealTextResult, SwapOption, WaterDay, WeeklyRecap, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
 
 export type Verification = { delivery: 'email' | 'console' | 'failed' | 'none'; error?: string; expires_in_minutes?: number; resend_in_seconds?: number }
 type Token = { access_token: string; user: User; verification?: Verification | null }
@@ -26,6 +26,8 @@ export const profileApi = {
   save: (p: Partial<Profile>) => api.put<Profile>('/profile', p),
   targets: () => api.get<any>('/profile/targets'),
   calculate: (b: any) => api.post<any>('/profile/calculate', b),
+  adaptive: () => api.get<AdaptiveEstimate>('/profile/adaptive'),
+  setAdaptive: (enabled: boolean) => api.put<any>('/profile/adaptive', { enabled }),
   breaks: () => api.get<{ active: Break | null; upcoming: Break[] }>('/profile/breaks'),
   addBreak: (kind: BreakKind, start_on: string, end_on: string, note?: string) => api.post<Break>('/profile/breaks', { kind, start_on, end_on, note: note || null }),
   endBreak: (id: number) => api.post<{ detail: string }>(`/profile/breaks/${id}/end`),
@@ -86,12 +88,14 @@ export const nutritionApi = {
   water: (date?: string) => api.get<WaterDay>(`/nutrition/water${date ? `?date=${date}` : ''}`),
   addWater: (ml: number) => api.post<WaterDay>('/nutrition/water', { ml }),
   barcode: (code: string) => api.get<{ found: boolean; result: FoodResult | null; warning: string | null }>(`/nutrition/barcode/${code}`),
+  describe: (text: string) => api.post<MealTextResult>('/nutrition/describe', { text }),
   analyzePhoto: (file: Blob) => { const f = new FormData(); f.append('file', file, 'meal.jpg'); return api.upload<MealPhotoResult>('/nutrition/photo', f) },
 }
 export const progressApi = {
   weights: () => api.get<{ id: number; recorded_on: string; weight_kg: number; note: string | null }[]>('/progress/weights'),
   addWeight: (b: any) => api.post<any>('/progress/weights', b),
   removeWeight: (id: number) => api.del<void>(`/progress/weights/${id}`),
+  recap: (which: 'last' | 'this' = 'last') => api.get<WeeklyRecap>(`/progress/recap?which=${which}`),
   measurements: () => api.get<any[]>('/progress/measurements'),
   addMeasurement: (b: any) => api.post<any>('/progress/measurements', b),
   removeMeasurement: (id: number) => api.del<void>(`/progress/measurements/${id}`),

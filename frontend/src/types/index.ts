@@ -9,6 +9,7 @@ export interface MealPhotoItem {
   per_100g: { calories: number; protein_g: number; carbs_g: number; fat_g: number }
   calories: number; protein_g: number; carbs_g: number; fat_g: number
   basis: 'database' | 'ai_estimate'; source_id: string | null; servings: { label: string; grams: number }[]; confidence: number
+  check_amount?: boolean
 }
 export interface MealPhotoResult { items: MealPhotoItem[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number }; is_food: boolean; note: string | null; model: string; seconds: number }
 
@@ -20,6 +21,7 @@ export interface Profile {
   current_weight_kg: number; target_weight_kg: number; start_weight_kg?: number; activity_level: Activity
   experience: Experience; goal: Goal; diet_preference: Diet; custom_diet: string | null; food_restrictions: string[]
   workout_days_per_week: number; workout_minutes: number; equipment: string[]; unit_system: Units
+  adaptive_target?: boolean
 }
 export interface Macros { calories: number; protein_g: number; carbs_g: number; fat_g: number }
 export interface FoodEntry {
@@ -96,3 +98,26 @@ export type BreakKind = 'travel' | 'festival'
 export interface Break { id: number; kind: BreakKind; label: string; start_on: string; end_on: string; note: string | null; active: boolean; days_left: number }
 /** An exercise that can replace another mid-workout. */
 export interface SwapOption { exercise_id: string; name: string; muscle: string; equipment: string[]; type: string; same_muscle: boolean }
+
+/** A meal described by voice or text, split into foods to review. */
+export interface MealTextResult { text: string; items: MealPhotoItem[]; totals: { calories: number; protein_g: number; carbs_g: number; fat_g: number }; source: string; notice: string | null; not_found: string[] }
+
+/** Maintenance worked out from logged food and the weight trend. */
+export interface AdaptiveEstimate {
+  enabled: boolean; status: 'ready' | 'collecting'; formula_tdee: number; tdee: number; estimated_tdee: number | null
+  logged_days: number; weigh_ins: number; weigh_span_days: number; window_days: number
+  needs: { logged_days: number; weigh_ins: number; weigh_span_days: number }
+  confidence: number; avg_intake?: number; weekly_change_kg?: number; difference?: number; capped?: boolean
+}
+
+export interface RecapPR { name: string; label: string; kg: number | null; reps: number; kind: string; date: string }
+/** Monday-to-Sunday summary. */
+export interface WeeklyRecap {
+  which: 'last' | 'this'; start: string; end: string; days_in: number; name: string | null; empty: boolean; highlight: string
+  workouts: { count: number; minutes: number; sets: number; volume_kg: number; days: string[]; planned: number; prev_count: number; prev_volume_kg: number }
+  prs: RecapPR[]
+  nutrition: { days_logged: number; calorie_target: number; protein_target: number; avg_calories: number | null; avg_protein: number | null; days_on_target: number; protein_days: number }
+  weight: { weigh_ins: number; start_kg: number | null; end_kg: number | null; change_kg: number | null; goal: string }
+  water: { days_logged: number; avg_ml: number | null; goal_ml: number; days_goal_met: number }
+  streak: number; best_streak: number | null
+}

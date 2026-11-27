@@ -156,6 +156,18 @@ def profile_targets(profile) -> dict:
     goal = "maintenance" if brk and profile.goal != "maintenance" else profile.goal
     out = full_calculation(profile.current_weight_kg, profile.height_cm, profile.age, profile.gender,
                            profile.activity_level, goal)
+    if getattr(profile, "adaptive_target", False) and db is not None and profile.user_id:
+        from app.services.adaptive_service import estimate
+        from app.utils.clock import local_today
+        est = estimate(db, profile.user_id, out["tdee"]["tdee"], local_today())
+        out["adaptive"] = est
+        if est["status"] == "ready":
+            out["tdee"]["formula_tdee"] = out["tdee"]["tdee"]
+            out["tdee"]["tdee"] = est["tdee"]
+            out["calories"] = calculate_calorie_target(est["tdee"], out["bmr"]["bmr"], goal, profile.gender)
+            out["macros"] = calculate_macros(out["calories"]["calorie_target"], profile.current_weight_kg, goal, profile.height_cm)
+            out["calories"]["rationale"] = (f"Adaptive: your logs and weight trend put maintenance at about {est['tdee']:,} kcal "
+                                            f"(the formula said {est['formula_tdee']:,}). " + out["calories"]["rationale"])
     if brk:
         out["break"] = {"kind": brk.kind, "end_on": brk.end_on.isoformat(), "goal": profile.goal}
         out["calories"]["rationale"] = (f"{BREAK_KINDS.get(brk.kind, 'Break')} mode until "

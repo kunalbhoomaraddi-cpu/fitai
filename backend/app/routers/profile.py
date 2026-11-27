@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Break, FitnessProfile, User, WeightRecord
-from app.schemas.lifestyle import BreakIn
+from app.schemas.lifestyle import AdaptiveIn, BreakIn
 from app.schemas.profile import CalcIn, ProfileIn, ProfileOut
 from app.services import fitness_service, lifestyle_service
 from app.services.auth_service import get_current_user, require_profile
@@ -42,6 +42,24 @@ def upsert_profile(body: ProfileIn, user: User = Depends(get_current_user), db: 
 
 @router.get("/targets")
 def targets(user: User = Depends(require_profile)):
+    return fitness_service.profile_targets(user.profile)
+
+
+@router.get("/adaptive")
+def adaptive(user: User = Depends(require_profile), db: Session = Depends(get_db)):
+    """What the adaptive target would be (worked out even while it's off, so the app can suggest it)."""
+    from app.services.adaptive_service import estimate
+    p = user.profile
+    formula = fitness_service.full_calculation(p.current_weight_kg, p.height_cm, p.age, p.gender, p.activity_level, p.goal)
+    est = estimate(db, user.id, formula["tdee"]["tdee"], local_today())
+    return {"enabled": p.adaptive_target, **est}
+
+
+@router.put("/adaptive")
+def set_adaptive(body: AdaptiveIn, user: User = Depends(require_profile), db: Session = Depends(get_db)):
+    """Turns the adaptive calorie target on or off; returns the resulting targets."""
+    user.profile.adaptive_target = body.enabled
+    db.commit()
     return fitness_service.profile_targets(user.profile)
 
 

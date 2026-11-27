@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -150,3 +150,11 @@ def mark_seen(user: User = Depends(require_profile), db: Session = Depends(get_d
 @router.get("/challenges")
 def challenges(user: User = Depends(require_profile), db: Session = Depends(get_db)):
     return progress_service.weekly_challenges(db, user)
+
+
+@router.get("/recap")
+def recap(which: str = Query(default="last", pattern="^(last|this)$"), user: User = Depends(require_profile),
+          db: Session = Depends(get_db)):
+    """Weekly recap, Monday to Sunday: last week (default) or this week so far."""
+    from app.services.recap_service import weekly_recap
+    return weekly_recap(db, user, which)

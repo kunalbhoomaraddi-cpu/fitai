@@ -72,8 +72,9 @@ export function Privacy() {
           <li><span className="text-fg">Neon</span> stores the database.</li>
           <li><span className="text-fg">Render</span> runs the server, and <span className="text-fg">Vercel</span> serves the website.</li>
           <li><span className="text-fg">Brevo</span> sends our emails.</li>
-          <li><span className="text-fg">Google Gemini</span> (or <span className="text-fg">Groq</span> if you pick it in Settings) receives your coach messages, a summary of your profile and logs, and any meal photo you ask it to read, so it can reply.</li>
-          <li><span className="text-fg">Open Food Facts</span> receives only the barcode number when you scan a packaged food.</li>
+          <li><span className="text-fg">Google Gemini</span> (or <span className="text-fg">Groq</span> if you pick it in Settings) receives your coach messages, a summary of your profile and logs, any meal photo you ask it to read, and the words of a meal you describe, so it can reply.</li>
+          <li><span className="text-fg">Open Food Facts</span> receives only the barcode number when you scan a packaged food, or the words when you search for one.</li>
+          <li><span className="text-fg">Speaking a meal</span> uses your browser's speech recognition: Chrome and Android send the audio to Google, Safari to Apple. FitAI never receives the audio, only the words, which go to the AI to find the foods.</li>
           <li><span className="text-fg">Sentry</span>, if switched on, receives error reports so we can fix crashes. We send these without your name, email, logs or photos.</li>
         </ul>
         <p>Some of these services store data outside India.</p>

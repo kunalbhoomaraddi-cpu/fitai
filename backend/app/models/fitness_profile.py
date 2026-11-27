@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -27,5 +27,7 @@ class FitnessProfile(TimestampMixin, Base):
     workout_minutes: Mapped[int] = mapped_column(Integer, default=45)
     equipment: Mapped[list] = mapped_column(JSON, default=list)
     unit_system: Mapped[str] = mapped_column(String(10), default="metric")  # metric|imperial
+    # use the maintenance estimated from logged food and weight trend instead of the formula (opt-in)
+    adaptive_target: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user = relationship("User", back_populates="profile")

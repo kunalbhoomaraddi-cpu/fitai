@@ -8,9 +8,11 @@ import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import { startMonitoring } from './utils/monitoring'
+import { initTheme } from './utils/theme'
 import { wakeApi } from './services/api'
 
 startMonitoring()
+initTheme()
 wakeApi()
 
 createRoot(document.getElementById('root')!).render(

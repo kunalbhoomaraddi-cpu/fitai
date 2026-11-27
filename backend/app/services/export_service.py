@@ -30,6 +30,7 @@ from app.models import (
     WorkoutPlan,
     WorkoutSession,
 )
+from app.services import buddy_service
 from app.utils.clock import local_today
 
 SKIP_COLUMNS = {"hashed_password", "image", "thumb", "user_id"}
@@ -40,7 +41,7 @@ Exported on {date} for {email}.
 
 fitai-data.json   Every record FitAI holds about you: account, profile, food log, saved meals, meal and
                   workout plans, workouts with every set, weigh-ins, measurements, water, breaks,
-                  weekly check-ins, achievements and coach conversations.
+                  weekly check-ins, achievements, coach conversations and workout buddies.
 food_log.csv      Your food log, one row per item (opens in Excel or Google Sheets).
 weights.csv       Your weigh-ins.
 workout_sets.csv  Every set you logged.
@@ -102,6 +103,7 @@ def build_export(db: Session, user: User):
         "achievements": [_row(x) for x in _all(db, UserAchievement, uid, UserAchievement.id)],
         "saved_tips": [_row(x) for x in _all(db, SavedRecommendation, uid, SavedRecommendation.id)],
         "coach_conversations": convs,
+        "workout_buddies": buddy_service.export_rows(db, user),
         "progress_photos": [{**_row(p), "file": f"photos/{p.taken_on.isoformat()}-{p.pose}-{p.id}.jpg"} for p in photos],
     }
 

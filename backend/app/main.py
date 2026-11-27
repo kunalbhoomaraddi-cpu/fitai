@@ -11,7 +11,7 @@ from app.ai.provider import available_providers
 from app.config import get_settings
 from app.database import init_db
 from app.monitoring import init_sentry
-from app.routers import auth, checkins, coach, dashboard, diet, nutrition, photos, profile, progress, workouts
+from app.routers import auth, buddies, checkins, coach, dashboard, diet, nutrition, photos, profile, progress, workouts
 from app.routers import settings as settings_router
 from app.utils.clock import TimezoneMiddleware
 from app.utils.errors import register_exception_handlers
@@ -55,7 +55,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allo
 register_exception_handlers(app)
 
 API = "/api"
-for r in (auth, profile, dashboard, coach, diet, workouts, nutrition, progress, checkins, photos, settings_router):
+for r in (auth, profile, dashboard, coach, diet, workouts, nutrition, progress, checkins, photos, buddies, settings_router):
     app.include_router(r.router, prefix=API)
 
 

@@ -8,7 +8,7 @@ import { useAsync } from '../../hooks/useAsync'
 import { checkinApi, type Checkin } from '../../services/fitai'
 import { fmtWeight, n0, shortDate, weightUnit } from '../../utils/format'
 
-const scoreTone = (s: number) => (s >= 85 ? '#C6F36B' : s >= 60 ? '#9BD77A' : s >= 30 ? '#F2B85B' : '#F2876B')
+const scoreTone = (s: number) => (s >= 85 ? 'rgb(var(--lime))' : s >= 60 ? 'rgb(var(--moss-400))' : s >= 30 ? 'rgb(var(--amber))' : 'rgb(var(--coral))')
 const scoreWord = (s: number) => (s >= 85 ? 'Excellent' : s >= 60 ? 'Good' : s >= 30 ? 'Building' : 'Restart')
 
 function Stat({ icon, label, value, sub, ok }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode; ok?: boolean }) {

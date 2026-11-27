@@ -119,7 +119,7 @@ export default function DietPlanner() {
             <div><Label htmlFor="pref" hint="Optional">Food preferences</Label><Input id="pref" placeholder="e.g. South Indian, paneer, quick meals" value={form.prefs} onChange={e => setForm({ ...form, prefs: e.target.value })} /></div>
             <label className="flex cursor-pointer items-center justify-between rounded-xl border border-line bg-ink-900 px-3.5 py-3">
               <span className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4 text-lime" />Let the AI write the menu</span>
-              <input type="checkbox" checked={form.useAi} onChange={e => setForm({ ...form, useAi: e.target.checked })} className="h-4 w-4 accent-[#C6F36B]" />
+              <input type="checkbox" checked={form.useAi} onChange={e => setForm({ ...form, useAi: e.target.checked })} className="h-4 w-4 accent-lime" />
             </label>
             <p className="text-xs leading-relaxed text-fg-dim">On: the AI writes the menu and estimates its values. Off: FitAI builds it from its food database.</p>
             <Button full size="lg" onClick={generate} loading={busy === 'gen'} icon={<Sparkles className="h-4 w-4" />}>{plan ? 'Generate new plan' : 'Generate diet plan'}</Button>
@@ -142,10 +142,10 @@ export default function DietPlanner() {
                       </div>
                       <p className="mt-1 flex items-center gap-1.5 text-xs text-fg-dim"><Clock className="h-3 w-3" />Created {shortDate(plan.created_at.slice(0, 10))}, {eaten.length} of {plan.meals.length} meals eaten ({eatenKcal} kcal)</p>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                        <MacroRow label="Calories" value={tot!.calories} target={tg!.calorie_target} unit=" kcal" color="#E9EEE6" />
-                        <MacroRow label="Protein" value={tot!.protein_g} target={tg!.protein_g} color="#C6F36B" />
-                        <MacroRow label="Carbohydrates" value={tot!.carbs_g} target={tg!.carbs_g} color="#7CC4F2" />
-                        <MacroRow label="Fat" value={tot!.fat_g} target={tg!.fat_g} color="#F2B85B" />
+                        <MacroRow label="Calories" value={tot!.calories} target={tg!.calorie_target} unit=" kcal" color="rgb(var(--fg))" />
+                        <MacroRow label="Protein" value={tot!.protein_g} target={tg!.protein_g} color="rgb(var(--lime))" />
+                        <MacroRow label="Carbohydrates" value={tot!.carbs_g} target={tg!.carbs_g} color="rgb(var(--sky))" />
+                        <MacroRow label="Fat" value={tot!.fat_g} target={tg!.fat_g} color="rgb(var(--amber))" />
                       </div>
                     </div>
                     <div className="flex gap-2 md:flex-col">

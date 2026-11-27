@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts'
 import type { Card as CardT, Units } from '../../types'
 import { fmtWeight } from '../../utils/format'
+import { useColors } from '../../utils/theme'
 import { MacroDonut } from '../charts/LazyCharts'
 import { MacroRow } from '../ui'
 
@@ -28,6 +29,7 @@ function Link({ to, label, state }: { to: string; label: string; state?: any }) 
 }
 
 export function CoachCard({ card, units }: { card: CardT; units: Units }) {
+  const C = useColors()
   switch (card.type) {
     case 'metrics':
       return (
@@ -49,7 +51,7 @@ export function CoachCard({ card, units }: { card: CardT; units: Units }) {
           <div className="flex items-center gap-5">
             <MacroDonut protein={card.protein_g} carbs={card.carbs_g} fat={card.fat_g} calories={card.calories} size={110} />
             <div className="grid flex-1 gap-2 text-sm">
-              {[['Protein', card.protein_g, '#C6F36B'], ['Carbs', card.carbs_g, '#7CC4F2'], ['Fat', card.fat_g, '#F2B85B']].map(([l, v, c]) => (
+              {[['Protein', card.protein_g, 'rgb(var(--lime))'], ['Carbs', card.carbs_g, 'rgb(var(--sky))'], ['Fat', card.fat_g, 'rgb(var(--amber))']].map(([l, v, c]) => (
                 <div key={l as string} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-1.5"><span className="flex items-center gap-2 text-fg-muted"><span className="h-2 w-2 rounded-full" style={{ background: c as string }} />{l}</span><b className="tabular-nums">{v as number} g</b></div>
               ))}
               <p className="text-[11px] text-fg-dim">Approximate daily targets for {card.calories} kcal</p>
@@ -70,7 +72,7 @@ export function CoachCard({ card, units }: { card: CardT; units: Units }) {
                 {card.trend != null && <p className={clsx('mt-1 flex items-center gap-1 text-xs', up ? 'text-amber' : 'text-moss-400')}>{up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}{card.trend > 0 ? '+' : ''}{card.trend} kg/wk trend</p>}
               </div>
               <div className="h-20 flex-1">
-                <ResponsiveContainer><LineChart data={recs}><YAxis hide domain={['dataMin - 0.5', 'dataMax + 0.5']} /><Line dataKey="weight_kg" stroke="#C6F36B" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer>
+                <ResponsiveContainer><LineChart data={recs}><YAxis hide domain={['dataMin - 0.5', 'dataMax + 0.5']} /><Line dataKey="weight_kg" stroke={C.lime} strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer>
               </div>
             </div>
           )}
@@ -107,10 +109,10 @@ export function CoachCard({ card, units }: { card: CardT; units: Units }) {
       return (
         <Shell card={card} action={<Link to="/nutrition" label="Open tracker" />}>
           <div className="space-y-2.5">
-            <MacroRow label="Calories" value={card.totals.calories} target={card.targets.calories} unit=" kcal" color="#C6F36B" />
-            <MacroRow label="Protein" value={card.totals.protein_g} target={card.targets.protein_g} color="#C6F36B" />
-            <MacroRow label="Carbs" value={card.totals.carbs_g} target={card.targets.carbs_g} color="#7CC4F2" />
-            <MacroRow label="Fat" value={card.totals.fat_g} target={card.targets.fat_g} color="#F2B85B" />
+            <MacroRow label="Calories" value={card.totals.calories} target={card.targets.calories} unit=" kcal" color="rgb(var(--lime))" />
+            <MacroRow label="Protein" value={card.totals.protein_g} target={card.targets.protein_g} color="rgb(var(--lime))" />
+            <MacroRow label="Carbs" value={card.totals.carbs_g} target={card.targets.carbs_g} color="rgb(var(--sky))" />
+            <MacroRow label="Fat" value={card.totals.fat_g} target={card.targets.fat_g} color="rgb(var(--amber))" />
           </div>
         </Shell>
       )

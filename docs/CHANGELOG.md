@@ -2,6 +2,13 @@
 
 What was built, in the order it was built. Live app: https://fitai-app-pink.vercel.app
 
+## 27 Nov 2026: workout buddies and light mode (v2 batch 4)
+
+- **Workout buddies.** Pair with up to 5 friends by invite code (*Workout buddies* in the menu; share a link like `/buddies?code=K7QM-2XRP`, and the code survives signing in). Each of you sees the other's workout days this week (Monday to Sunday on their own clock), how many workouts their plan has, their streak and when they last trained: never food, weight, measurements, photos, email or coach chats. *Share my workouts* off hides even that. Nudge a buddy once a day; nudges show on their dashboard and in the bell. Either person can end the pairing; deleting an account removes its pairings and nudges, and *Export my data* lists your buddies. The demo shows a sample buddy instead of pairing with real people. New tables `buddy_links` and `buddy_nudges`, new columns `users.buddy_code` and `users.buddy_sharing` (added automatically), `/api/buddies`.
+- **Light mode (optional).** Settings, then *Appearance*: Dark (still the default), Light, or Match device. Every colour is now a theme variable; light mode uses a deeper leaf green for the accent so text stays readable (every text colour is at least 4.5:1 on cards). Charts, rings and the buddy week strip follow the theme; the shareable weekly-recap image keeps FitAI's dark look. The choice is saved on the device and applied before the page draws, so there's no flash.
+- Privacy policy: new *Workout buddies* section on exactly what a buddy can see.
+- From-scratch check before this batch: every test, every browser suite and every live feature passed; the only fix was a browser test that typed weight and reps into different exercises.
+
 ## 27 Nov 2026: smarter targets, voice logging, weekly recap (v2 batch 3)
 
 - **Adaptive calorie target (opt-in).** FitAI estimates your real maintenance from the last 4 weeks: average calories on fully logged days, corrected by your weight trend (a straight-line fit, about 7,700 kcal per kg). It needs 10 logged days and 5 weigh-ins over 10+ days, blends with the formula until 3 weeks of data, stays within 25% of the formula, and keeps the safety floors. Turn it on in Settings, then *Calorie target*, or from the dashboard suggestion that appears when your real number differs by 100 kcal or more. Breaks use the adaptive maintenance too. New column `fitness_profiles.adaptive_target` (added automatically), `GET/PUT /api/profile/adaptive`.

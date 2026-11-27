@@ -1,5 +1,5 @@
 import { tokenStore } from '../../services/api'
-import { Bot, Download, Dumbbell, Gauge, KeyRound, LogOut, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
+import { Bot, Download, Dumbbell, Gauge, KeyRound, LogOut, Palette, Ruler, Salad, Save, ShieldAlert, Smartphone, User } from 'lucide-react'
 import { AdaptiveSettings } from '../../components/AdaptiveTarget'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { useToast } from '../../context/ToastContext'
 import { profileApi, settingsApi } from '../../services/fitai'
 import type { CoachLanguage, Profile, Units } from '../../types'
 import { COACH_LANGUAGES, LANGUAGE_NAME } from '../../utils/language'
+import { getChoice, setThemeChoice, type ThemeChoice } from '../../utils/theme'
 import { ACTIVITY_LABEL, cmToFtIn, DIET_LABEL, EQUIPMENT, ftInToCm, GOAL_LABEL, kgToLb, lbToKg } from '../../utils/format'
 
 const RESTRICTIONS = ['dairy', 'gluten', 'nuts', 'peanuts', 'soy', 'eggs', 'seafood']
@@ -22,6 +23,13 @@ function Section({ icon, title, desc, children, id }: { icon: ReactNode; title: 
       <div>{children}</div>
     </Card>
   )
+}
+
+const THEMES = [['dark', 'Dark'], ['light', 'Light'], ['system', 'Match device']] as const
+
+function AppearancePicker() {
+  const [choice, setChoice] = useState<ThemeChoice>(getChoice)
+  return <Segmented options={THEMES} value={choice} onChange={v => { setChoice(v); setThemeChoice(v) }} />
 }
 
 export default function Settings() {
@@ -129,6 +137,9 @@ export default function Settings() {
         </Section>
         <Section id="units" icon={<Ruler className="h-4 w-4" />} title="Measurement units" desc="Data is stored in metric; display converts automatically.">
           <Segmented options={[['metric', 'Metric (kg, cm)'], ['imperial', 'Imperial (lb, ft/in)']] as const} value={units} onChange={setUnits} />
+        </Section>
+        <Section id="appearance" icon={<Palette className="h-4 w-4" />} title="Appearance" desc="Dark is FitAI's look. Light is easier to read in bright sunlight. Saved on this device.">
+          <AppearancePicker />
         </Section>
         <Section id="app" icon={<Smartphone className="h-4 w-4" />} title="App and reminders" desc="Use FitAI like a phone app and get reminded on training days.">
           <div className="space-y-5"><InstallRow /><CalendarRow /></div>

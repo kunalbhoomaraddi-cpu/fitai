@@ -1,5 +1,5 @@
 import { api, fetchBlobUrl } from './api'
-import type { AIStatus, Achievement, AdaptiveEstimate, Break, BreakKind, MealTextResult, SwapOption, WaterDay, WeeklyRecap, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
+import type { AIStatus, Achievement, AdaptiveEstimate, Break, BuddyOverview, BreakKind, MealTextResult, SwapOption, WaterDay, WeeklyRecap, Challenge, ChatMessage, DietPlan, FoodEntry, FoodResult, Lift, MealPhotoResult, MealType, Profile, RecentFood, SavedMeal, User, WorkoutPlan, WorkoutSession } from '../types'
 
 export type Verification = { delivery: 'email' | 'console' | 'failed' | 'none'; error?: string; expires_in_minutes?: number; resend_in_seconds?: number }
 type Token = { access_token: string; user: User; verification?: Verification | null }
@@ -153,4 +153,14 @@ export const photoApi = {
   update: (id: number, b: { pose?: Pose; note?: string | null }) => api.patch<ProgressPhoto>(`/photos/${id}`, b),
   remove: (id: number) => api.del<void>(`/photos/${id}`),
   imagePath: (id: number, size: 'thumb' | 'full') => `/photos/${id}/image?size=${size}`,
+}
+
+export const buddyApi = {
+  overview: () => api.get<BuddyOverview>('/buddies'),
+  join: (code: string) => api.post<BuddyOverview & { detail: string }>('/buddies/join', { code }),
+  newCode: () => api.post<BuddyOverview>('/buddies/code'),
+  setSharing: (sharing: boolean) => api.put<BuddyOverview>('/buddies/sharing', { sharing }),
+  remove: (id: number) => api.del<void>(`/buddies/${id}`),
+  nudge: (id: number) => api.post<{ detail: string }>(`/buddies/${id}/nudge`),
+  nudgesSeen: () => api.post<{ detail: string }>('/buddies/nudges/seen'),
 }

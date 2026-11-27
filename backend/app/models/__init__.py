@@ -1,4 +1,5 @@
 from app.models.achievements import UserAchievement
+from app.models.buddy import BuddyLink, BuddyNudge
 from app.models.checkin import WeeklyCheckin
 from app.models.conversation import Conversation, Message, SavedRecommendation
 from app.models.fitness_profile import FitnessProfile
@@ -13,4 +14,4 @@ from app.models.weight import BodyMeasurement, WeightRecord
 from app.models.workout import WorkoutPlan, WorkoutSession
 
 __all__ = ["User", "FitnessProfile", "WeightRecord", "BodyMeasurement", "FoodEntry", "SavedMeal", "DietPlan",
-           "WorkoutPlan", "WorkoutSession", "Conversation", "Message", "SavedRecommendation", "UserAchievement", "EmailVerification", "LoginChallenge", "PasswordReset", "WeeklyCheckin", "ProgressPhoto", "WaterLog", "Break"]
+           "WorkoutPlan", "WorkoutSession", "Conversation", "Message", "SavedRecommendation", "UserAchievement", "EmailVerification", "LoginChallenge", "PasswordReset", "WeeklyCheckin", "ProgressPhoto", "WaterLog", "Break", "BuddyLink", "BuddyNudge"]

@@ -77,3 +77,9 @@ def _make_user(client):
     verify(client, h, email)
     client.put("/api/profile", json=PROFILE, headers=h)
     return h
+
+
+@pytest.fixture
+def make_user(client):
+    """Makes as many extra signed-in users as a test needs."""
+    return lambda: _make_user(client)

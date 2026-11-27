@@ -11,7 +11,7 @@ import { useAsync } from '../../hooks/useAsync'
 import { progressApi } from '../../services/fitai'
 import { fmtLength, fmtWeight, kgToLb, lbToKg, shortDate, todayISO, weightUnit } from '../../utils/format'
 
-const MEAS: [string, string, string][] = [['waist_cm', 'Waist', '#C6F36B'], ['chest_cm', 'Chest', '#7CC4F2'], ['hips_cm', 'Hips', '#F2B85B'], ['arm_cm', 'Arm', '#49B675'], ['thigh_cm', 'Thigh', '#C9A7F5']]
+const MEAS: [string, string, string][] = [['waist_cm', 'Waist', 'rgb(var(--lime))'], ['chest_cm', 'Chest', 'rgb(var(--sky))'], ['hips_cm', 'Hips', 'rgb(var(--amber))'], ['arm_cm', 'Arm', 'rgb(var(--moss))'], ['thigh_cm', 'Thigh', 'rgb(var(--violet))']]
 
 export default function ProgressTracker() {
   const nav = useNavigate()

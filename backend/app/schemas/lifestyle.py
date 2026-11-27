@@ -35,3 +35,11 @@ class AdaptiveIn(BaseModel):
 class SwapIn(BaseModel):
     index: int = Field(ge=0, le=30)
     exercise_id: str = Field(min_length=1, max_length=60)
+
+
+class BuddyJoinIn(BaseModel):
+    code: str = Field(min_length=4, max_length=20, description="A friend's invite code, e.g. K7QM-2XRP")
+
+
+class BuddySharingIn(BaseModel):
+    sharing: bool

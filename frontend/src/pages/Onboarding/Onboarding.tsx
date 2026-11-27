@@ -179,7 +179,7 @@ export default function Onboarding() {
                 <div className="rounded-2xl border border-line bg-ink-800 p-4 sm:col-span-4">
                   <p className="mb-3 text-xs text-fg-muted">Daily macros</p>
                   <div className="grid grid-cols-3 gap-3 text-center">
-                    {[['Protein', preview.macros.protein_g, '#C6F36B'], ['Carbs', preview.macros.carbs_g, '#7CC4F2'], ['Fat', preview.macros.fat_g, '#F2B85B']].map(([l, v, c]) => (
+                    {[['Protein', preview.macros.protein_g, 'rgb(var(--lime))'], ['Carbs', preview.macros.carbs_g, 'rgb(var(--sky))'], ['Fat', preview.macros.fat_g, 'rgb(var(--amber))']].map(([l, v, c]) => (
                       <div key={l as string}><p className="score text-[30px]" style={{ color: c as string }}>{v as number} g</p><p className="text-xs text-fg-dim">{l}</p></div>
                     ))}
                   </div>

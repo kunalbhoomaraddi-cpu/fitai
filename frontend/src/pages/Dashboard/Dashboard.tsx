@@ -8,6 +8,7 @@ import { InstallBanner } from '../../components/InstallApp'
 import { BreakCard, WaterCard, WeighInCard } from '../../components/dashboard/QuickLog'
 import { AdaptiveSuggestion } from '../../components/AdaptiveTarget'
 import { DashboardRecap } from '../../components/RecapSections'
+import { BuddiesCard } from '../../components/Buddies'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useAsync } from '../../hooks/useAsync'
@@ -18,17 +19,17 @@ import { fmtWeight, weightUnit, weightValue } from '../../utils/format'
 const CH_ICON: Record<string, any> = { dumbbell: Dumbbell, notebook: NotebookPen, beef: Beef, scale: Scale }
 const ACH_ICON: Record<string, any> = { dumbbell: Dumbbell, flame: Flame, zap: Zap, 'trending-down': TrendingDown, salad: UtensilsCrossed, flag: Target, trophy: Trophy }
 
-function Spark({ data, color = '#C6F36B' }: { data: number[]; color?: string }) {
+function Spark({ data, color = 'rgb(var(--lime))' }: { data: number[]; color?: string }) {
   const pts = data.filter(v => v > 0)
   if (pts.length < 3) return null
   const lo = Math.min(...pts), hi = Math.max(...pts), w = 84, h = 26
   const d = pts.map((v, i) => `${(i / (pts.length - 1)) * w},${h - 2 - ((v - lo) / (hi - lo || 1)) * (h - 4)}`).join(' ')
-  const id = `sp${color.slice(1)}`
+  const id = `sp${color.replace(/[^a-z0-9]/gi, '')}`
   return (
     <svg width={w} height={h} className="absolute right-5 top-[46px] hidden opacity-80 sm:block" aria-hidden>
-      <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".35" /><stop offset="1" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+      <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: color, stopOpacity: 0.35 }} /><stop offset="1" style={{ stopColor: color, stopOpacity: 0 }} /></linearGradient></defs>
       <polygon points={`0,${h} ${d} ${w},${h}`} fill={`url(#${id})`} />
-      <polyline points={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <polyline points={d} fill="none" style={{ stroke: color }} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   )
 }
@@ -172,6 +173,7 @@ export default function Dashboard() {
       </section>
 
       <CheckinPrompt />
+      <BuddiesCard />
 
       {/* WEIGHT + NUTRITION */}
       <section className="grid gap-4 lg:grid-cols-3">
@@ -188,14 +190,14 @@ export default function Dashboard() {
           <CardHeader title="Nutrition today" subtitle={`${Math.max(0, tg.calories - t.calories).toLocaleString()} kcal remaining`} icon={<UtensilsCrossed className="h-4 w-4" />}
             action={<Button size="sm" variant="ghost" onClick={() => nav('/nutrition')}><Plus className="h-3.5 w-3.5" /> Log</Button>} />
           <div className="flex items-center justify-center py-5">
-            <Ring value={t.calories} max={tg.calories} size={150} stroke={12} color="#E9EEE6">
+            <Ring value={t.calories} max={tg.calories} size={150} stroke={12} color="rgb(var(--fg))">
               <p className="score text-[44px]">{Math.round(t.calories)}</p><p className="text-xs text-fg-dim">of {tg.calories} kcal</p>
             </Ring>
           </div>
           <div className="space-y-3.5 px-5 pb-5">
-            <MacroRow label="Protein" value={t.protein_g} target={tg.protein_g} color="#C6F36B" />
-            <MacroRow label="Carbohydrates" value={t.carbs_g} target={tg.carbs_g} color="#7CC4F2" />
-            <MacroRow label="Fat" value={t.fat_g} target={tg.fat_g} color="#F2B85B" />
+            <MacroRow label="Protein" value={t.protein_g} target={tg.protein_g} color="rgb(var(--lime))" />
+            <MacroRow label="Carbohydrates" value={t.carbs_g} target={tg.carbs_g} color="rgb(var(--sky))" />
+            <MacroRow label="Fat" value={t.fat_g} target={tg.fat_g} color="rgb(var(--amber))" />
           </div>
         </Card>
       </section>

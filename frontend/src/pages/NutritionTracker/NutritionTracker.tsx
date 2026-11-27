@@ -152,7 +152,7 @@ function AddFood({ open, onClose, meal, date, onAdded, editing }: { open: boolea
           </>)}
           {!searching && results.map(r => (
             <button key={r.id} onClick={() => choose(r)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/[0.04]">
-              {r.image_url ? <img src={r.image_url} alt="" className="h-9 w-9 rounded-lg bg-white object-contain" loading="lazy" onError={e => (e.currentTarget.style.display = 'none')} /> : <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-fg-dim"><Database className="h-4 w-4" /></div>}
+              {r.image_url ? <img src={r.image_url} alt="" className="h-9 w-9 rounded-lg bg-snow object-contain" loading="lazy" onError={e => (e.currentTarget.style.display = 'none')} /> : <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-fg-dim"><Database className="h-4 w-4" /></div>}
               <div className="min-w-0 flex-1"><p className="flex items-center gap-1.5 truncate text-sm">{r.diet && <DietDot diet={r.diet} />}{r.name}</p>
                 <p className="truncate text-[11px] text-fg-dim">{r.servings?.length ? `${r.category}, ${mainServing(r)!.label} ≈ ${Math.round(r.calories_100g * mainServing(r)!.grams / 100)} kcal` : `${r.brand ? `${r.brand}, ` : ''}${r.source === 'open_food_facts' ? 'Open Food Facts' : 'FitAI food database'}, per 100 g`}</p></div>
               <span className="shrink-0 text-xs tabular-nums text-fg-muted">{r.servings?.length ? `P ${(r.protein_100g * mainServing(r)!.grams / 100).toFixed(1)} g` : `${r.calories_100g} kcal  P ${r.protein_100g}`}</span>
@@ -265,14 +265,14 @@ export default function NutritionTracker() {
             <Card className="p-5 sm:p-6">
               <div className="grid items-center gap-6 sm:grid-cols-[auto_1fr]">
                 <div className="flex justify-center">
-                  <Ring value={d.totals.calories} max={d.targets.calories} size={176} stroke={14} color="#E9EEE6">
+                  <Ring value={d.totals.calories} max={d.targets.calories} size={176} stroke={14} color="rgb(var(--fg))">
                     <p className="score text-[52px]">{Math.max(0, d.targets.calories - d.totals.calories).toLocaleString()}</p>
                     <p className="mt-1 text-xs text-fg-muted">kcal left</p>
                     <p className="mt-0.5 text-[11px] tabular-nums text-fg-dim">{Math.round(d.totals.calories)} of {d.targets.calories}</p>
                   </Ring>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  {([['Protein', 'protein_g', '#C6F36B'], ['Carbs', 'carbs_g', '#7CC4F2'], ['Fat', 'fat_g', '#F2B85B']] as const).map(([l, k2, c]) => (
+                  {([['Protein', 'protein_g', 'rgb(var(--lime))'], ['Carbs', 'carbs_g', 'rgb(var(--sky))'], ['Fat', 'fat_g', 'rgb(var(--amber))']] as const).map(([l, k2, c]) => (
                     <div key={k2} className="flex flex-col items-center p-2">
                       <Ring value={d.totals[k2]} max={d.targets[k2]} size={86} stroke={8} color={c}><p className="score text-[26px]">{Math.round(d.totals[k2])}</p><p className="text-[10px] text-fg-dim">of {d.targets[k2]} g</p></Ring>
                       <p className="mt-2 text-xs font-medium text-fg-muted">{l}</p>
@@ -339,7 +339,7 @@ export default function NutritionTracker() {
             <Card>
               <CardHeader title="Meal breakdown" subtitle="Share of today's calories" icon={<UtensilsCrossed className="h-4 w-4" />} />
               <div className="space-y-3.5 p-5">
-                {MEALS.map(([m]) => <MacroRow key={m} label={MEAL_LABEL[m]} value={d.by_meal[m].calories} target={Math.max(d.totals.calories, 1)} unit=" kcal" color={{ breakfast: '#C6F36B', lunch: '#49B675', snack: '#F2B85B', dinner: '#7CC4F2' }[m]} />)}
+                {MEALS.map(([m]) => <MacroRow key={m} label={MEAL_LABEL[m]} value={d.by_meal[m].calories} target={Math.max(d.totals.calories, 1)} unit=" kcal" color={{ breakfast: 'rgb(var(--lime))', lunch: 'rgb(var(--moss))', snack: 'rgb(var(--amber))', dinner: 'rgb(var(--sky))' }[m]} />)}
               </div>
             </Card>
             <Card>

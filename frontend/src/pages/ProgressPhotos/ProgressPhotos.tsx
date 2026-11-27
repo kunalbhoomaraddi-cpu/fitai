@@ -101,7 +101,7 @@ function UploadModal({ open, onClose, onDone }: { open: boolean; onClose: () => 
                 files[p] ? 'border-lime/40' : 'border-dashed border-line-strong hover:border-lime/50 hover:text-fg')}>
               {files[p] ? <>
                 <img src={files[p]!.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-2 pt-6 text-xs font-medium text-white">Change</span>
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-2 pt-6 text-xs font-medium text-snow">Change</span>
               </> : <><Camera className="h-6 w-6" /><span className="mt-2 text-xs">Tap to add</span></>}
             </button>
             <div className="mt-1.5 flex items-center justify-between">
@@ -133,8 +133,8 @@ function CompareSlider({ before, after }: { before: ProgressPhoto; after: Progre
       <div className="pointer-events-none absolute inset-y-0 w-0.5 bg-lime shadow-[0_0_12px_rgba(198,243,107,.6)]" style={{ left: `${pos}%` }}>
         <span className="absolute top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-lime text-ink-950 shadow-lg"><MoveHorizontal className="h-4 w-4" /></span>
       </div>
-      <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">Before</span>
-      <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">After</span>
+      <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-snow">Before</span>
+      <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-snow">After</span>
       <input type="range" min={0} max={100} value={pos} onChange={e => setPos(+e.target.value)} aria-label="Compare slider"
         className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0" />
     </div>
@@ -243,8 +243,8 @@ function Viewer({ photo, photos, onSelect, onClose, onChange, onDelete }: {
       <div className="relative">
         <AuthImg key={photo.id} id={photo.id} size="full" alt={`${photo.pose} progress photo`} className="mx-auto max-h-[56vh] w-auto rounded-2xl !object-contain" />
         {sameDay.length > 1 && <>
-          <button aria-label="Previous photo" disabled={idx <= 0} onClick={() => onSelect(sameDay[idx - 1])} className="absolute left-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 disabled:opacity-0"><ChevronLeft className="h-5 w-5" /></button>
-          <button aria-label="Next photo" disabled={idx >= sameDay.length - 1} onClick={() => onSelect(sameDay[idx + 1])} className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 disabled:opacity-0"><ChevronRight className="h-5 w-5" /></button>
+          <button aria-label="Previous photo" disabled={idx <= 0} onClick={() => onSelect(sameDay[idx - 1])} className="absolute left-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-snow transition hover:bg-black/80 disabled:opacity-0"><ChevronLeft className="h-5 w-5" /></button>
+          <button aria-label="Next photo" disabled={idx >= sameDay.length - 1} onClick={() => onSelect(sameDay[idx + 1])} className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-snow transition hover:bg-black/80 disabled:opacity-0"><ChevronRight className="h-5 w-5" /></button>
         </>}
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -313,7 +313,7 @@ export default function ProgressPhotos() {
                       {ps.map(p => (
                         <button key={p.id} onClick={() => setView(p)} className="group relative overflow-hidden rounded-xl border border-line text-left transition hover:border-lime/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime">
                           <AuthImg id={p.id} size="thumb" alt={`${p.pose} photo, ${d}`} className="aspect-[3/4] w-full transition duration-300 group-hover:scale-[1.03]" />
-                          <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[10px] font-medium text-white">{POSE_LABEL[p.pose]}</span>
+                          <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[10px] font-medium text-snow">{POSE_LABEL[p.pose]}</span>
                         </button>
                       ))}
                     </div>

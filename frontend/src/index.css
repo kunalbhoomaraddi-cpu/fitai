@@ -3,7 +3,33 @@
 @tailwind utilities;
 
 @layer base {
-  :root { color-scheme: dark; }
+  /* Theme colours as RGB channels, so Tailwind's opacity modifiers keep working (bg-lime/10).
+     Dark is the default; Settings > Appearance can switch to light or follow the device. */
+  :root {
+    color-scheme: dark;
+    --ink-950: 11 13 12; --ink-900: 17 21 18; --ink-850: 20 25 21; --ink-800: 23 28 24; --ink-750: 28 34 29; --ink-700: 34 41 35;
+    --line: 41 49 43; --line-soft: 31 38 33; --line-strong: 54 64 56;
+    --lime: 198 243 107; --lime-400: 212 247 143; --lime-600: 169 216 79; --lime-900: 42 58 18;
+    --moss: 73 182 117; --moss-400: 100 201 140; --moss-600: 58 149 96;
+    --fg: 245 247 242; --fg-muted: 156 166 157; --fg-dim: 107 117 109;
+    --amber: 242 184 91; --coral: 240 124 106; --sky: 124 196 242; --violet: 201 167 245;
+    --tint: 255 255 255;
+    --shadow-card: 0 1px 0 0 rgba(255,255,255,0.03) inset, 0 12px 32px -16px rgba(0,0,0,0.6);
+    --shadow-pop: 0 24px 64px -20px rgba(0,0,0,0.75);
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ink-950: 242 244 239; --ink-900: 234 237 230; --ink-850: 255 255 255; --ink-800: 247 248 245; --ink-750: 238 241 234; --ink-700: 229 233 225;
+    --line: 214 219 210; --line-soft: 228 232 224; --line-strong: 193 201 189;
+    /* Lime #C6F36B can't be read on white, so the accent deepens to a leaf green (5:1 on cards) */
+    --lime: 75 122 10; --lime-400: 63 104 8; --lime-600: 63 104 8; --lime-900: 226 241 196;
+    --moss: 35 120 74; --moss-400: 31 110 68; --moss-600: 27 96 59;
+    --fg: 19 24 20; --fg-muted: 79 90 82; --fg-dim: 102 112 106;
+    --amber: 154 98 0; --coral: 184 58 40; --sky: 27 111 168; --violet: 122 79 192;
+    --tint: 19 24 20;
+    --shadow-card: 0 1px 2px rgba(19,24,20,0.04), 0 8px 24px -16px rgba(19,24,20,0.18);
+    --shadow-pop: 0 24px 56px -20px rgba(19,24,20,0.28);
+  }
   html, body, #root { min-height: 100%; }
   body {
     @apply bg-ink-950 font-sans text-fg antialiased;
@@ -11,11 +37,11 @@
   }
   /* Big Shoulders is condensed: headings get a touch of tracking instead of the tight setting Manrope needed */
   h1, h2 { @apply font-display; letter-spacing: 0.005em; }
-  ::selection { background: rgba(198, 243, 107, .3); }
-  * { scrollbar-width: thin; scrollbar-color: #29312B transparent; }
+  ::selection { background: rgb(var(--lime) / .3); }
+  * { scrollbar-width: thin; scrollbar-color: rgb(var(--line)) transparent; }
   input[type=number]::-webkit-inner-spin-button { opacity: .4; }
   /* Keyboard users always see where they are; components with their own ring opt out with focus-visible:outline-none */
-  :focus-visible { outline: 2px solid #C6F36B; outline-offset: 2px; }
+  :focus-visible { outline: 2px solid rgb(var(--lime)); outline-offset: 2px; }
 }
 
 @layer components {
@@ -50,11 +76,11 @@
   .reveal { opacity: 0; transform: translateY(8px); transition: opacity .5s cubic-bezier(.2,.7,.2,1), transform .5s cubic-bezier(.2,.7,.2,1); }
   .reveal.is-visible { opacity: 1; transform: none; }
   .reveal-d1 { transition-delay: .08s } .reveal-d2 { transition-delay: .16s } .reveal-d3 { transition-delay: .24s }
-  .text-gradient { background: linear-gradient(100deg, #F5F7F2 0%, #D4F78F 55%, #49B675 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .grid-bg { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; }
+  .text-gradient { background: linear-gradient(100deg, rgb(var(--fg)) 0%, rgb(var(--lime-400)) 55%, rgb(var(--moss)) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .grid-bg { background-image: linear-gradient(rgb(var(--tint) / .035) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--tint) / .035) 1px, transparent 1px); background-size: 48px 48px; }
   .glow-border { position: relative; }
   .glow-border::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
-    background: linear-gradient(140deg, rgba(198,243,107,.55), rgba(73,182,117,.1) 40%, transparent 60%, rgba(198,243,107,.25));
+    background: linear-gradient(140deg, rgb(var(--lime) / .55), rgb(var(--moss) / .1) 40%, transparent 60%, rgb(var(--lime) / .25));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
   .btn-shine { position: relative; overflow: hidden; }
   .btn-shine::after { content: ''; position: absolute; inset: 0; transform: translateX(-120%); pointer-events: none;
@@ -74,6 +100,6 @@
   a, button { -webkit-tap-highlight-color: transparent; }
   .shadow-card { transition: box-shadow .3s ease, border-color .3s ease, transform .3s ease; }
   table tbody tr { transition: background-color .15s ease; }
-  table tbody tr:hover { background-color: rgba(255,255,255,.02); }
+  table tbody tr:hover { background-color: rgb(var(--tint) / .02); }
   input[type="checkbox"] { cursor: pointer; }
 }

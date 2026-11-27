@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../../components/ui'
 
-/** Keep in step with POLICY_VERSION in backend/app/legal.py. Changing that asks everyone to accept again. */
-export const POLICY_DATE = '26 November 2026'
+/** Date shown on the policy. POLICY_VERSION in backend/app/legal.py changes only for changes everyone must accept again
+ *  (26 Nov 2026); additions about opt-in features, like workout buddies, update only this date. */
+export const POLICY_DATE = '27 November 2026'
 /** The person people write to about their data (the DPDP Act calls this the grievance contact). */
 export const PRIVACY_CONTACT = 'kunalbhoomaraddi@gmail.com'
 
@@ -51,7 +52,8 @@ export function Privacy() {
           <li><span className="text-fg">Profile:</span> age, sex, height, weight, activity level, goal, diet type, food preferences and allergies, training experience and equipment.</li>
           <li><span className="text-fg">What you log:</span> meals, water, workouts and sets, body weight and measurements, check-ins, travel or festival breaks you set, and progress photos.</li>
           <li><span className="text-fg">Coach chats:</span> the messages you send the AI coach and its replies.</li>
-          <li><span className="text-fg">Technical:</span> your time zone (so "today" is your today), and short-lived sign-in codes and attempt counters that stop abuse.</li>
+          <li><span className="text-fg">Workout buddies:</span> who you've paired with, your invite code, whether you share your workouts with them, and nudges you send or receive.</li>
+          <li><span className="text-fg">Technical:</span> your time zone (so "today" is your today), and short-lived sign-in codes and attempt counters that stop abuse. Your light or dark appearance choice stays in your browser.</li>
         </ul>
         <p>Some of this, such as weight, measurements and allergies, is health information. We treat all of it as private.</p>
       </Sec>
@@ -82,6 +84,10 @@ export function Privacy() {
 
       <Sec title="Progress photos">
         <p>Photos are re-encoded when you upload them, which removes location and camera details. Only you can see them, and they are never sent to the AI. A meal photo you ask the coach to read is sent to the AI and is not stored by FitAI.</p>
+      </Sec>
+
+      <Sec title="Workout buddies">
+        <p>Nothing is shared unless you pair with someone using an invite code. A buddy sees only your first name, the days you worked out this week, how many workouts your plan has, and your current streak. They never see your food, weight, measurements, photos, email or coach chats. You can hide even that with <span className="text-fg">Share my workouts</span>, and either of you can end the pairing at any time. Deleting your account removes your pairings and nudges.</p>
       </Sec>
 
       <Sec title="How long we keep it">

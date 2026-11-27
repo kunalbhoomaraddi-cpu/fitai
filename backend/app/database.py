@@ -72,6 +72,11 @@ def run_light_migrations() -> None:
         if "coach_language" not in cols:  # the coach's reply language (English for everyone until they pick)
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN coach_language VARCHAR(5) NOT NULL DEFAULT 'en'"))
+        if "buddy_code" not in cols:  # workout buddies (codes are made on first use; sharing is on until turned off)
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN buddy_code VARCHAR(12) NULL"))
+                conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_buddy_code ON users (buddy_code)"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN buddy_sharing BOOLEAN NOT NULL DEFAULT TRUE"))
     if "fitness_profiles" in insp.get_table_names():
         if "adaptive_target" not in {c["name"] for c in insp.get_columns("fitness_profiles")}:
             with engine.begin() as conn:  # adaptive calorie target is opt-in: off for everyone at first

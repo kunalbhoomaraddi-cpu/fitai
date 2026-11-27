@@ -12,6 +12,7 @@ import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
 const Landing = lazy(() => import('./pages/Landing/Landing'))
 const Onboarding = lazy(() => import('./pages/Onboarding/Onboarding'))
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'))
+const Buddies = lazy(() => import('./pages/Buddies/Buddies'))
 const AICoach = lazy(() => import('./pages/AICoach/AICoach'))
 const DietPlanner = lazy(() => import('./pages/DietPlanner/DietPlanner'))
 const WorkoutPlanner = lazy(() => import('./pages/WorkoutPlanner/WorkoutPlanner'))
@@ -31,7 +32,12 @@ function Protected({ children, needsProfile = true }: { children: ReactNode; nee
   const { user, loading } = useAuth()
   const loc = useLocation()
   if (loading) return <Splash />
-  if (!user) return <Navigate to="/login" state={{ from: loc.pathname }} replace />
+  if (!user) {
+    // Keep a buddy invite code through sign-in or sign-up (the Buddies page picks it up)
+    const code = loc.pathname === '/buddies' ? new URLSearchParams(loc.search).get('code') : null
+    if (code) { try { sessionStorage.setItem('fitai.buddy-code', code) } catch { /* storage blocked */ } }
+    return <Navigate to="/login" state={{ from: loc.pathname }} replace />
+  }
   if (!user.email_verified) return <Navigate to="/verify-email" replace />
   if (needsProfile && !user.onboarding_complete) return <Navigate to="/onboarding" replace />
   return <>{children}<ConsentGate /></>
@@ -74,6 +80,7 @@ export default function App() {
           <Route path="/progress" element={<Suspense fallback={<PageSkeleton />}><ProgressTracker /></Suspense>} />
           <Route path="/photos" element={<Suspense fallback={<PageSkeleton />}><ProgressPhotos /></Suspense>} />
           <Route path="/checkins" element={<Suspense fallback={<PageSkeleton />}><Checkins /></Suspense>} />
+          <Route path="/buddies" element={<Suspense fallback={<PageSkeleton />}><Buddies /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={<PageSkeleton />}><Settings /></Suspense>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

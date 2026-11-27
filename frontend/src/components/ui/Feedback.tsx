@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Button } from './Button'
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={clsx('animate-shimmer rounded-xl bg-[linear-gradient(90deg,#171C18_0%,#1F2621_50%,#171C18_100%)] bg-[length:800px_100%]', className)} />
+  return <div className={clsx('animate-shimmer rounded-xl bg-[linear-gradient(90deg,rgb(var(--ink-800))_0%,rgb(var(--line-soft))_50%,rgb(var(--ink-800))_100%)] bg-[length:800px_100%]', className)} />
 }
 
 export function PageSkeleton() {

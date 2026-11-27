@@ -48,10 +48,10 @@ function ExerciseRow({ e, index, session, onToggle, prev, onLog, onSwap, units =
     <div className={clsx('group overflow-hidden rounded-2xl border transition', e.completed ? 'border-lime/40 bg-lime/[0.03]' : 'border-line bg-ink-900/60 hover:border-line-strong')}>
       <div className="flex items-center gap-4 p-3 pr-4">
         <button onClick={() => setDemoOpen(true)} aria-label={`Watch ${e.name} demo`} className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl sm:h-24 sm:w-20">
-          {hasDemo ? <img src={demoImg(e.exercise_id, 1)} alt="" loading="lazy" className="absolute inset-0 h-full w-full bg-white object-cover" />
+          {hasDemo ? <img src={demoImg(e.exercise_id, 1)} alt="" loading="lazy" className="absolute inset-0 h-full w-full bg-snow object-cover" />
             : <Photo name={e.image} alt={`${e.muscle} illustration`} className="absolute inset-0" overlay={false} />}
           <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-90 transition group-hover:bg-black/40">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white"><Play className="ml-0.5 h-3.5 w-3.5" /></span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-snow"><Play className="ml-0.5 h-3.5 w-3.5" /></span>
           </span>
         </button>
         <div className="min-w-0 flex-1">
@@ -420,7 +420,7 @@ export default function WorkoutPlanner() {
               <div><Label>Workout duration</Label><div className="flex flex-wrap gap-1.5">{[30, 45, 60, 75, 90].map(n => <Chip key={n} active={form.duration === n} onClick={() => setForm({ ...form, duration: n })}>{n} min</Chip>)}</div></div>
               <div><Label>Equipment</Label><div className="flex flex-wrap gap-1.5">{EQUIPMENT.map(([v, l]) => <Chip key={v} active={form.equipment.includes(v)} onClick={() => setForm({ ...form, equipment: form.equipment.includes(v) ? form.equipment.filter(x => x !== v) : [...form.equipment, v] })}>{l}</Chip>)}</div></div>
               <div><Label>Recovery preference</Label><Segmented size="sm" options={[['standard', 'Standard'], ['extra_rest', 'Extra rest'], ['active_recovery', 'Active']] as const} value={form.recovery as any} onChange={v => setForm({ ...form, recovery: v })} /></div>
-              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-line bg-ink-900 px-3.5 py-3"><span className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4 text-lime" />AI coach notes</span><input type="checkbox" checked={form.useAi} onChange={e => setForm({ ...form, useAi: e.target.checked })} className="h-4 w-4 accent-[#C6F36B]" /></label>
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-line bg-ink-900 px-3.5 py-3"><span className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4 text-lime" />AI coach notes</span><input type="checkbox" checked={form.useAi} onChange={e => setForm({ ...form, useAi: e.target.checked })} className="h-4 w-4 accent-lime" /></label>
               <Button full size="lg" onClick={generate} loading={busy === 'gen'} disabled={form.trainingDays.length < 1 || form.trainingDays.length > 6} icon={<Sparkles className="h-4 w-4" />}>Generate workout plan</Button>
               <p className="text-[11px] text-fg-dim">Sets, reps and exercise selection come from FitAI's deterministic programming engine; the AI adds coaching guidance.</p>
             </div>

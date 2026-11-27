@@ -144,6 +144,20 @@ Authentication: `Authorization: Bearer <access_token>` from `/auth/register`, `/
 
 `facts` and `score` are deterministic. Score = 40 × min(workouts / planned, 1) + 30 × min(days logged / 5, 1) + 30 × min(protein days / 4, 1). A protein day means reaching at least 90% of the target. The weight change compares this week's average with the previous week's. Weight loss faster than about 1% of body weight per week is flagged.
 
+## Workout buddies
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/buddies` | `{code, sharing, max_buddies, buddies[], nudges[], demo}`. Makes your invite code (e.g. `K7QM-2XRP`) on first use. Each buddy: `{id, name, since, sharing, activity, nudged_today}`; `activity` is `null` when they've turned sharing off, otherwise `{week[7]:{date, trained, future}, workouts_this_week, planned_per_week, streak, on_break, trained_today, last_workout}` on the buddy's own clock. `nudges` are unseen nudges from the last 3 days. |
+| POST | `/api/buddies/join` | `{code}` (any case, dash optional). `201` and the new overview. `404` unknown code, `422` malformed or your own, `409` already paired or 5 buddies on either side. 10 tries an hour. |
+| POST | `/api/buddies/code` | Makes a new code; the old one stops working, existing buddies stay. |
+| PUT | `/api/buddies/sharing` | `{sharing: bool}`. Off: buddies see only your first name. |
+| DELETE | `/api/buddies/{buddy_id}` | Ends the pairing for both people and removes nudges between them. `204`. |
+| POST | `/api/buddies/{buddy_id}/nudge` | One per buddy per day (`429` after that). |
+| POST | `/api/buddies/nudges/seen` | Marks your nudges as seen. |
+
+A buddy never sees food, weight, measurements, photos, email or coach chats. The demo shows a sample buddy (`id 0`, not a real account); joining, new codes and sharing return `403` there. Deleting an account removes its pairings and nudges.
+
 ## Progress photos
 
 | Method | Path | Notes |

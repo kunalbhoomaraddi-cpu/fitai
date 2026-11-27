@@ -15,7 +15,7 @@ backend tests run twice, once on SQLite and once on PostgreSQL 16.
 cd backend && source .venv/bin/activate
 pip install -r requirements-dev.txt     # once: adds ruff
 ruff check .                            # lint
-python -m pytest -q                     # 193 tests
+python -m pytest -q                     # 207 tests
 ```
 
 The tests use a throwaway SQLite file, no external APIs and no LLM keys, so they are deterministic and need no network.
@@ -51,6 +51,7 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 | `test_adaptive.py` | Waits for enough data, 2,000 kcal while losing 0.5 kg/week reads as ~2,550 maintenance, partly logged days ignored, 25% cap, blending, on/off, breaks use it, privacy |
 | `test_meal_text.py` | Built-in reader portions (rotis, dal, curd, eggs, almonds, bread), unknown foods reported, AI reads Hindi while the database does the maths, AI failure falls back, Hindi without AI says so, `voice` tag, input limits |
 | `test_recap.py` | Week bounds, a full week (workouts, volume, records, food, weight from the previous weigh-in, water, highlight), empty week, this week, highlights in kg or lb |
+| `test_buddies.py` | Invite codes (format, any case, a new code retires the old one), pairing both ways, buddies see only workout days, plan size and streak (no food, weight, photos or email), bad, own and demo codes, at most 5 buddies, sharing off, one nudge a day and marking seen, strangers can't nudge or remove, removing ends it for both, deleting an account removes pairings, export lists buddies, the demo's sample buddy |
 | `test_food_search.py` | Name search uses Open Food Facts' search service (brands cleaned, products without nutrition skipped), falls back to the classic search, shows FitAI's foods with a note when both are down, and ranks typo guesses after real matches |
 | `test_ai_provider.py`, `test_real_llm_paths.py` | Provider selection, Gemini schema conversion, a simulated tool-calling round trip |
 
@@ -60,7 +61,7 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/fitai_test pytho
 cd frontend
 npm run lint          # ESLint (TypeScript + React hooks rules)
 npm run typecheck     # strict TypeScript
-npm test              # 32 Vitest + Testing Library tests
+npm test              # 36 Vitest + Testing Library tests
 npm run build         # tsc + vite production build
 ```
 

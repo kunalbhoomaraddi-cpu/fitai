@@ -121,3 +121,10 @@ export interface WeeklyRecap {
   water: { days_logged: number; avg_ml: number | null; goal_ml: number; days_goal_met: number }
   streak: number; best_streak: number | null
 }
+
+/** Workout buddies: all a buddy can see is a first name, this week's workout days and a streak. */
+export interface BuddyDay { date: string; trained: boolean; future: boolean }
+export interface BuddyActivity { week: BuddyDay[]; workouts_this_week: number; planned_per_week: number | null; streak: number; on_break: boolean; trained_today: boolean; last_workout: string | null }
+export interface Buddy { id: number; name: string; since: string; sharing: boolean; activity: BuddyActivity | null; nudged_today: boolean }
+export interface BuddyNudge { id: number; from_id: number; from_name: string; at: string }
+export interface BuddyOverview { code: string | null; sharing: boolean; max_buddies: number; buddies: Buddy[]; nudges: BuddyNudge[]; demo: boolean }

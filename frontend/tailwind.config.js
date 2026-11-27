@@ -3,15 +3,20 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Every theme colour is a CSS variable (see index.css): dark is the default, light is optional.
       colors: {
-        ink: { 950: '#0B0D0C', 900: '#111512', 850: '#141915', 800: '#171C18', 750: '#1C221D', 700: '#222923' },
-        line: { DEFAULT: '#29312B', soft: '#1F2621', strong: '#364038' },
-        lime: { DEFAULT: '#C6F36B', 400: '#D4F78F', 500: '#C6F36B', 600: '#A9D84F', 900: '#2A3A12' },
-        moss: { DEFAULT: '#49B675', 400: '#64C98C', 600: '#3A9560' },
-        fg: { DEFAULT: '#F5F7F2', muted: '#9CA69D', dim: '#6B756D' },
-        amber: { DEFAULT: '#F2B85B' },
-        coral: { DEFAULT: '#F07C6A' },
-        sky: { DEFAULT: '#7CC4F2' },
+        ink: { 950: 'rgb(var(--ink-950) / <alpha-value>)', 900: 'rgb(var(--ink-900) / <alpha-value>)', 850: 'rgb(var(--ink-850) / <alpha-value>)', 800: 'rgb(var(--ink-800) / <alpha-value>)', 750: 'rgb(var(--ink-750) / <alpha-value>)', 700: 'rgb(var(--ink-700) / <alpha-value>)' },
+        line: { DEFAULT: 'rgb(var(--line) / <alpha-value>)', soft: 'rgb(var(--line-soft) / <alpha-value>)', strong: 'rgb(var(--line-strong) / <alpha-value>)' },
+        lime: { DEFAULT: 'rgb(var(--lime) / <alpha-value>)', 400: 'rgb(var(--lime-400) / <alpha-value>)', 500: 'rgb(var(--lime) / <alpha-value>)', 600: 'rgb(var(--lime-600) / <alpha-value>)', 900: 'rgb(var(--lime-900) / <alpha-value>)' },
+        moss: { DEFAULT: 'rgb(var(--moss) / <alpha-value>)', 400: 'rgb(var(--moss-400) / <alpha-value>)', 600: 'rgb(var(--moss-600) / <alpha-value>)' },
+        fg: { DEFAULT: 'rgb(var(--fg) / <alpha-value>)', muted: 'rgb(var(--fg-muted) / <alpha-value>)', dim: 'rgb(var(--fg-dim) / <alpha-value>)' },
+        amber: { DEFAULT: 'rgb(var(--amber) / <alpha-value>)' },
+        coral: { DEFAULT: 'rgb(var(--coral) / <alpha-value>)' },
+        sky: { DEFAULT: 'rgb(var(--sky) / <alpha-value>)' },
+        // Faint overlays (bg-white/[0.04]) tint toward the text colour: light on dark, dark on light
+        white: 'rgb(var(--tint) / <alpha-value>)',
+        // Real white, for labels over photos
+        snow: '#FFFFFF',
       },
       fontFamily: {
         // Body: IBM Plex Sans (calm, clear figures). Display: Big Shoulders, a condensed scoreboard face for headings and numbers.
@@ -20,9 +25,9 @@ export default {
       },
       borderRadius: { xl: '14px', '2xl': '18px', '3xl': '24px' },
       boxShadow: {
-        card: '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 12px 32px -16px rgba(0,0,0,0.6)',
-        glow: '0 0 0 1px rgba(198,243,107,0.25), 0 8px 30px -8px rgba(198,243,107,0.35)',
-        pop: '0 24px 64px -20px rgba(0,0,0,0.75)',
+        card: 'var(--shadow-card)',
+        glow: '0 0 0 1px rgb(var(--lime) / 0.25), 0 8px 30px -8px rgb(var(--lime) / 0.35)',
+        pop: 'var(--shadow-pop)',
       },
       keyframes: {
         'fade-up': { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'none' } },

@@ -1,11 +1,11 @@
 import clsx from 'clsx'
-import { Bell, Bot, CalendarCheck, Camera, ChartLine, Dumbbell, LayoutDashboard, LogOut, Menu, Salad, Settings, Trophy, UtensilsCrossed, X } from 'lucide-react'
+import { Bell, Bot, CalendarCheck, Camera, ChartLine, Dumbbell, LayoutDashboard, LogOut, Menu, Salad, Settings, Trophy, Users, UtensilsCrossed, X, Hand } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Badge, Logo } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
-import { progressApi } from '../services/fitai'
-import type { Achievement } from '../types'
+import { buddyApi, progressApi } from '../services/fitai'
+import type { Achievement, BuddyNudge } from '../types'
 import { greeting, longToday } from '../utils/format'
 
 export const NAV = [
@@ -17,6 +17,7 @@ export const NAV = [
   { to: '/progress', label: 'Progress', short: 'Progress', icon: ChartLine },
   { to: '/photos', label: 'Progress photos', short: 'Photos', icon: Camera },
   { to: '/checkins', label: 'Weekly check-in', short: 'Check-in', icon: CalendarCheck },
+  { to: '/buddies', label: 'Workout buddies', short: 'Buddies', icon: Users },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 const MOBILE = ['/dashboard', '/coach', '/workouts', '/nutrition', '/progress']
@@ -67,25 +68,45 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
 function Notifications() {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Achievement[]>([])
+  const [nudges, setNudges] = useState<BuddyNudge[]>([])
+  const [nudgesSeen, setNudgesSeen] = useState(true)
   const ref = useRef<HTMLDivElement>(null)
   const loc = useLocation()
+  const navigate = useNavigate()
   const isDash = loc.pathname === '/dashboard' || loc.pathname === '/progress' || loc.pathname === '/workouts'
-  useEffect(() => { if (isDash || items.length === 0) progressApi.achievements().then(setItems).catch(() => undefined) }, [isDash]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (isDash || items.length === 0) progressApi.achievements().then(setItems).catch(() => undefined)
+    if (isDash || loc.pathname === '/buddies') buddyApi.overview().then(o => { setNudges(o.nudges); setNudgesSeen(o.nudges.length === 0) }).catch(() => undefined)
+  }, [isDash, loc.pathname === '/buddies']) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
     document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h)
   }, [])
   const unlocked = items.filter(a => a.unlocked).sort((a, b) => (b.unlocked_at || '').localeCompare(a.unlocked_at || ''))
-  const unseen = unlocked.filter(a => !a.seen).length
+  const unseen = unlocked.filter(a => !a.seen).length + (nudgesSeen ? 0 : nudges.length)
+  const toggle = () => {
+    setOpen(o => !o)
+    if (unlocked.some(a => !a.seen)) progressApi.markSeen().then(() => setItems(s => s.map(a => ({ ...a, seen: true })))).catch(() => undefined)
+    if (!nudgesSeen) buddyApi.nudgesSeen().then(() => setNudgesSeen(true)).catch(() => undefined)
+  }
   return (
     <div className="relative" ref={ref}>
-      <button aria-label="Notifications" onClick={() => { setOpen(o => !o); if (unseen) progressApi.markSeen().then(() => setItems(s => s.map(a => ({ ...a, seen: true })))).catch(() => undefined) }}
+      <button aria-label={unseen ? `Notifications, ${unseen} new` : 'Notifications'} onClick={toggle}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-ink-850 text-fg-muted transition hover:text-fg">
         <Bell className="h-[18px] w-[18px]" />
         {unseen > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-lime px-1 text-[10px] font-bold text-ink-950">{unseen}</span>}
       </button>
       {open && (
         <div className="absolute right-0 top-12 z-50 w-80 animate-pop rounded-2xl border border-line bg-ink-850 p-2 shadow-pop">
+          {nudges.length > 0 && <>
+            <p className="px-3 pb-2 pt-2 text-[13px] font-semibold text-fg-muted">From your buddies</p>
+            {nudges.slice(0, 3).map(n => (
+              <button key={n.id} onClick={() => { setOpen(false); navigate('/workouts') }} className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-white/[0.03]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-lime/10 text-lime"><Hand className="h-4 w-4" /></div>
+                <div className="min-w-0"><p className="text-sm font-medium text-fg">{n.from_name} nudged you to train</p><p className="text-xs text-fg-muted">Tap to start a workout</p></div>
+              </button>
+            ))}
+          </>}
           <p className="px-3 pb-2 pt-2 text-[13px] font-semibold text-fg-muted">Achievements</p>
           {unlocked.length === 0 && <p className="px-3 pb-3 text-sm text-fg-muted">Complete a workout or log a weigh-in to earn your first badge.</p>}
           {unlocked.slice(0, 6).map(a => (

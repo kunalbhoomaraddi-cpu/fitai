@@ -27,6 +27,9 @@ class User(TimestampMixin, Base):
     ai_provider_pref: Mapped[str] = mapped_column(String(20), default="auto", nullable=False)
     # language the coach replies in: en | hi (Hindi) | kn (Kannada)
     coach_language: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
+    # workout buddies: the invite code friends type to pair up, and whether buddies can see your workouts
+    buddy_code: Mapped[str | None] = mapped_column(String(12), unique=True, nullable=True)
+    buddy_sharing: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     profile = relationship("FitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 

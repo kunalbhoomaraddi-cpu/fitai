@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 
-export function Ring({ value, max, size = 120, stroke = 10, color = '#C6F36B', track = 'rgba(255,255,255,0.06)', children }:
+export function Ring({ value, max, size = 120, stroke = 10, color = 'rgb(var(--lime))', track = 'rgb(var(--tint) / 0.06)', children }:
   { value: number; max: number; size?: number; stroke?: number; color?: string; track?: string; children?: ReactNode }) {
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
@@ -12,9 +12,9 @@ export function Ring({ value, max, size = 120, stroke = 10, color = '#C6F36B', t
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-          strokeDasharray={c} strokeDashoffset={c * (1 - shown)} style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1)', filter: `drop-shadow(0 0 6px ${color}55)` }} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} style={{ stroke: track }} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - shown)}
+          style={{ stroke: color, transition: 'stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1)', filter: `drop-shadow(0 0 6px color-mix(in srgb, ${color} 33%, transparent))` }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div>
     </div>
@@ -32,7 +32,7 @@ export function Bar({ value, max, color = 'bg-lime', className, height = 'h-1.5'
   )
 }
 
-export const MACRO_COLORS = { protein: '#C6F36B', carbs: '#7CC4F2', fat: '#F2B85B', calories: '#E9EEE6' }
+export const MACRO_COLORS = { protein: 'rgb(var(--lime))', carbs: 'rgb(var(--sky))', fat: 'rgb(var(--amber))', calories: 'rgb(var(--fg))' }
 
 export function MacroRow({ label, value, target, unit = 'g', color }: { label: string; value: number; target: number; unit?: string; color: string }) {
   const over = value > target * 1.1
@@ -43,7 +43,7 @@ export function MacroRow({ label, value, target, unit = 'g', color }: { label: s
         <span className="tabular-nums text-fg"><b className="font-semibold">{Math.round(value)}</b><span className="text-fg-dim"> / {Math.round(target)}{unit}</span></span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-        <div className="h-full rounded-full transition-[width] duration-1000" style={{ width: `${Math.min(100, (value / Math.max(target, 1)) * 100)}%`, background: over ? '#F07C6A' : color }} />
+        <div className="h-full rounded-full transition-[width] duration-1000" style={{ width: `${Math.min(100, (value / Math.max(target, 1)) * 100)}%`, background: over ? 'rgb(var(--coral))' : color }} />
       </div>
     </div>
   )

@@ -13,6 +13,12 @@
     <meta name="theme-color" content="#0B0D0C" />
     <meta name="description" content="FitAI: workouts, meals and a coach that knows your numbers." />
     <title>FitAI — Your AI Fitness Coach</title>
+    <script>
+      // Apply the saved appearance before the first paint (dark unless the person chose otherwise)
+      try { var c = localStorage.getItem('fitai.theme'); if (c === 'light' || (c === 'system' && matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.documentElement.dataset.theme = 'light'; document.documentElement.classList.remove('dark');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#F2F4EF') } } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

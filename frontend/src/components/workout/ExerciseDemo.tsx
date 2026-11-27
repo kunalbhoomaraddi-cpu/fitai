@@ -18,7 +18,7 @@ export function DemoFrames({ exerciseId, name, playing = true, className, speed 
   }, [playing, demo, speed])
   if (!demo) return null
   return (
-    <div className={clsx('relative overflow-hidden bg-white', className)}>
+    <div className={clsx('relative overflow-hidden bg-snow', className)}>
       {([0, 1] as const).slice(0, demo.frames).map(i => (
         <img key={i} src={demoImg(exerciseId, i)} alt={`${name}, ${i ? 'end' : 'start'} position`} draggable={false}
           className={clsx('absolute inset-0 h-full w-full select-none object-cover transition-opacity duration-300', frame === i ? 'opacity-100' : 'opacity-0')} />
@@ -39,10 +39,10 @@ export function ExerciseDemoModal({ open, onClose, exerciseId, name, tip, sets, 
         <div className="relative">
           <DemoFrames exerciseId={exerciseId} name={name} playing={playing} className="aspect-[3/2] w-full rounded-2xl" />
           <button onClick={() => setPlaying(p => !p)} aria-label={playing ? 'Pause demo' : 'Play demo'}
-            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur transition hover:bg-black/80">
+            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-snow backdrop-blur transition hover:bg-black/80">
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </button>
-          <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white">Start ↔ finish position</span>
+          <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-medium text-snow">Start ↔ finish position</span>
         </div>
       ) : (
         <div className="rounded-2xl border border-line bg-white/[0.02] p-4 text-sm text-fg-muted">No photo demo for this exercise yet. Follow the steps below.</div>
